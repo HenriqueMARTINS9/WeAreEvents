@@ -18,6 +18,7 @@ import { EVENT_TYPES } from "@/types/venue";
 import { useNavigate } from "react-router-dom";
 import logoBlack from "@/assets/logo-black.svg";
 import DesktopNav from "./DesktopNav";
+import FilterSelect from "./FilterSelect";
 import VenueGridCard from "./VenueGridCard";
 
 const DesktopHome = () => {
@@ -64,10 +65,6 @@ const DesktopHome = () => {
 
         <div className="relative z-10 h-full max-w-6xl mx-auto px-6 pt-28 pb-10 flex flex-col justify-center">
           <div className="max-w-3xl">
-            <p className="mb-4 inline-flex items-center gap-2 rounded-lg border border-primary-foreground/20 bg-primary-foreground/10 px-3 py-1.5 text-xs font-body font-semibold text-primary-foreground/90">
-              <Gem className="w-3.5 h-3.5 text-luxe-gold" />
-              Conciergerie événementielle privée
-            </p>
             <h1 className="font-heading text-5xl md:text-6xl lg:text-7xl text-primary-foreground font-semibold leading-none mb-6">
               Trouvez un lieu qui signe votre événement.
             </h1>
@@ -76,9 +73,9 @@ const DesktopHome = () => {
             </p>
           </div>
 
-          <div className="mt-8 w-full max-w-5xl rounded-lg border border-primary-foreground/20 bg-foreground/50 p-3 shadow-2xl backdrop-blur-xl hairline-top">
-            <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_1fr] gap-3">
-              <div className="flex items-center gap-3 rounded-lg bg-background p-3">
+          <div className="mt-8 w-full max-w-5xl rounded-lg border border-primary-foreground/20 bg-foreground/50 p-4 shadow-2xl backdrop-blur-xl hairline-top">
+            <div className="space-y-3">
+              <div className="grid grid-cols-1 gap-3 rounded-lg bg-background p-3 md:grid-cols-[auto_1fr_auto] md:items-center">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                   <Tag className="w-4 h-4" />
                 </div>
@@ -103,46 +100,44 @@ const DesktopHome = () => {
                 </div>
                 <button
                   onClick={handleCodeSearch}
-                  className="rounded-lg bg-foreground px-4 py-2.5 text-sm font-body font-semibold text-primary-foreground hover:bg-primary transition-colors"
+                  className="rounded-lg bg-foreground px-5 py-2.5 text-sm font-body font-semibold text-primary-foreground hover:bg-primary transition-colors"
                 >
                   Accéder
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                <div className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2.5">
-                  <MapPin className="w-4 h-4 text-primary shrink-0" />
-                  <select
-                    value={searchCity}
-                    onChange={(e) => setSearchCity(e.target.value)}
-                    className="min-w-0 flex-1 bg-transparent text-sm font-body focus:outline-none"
-                  >
-                    <option value="">Ville</option>
-                    {cityOptions.map((c) => (
-                      <option key={c} value={c}>{c}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2.5">
-                  <Sparkles className="w-4 h-4 text-primary shrink-0" />
-                  <select
-                    value={searchEventType}
-                    onChange={(e) => setSearchEventType(e.target.value)}
-                    className="min-w-0 flex-1 bg-transparent text-sm font-body focus:outline-none"
-                  >
-                    <option value="">Type</option>
-                    {EVENT_TYPES.map((t) => (
-                      <option key={t} value={t}>{t}</option>
-                    ))}
-                  </select>
-                </div>
+              <div className="flex items-center gap-3">
+                <div className="h-px flex-1 bg-primary-foreground/15" />
+                <span className="rounded-lg border border-primary-foreground/15 bg-primary-foreground/10 px-3 py-1 text-[11px] font-body font-semibold text-primary-foreground/70">
+                  ou
+                </span>
+                <div className="h-px flex-1 bg-primary-foreground/15" />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-[1fr_1.4fr_0.9fr_auto] gap-3">
+                <FilterSelect
+                  value={searchCity}
+                  onChange={setSearchCity}
+                  placeholder="Ville"
+                  emptyLabel="Toutes les villes"
+                  options={cityOptions}
+                  icon={<MapPin className="w-4 h-4" />}
+                />
+                <FilterSelect
+                  value={searchEventType}
+                  onChange={setSearchEventType}
+                  placeholder="Type d'événement"
+                  emptyLabel="Tous les types"
+                  options={EVENT_TYPES}
+                  icon={<Sparkles className="w-4 h-4" />}
+                />
                 <div className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2.5">
                   <Users className="w-4 h-4 text-primary shrink-0" />
                   <input
                     type="number"
                     value={searchGuests}
                     onChange={(e) => setSearchGuests(e.target.value)}
-                    placeholder="Invités"
+                    placeholder="Nombre d'invités"
                     className="min-w-0 flex-1 bg-transparent text-sm font-body focus:outline-none"
                   />
                 </div>
@@ -248,7 +243,7 @@ const DesktopHome = () => {
       <section className="px-6 py-20 bg-background">
         <div className="max-w-6xl mx-auto">
           <div className="mb-12 max-w-2xl">
-            <p className="font-body text-sm font-semibold text-primary mb-3">Confiance</p>
+            <p className="font-body text-sm font-semibold text-primary mb-3">Ils nous font confiance</p>
             <h2 className="font-heading text-3xl md:text-5xl font-semibold">
               Des demandes plus claires, des lieux mieux qualifiés.
             </h2>
@@ -298,9 +293,6 @@ const DesktopHome = () => {
         <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
             <img src={logoBlack} alt="WeAreEvents" className="h-6 mb-4 brightness-0 invert" />
-            <p className="text-primary-foreground/60 text-sm font-body leading-relaxed">
-              La conciergerie de découverte et réservation de salles événementielles en France.
-            </p>
           </div>
           <div>
             <h4 className="font-body font-semibold text-sm mb-3">Navigation</h4>

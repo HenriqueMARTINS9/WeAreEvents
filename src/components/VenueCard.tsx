@@ -79,7 +79,7 @@ const VenueCard = ({ venue, isActive, onOpenDetail, onBooking }: VenueCardProps)
       <div className="absolute inset-0 z-10 bg-[radial-gradient(circle_at_22%_78%,rgba(190,154,83,0.18),transparent_32%)]" />
 
       {/* Content overlay */}
-      <div className="absolute bottom-[6.5rem] left-0 right-16 z-20 px-5">
+      <div className="absolute bottom-6 left-0 right-16 z-20 px-5">
         <button onClick={onOpenDetail} className="text-left w-full">
           <div className="flex flex-wrap items-center gap-2 mb-3">
             <span className="px-2 py-1 rounded-lg border border-primary-foreground/20 bg-primary-foreground/10 text-primary-foreground text-[11px] font-body font-semibold">
@@ -131,7 +131,7 @@ const VenueCard = ({ venue, isActive, onOpenDetail, onBooking }: VenueCardProps)
       </div>
 
       {/* Right action column (TikTok style) */}
-      <div className="absolute right-3 bottom-28 z-20 flex flex-col items-center gap-4">
+      <div className="absolute right-3 bottom-6 z-20 flex flex-col items-center gap-4">
         <button
           onClick={onBooking}
           className="w-12 h-12 rounded-lg bg-primary flex items-center justify-center luxury-shadow active:scale-[0.96] transition-transform"
@@ -168,27 +168,6 @@ const VenueCard = ({ venue, isActive, onOpenDetail, onBooking }: VenueCardProps)
           </span>
           <span className="text-[10px] font-body">Partager</span>
         </button>
-      </div>
-
-      {/* Bottom CTA */}
-      <div className="absolute bottom-0 left-0 right-0 z-20 p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] bg-gradient-to-t from-foreground via-foreground/75 to-transparent">
-        <div className="flex gap-2">
-          <button
-            onClick={onBooking}
-            className="flex-1 py-3 rounded-lg bg-primary text-primary-foreground font-body font-semibold text-sm shadow-lg active:scale-[0.98] transition-transform"
-          >
-            Demander une visite
-          </button>
-          <button
-            onClick={onOpenDetail}
-            className="px-4 py-3 rounded-lg glass-dark text-primary-foreground font-body font-semibold text-sm active:scale-[0.98] transition-transform"
-          >
-            Détails
-          </button>
-        </div>
-        <p className="mt-2 text-center text-[11px] font-body text-primary-foreground/70">
-          Conciergerie, devis et disponibilité sous 24h
-        </p>
       </div>
     </div>
   );

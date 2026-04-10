@@ -34,7 +34,6 @@ const VenueGridCard = ({ venue }: VenueGridCardProps) => {
           </div>
         </div>
         <div className="absolute bottom-4 left-4 right-4">
-          <p className="text-xs font-body text-luxe-gold mb-1">Sélection WeAreEvents</p>
           <h3 className="font-heading text-2xl font-semibold leading-tight text-primary-foreground">
             {venue.title}
           </h3>

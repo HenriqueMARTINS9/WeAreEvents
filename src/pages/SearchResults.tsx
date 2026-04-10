@@ -4,6 +4,7 @@ import { Search, MapPin, Users, SlidersHorizontal, Tag, ShieldCheck, ArrowRight 
 import { searchVenues, mockVenues, getVenueByCode } from "@/data/venues";
 import { EVENT_TYPES } from "@/types/venue";
 import DesktopNav from "@/components/DesktopNav";
+import FilterSelect from "@/components/FilterSelect";
 import VenueGridCard from "@/components/VenueGridCard";
 import { useEffect } from "react";
 
@@ -106,8 +107,16 @@ const SearchResults = () => {
             </div>
           </div>
 
+          <div className="mb-4 flex items-center gap-3">
+            <div className="h-px flex-1 bg-border" />
+            <span className="rounded-lg border border-border bg-card px-3 py-1 text-[11px] font-body font-semibold text-muted-foreground">
+              ou
+            </span>
+            <div className="h-px flex-1 bg-border" />
+          </div>
+
           {/* Filters */}
-          <div className="mb-8 grid grid-cols-1 gap-3 rounded-lg border border-border bg-card p-3 luxury-shadow md:grid-cols-[1.2fr_1fr_1fr_0.8fr]">
+          <div className="mb-8 grid grid-cols-1 gap-3 rounded-lg border border-border bg-card p-3 luxury-shadow md:grid-cols-[1.2fr_1fr_1.35fr_0.8fr]">
             <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-muted border border-border">
               <Search className="w-4 h-4 text-muted-foreground" />
               <input
@@ -118,31 +127,31 @@ const SearchResults = () => {
                 className="min-w-0 flex-1 bg-transparent text-sm font-body focus:outline-none"
               />
             </div>
-            <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-muted border border-border">
-              <MapPin className="w-4 h-4 text-muted-foreground" />
-              <select value={city} onChange={(e) => setCity(e.target.value)} className="min-w-0 flex-1 bg-transparent text-sm font-body focus:outline-none">
-                <option value="">Ville</option>
-                {cityOptions.map((c) => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
-            </div>
-            <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-muted border border-border">
-              <Tag className="w-4 h-4 text-muted-foreground" />
-              <select value={eventType} onChange={(e) => setEventType(e.target.value)} className="min-w-0 flex-1 bg-transparent text-sm font-body focus:outline-none">
-                <option value="">Type</option>
-                {EVENT_TYPES.map((t) => (
-                  <option key={t} value={t}>{t}</option>
-                ))}
-              </select>
-            </div>
+            <FilterSelect
+              value={city}
+              onChange={setCity}
+              placeholder="Ville"
+              emptyLabel="Toutes les villes"
+              options={cityOptions}
+              icon={<MapPin className="w-4 h-4" />}
+              className="bg-muted"
+            />
+            <FilterSelect
+              value={eventType}
+              onChange={setEventType}
+              placeholder="Type d'événement"
+              emptyLabel="Tous les types"
+              options={EVENT_TYPES}
+              icon={<Tag className="w-4 h-4" />}
+              className="bg-muted"
+            />
             <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-muted border border-border">
               <Users className="w-4 h-4 text-muted-foreground" />
               <input
                 type="number"
                 value={guests}
                 onChange={(e) => setGuests(e.target.value)}
-                placeholder="Invités"
+                placeholder="Nombre d'invités"
                 className="min-w-0 flex-1 bg-transparent text-sm font-body focus:outline-none"
               />
             </div>

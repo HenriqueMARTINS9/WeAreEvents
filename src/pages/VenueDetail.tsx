@@ -54,7 +54,7 @@ const VenueDetail = () => {
               <span className="px-3 py-1.5 rounded-lg border border-primary-foreground/20 bg-primary-foreground/10 text-primary-foreground text-sm font-body font-semibold mb-4 inline-block backdrop-blur-md">
                 Code TikTok · {venue.venueCode}
               </span>
-              <p className="font-body text-luxe-gold text-sm font-semibold mb-3">Sélection WeAreEvents</p>
+
               <h1 className="font-heading text-5xl md:text-7xl text-primary-foreground font-semibold leading-none mb-5">{venue.title}</h1>
               <div className="flex flex-wrap items-center gap-4 text-primary-foreground/80 font-body text-sm">
                 <span className="flex items-center gap-1"><MapPin className="w-4 h-4" />{venue.city}</span>
