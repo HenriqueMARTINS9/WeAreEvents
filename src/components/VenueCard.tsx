@@ -79,7 +79,7 @@ const VenueCard = ({ venue, isActive, onOpenDetail, onBooking }: VenueCardProps)
       <div className="absolute inset-0 z-10 bg-[radial-gradient(circle_at_22%_78%,rgba(190,154,83,0.18),transparent_32%)]" />
 
       {/* Content overlay */}
-      <div className="absolute bottom-12 left-0 right-16 z-20 px-5">
+      <div className="absolute bottom-16 left-0 right-16 z-20 px-5">
         <button onClick={onOpenDetail} className="text-left w-full">
           <div className="flex flex-wrap items-center gap-2 mb-3">
             <span className="px-2 py-1 rounded-lg border border-primary-foreground/20 bg-primary-foreground/10 text-primary-foreground text-[11px] font-body font-semibold">
@@ -131,7 +131,7 @@ const VenueCard = ({ venue, isActive, onOpenDetail, onBooking }: VenueCardProps)
       </div>
 
       {/* Right action column (TikTok style) */}
-      <div className="absolute right-3 bottom-12 z-20 flex flex-col items-center gap-4">
+      <div className="absolute right-3 bottom-16 z-20 flex flex-col items-center gap-4">
         <button
           onClick={onBooking}
           className="w-12 h-12 rounded-lg bg-primary flex items-center justify-center luxury-shadow active:scale-[0.96] transition-transform"
