@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { mockVenues } from "@/data/venues";
 import VenueCard from "./VenueCard";
 import MobileHeader from "./MobileHeader";
@@ -8,6 +9,7 @@ import BookingModal from "./BookingModal";
 import type { Venue } from "@/types/venue";
 
 const MobileSwipeHome = () => {
+  const navigate = useNavigate();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showCodeSearch, setShowCodeSearch] = useState(false);
   const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null);
@@ -50,7 +52,7 @@ const MobileSwipeHome = () => {
           <div
             key={i}
             className={`w-1.5 rounded-full transition-all duration-300 ${
-              i === currentIndex ? "h-6 bg-primary" : "h-1.5 bg-primary-foreground/40"
+              i === currentIndex ? "h-7 bg-accent" : "h-1.5 bg-primary-foreground/40"
             }`}
           />
         ))}
@@ -61,7 +63,7 @@ const MobileSwipeHome = () => {
           onClose={() => setShowCodeSearch(false)}
           onVenueFound={(venue) => {
             setShowCodeSearch(false);
-            setSelectedVenue(venue);
+            navigate(`/salle/${venue.slug}`);
           }}
         />
       )}

@@ -1,4 +1,4 @@
-import type { Venue, Review } from "@/types/venue";
+import type { Venue, Review, TikTokVenueCodeMapping } from "@/types/venue";
 
 export const mockVenues: Venue[] = [
   {
@@ -167,12 +167,44 @@ export const mockReviews: Review[] = [
   { id: "r8", venueId: "5", authorName: "Léa F.", rating: 5, comment: "Un jardin secret incroyable ! L'ambiance est unique, on se sent hors du temps.", createdAt: "2024-09-30" },
 ];
 
+export const mockTikTokCodeMappings: TikTokVenueCodeMapping[] = [
+  { code: "WE-ROOF01", venueId: "1", campaignName: "Rooftop Paris sous les étoiles", active: true },
+  { code: "TT-PARIS-ROOF", venueId: "1", campaignName: "Rooftop Étoilé TikTok reveal", active: true },
+  { code: "WE-VILLA02", venueId: "2", campaignName: "Villa Méditerranée mariage privé", active: true },
+  { code: "TT-MARSEILLE-VILLA", venueId: "2", campaignName: "Villa Méditerranée TikTok reveal", active: true },
+  { code: "WE-LOFT03", venueId: "3", campaignName: "Loft industriel Lyon corporate", active: true },
+  { code: "TT-LYON-LOFT", venueId: "3", campaignName: "Atelier Industriel TikTok reveal", active: true },
+  { code: "WE-CHAT04", venueId: "4", campaignName: "Château des Lumières mariage", active: true },
+  { code: "TT-LOIRE-CHATEAU", venueId: "4", campaignName: "Château des Lumières TikTok reveal", active: true },
+  { code: "WE-JARD05", venueId: "5", campaignName: "Jardin Suspendu Bordeaux", active: true },
+  { code: "TT-BDX-JARDIN", venueId: "5", campaignName: "Jardin Suspendu TikTok reveal", active: true },
+  { code: "WE-NICE06", venueId: "6", campaignName: "Loft Riviera Nice", active: true },
+  { code: "TT-NICE-RIVIERA", venueId: "6", campaignName: "Loft Riviera TikTok reveal", active: true },
+];
+
+const normalizeVenueCode = (code: string) => code.trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+
 export function getVenueBySlug(slug: string): Venue | undefined {
   return mockVenues.find((v) => v.slug === slug);
 }
 
+export function getTikTokCodeMapping(code: string): TikTokVenueCodeMapping | undefined {
+  const normalizedCode = normalizeVenueCode(code);
+  return mockTikTokCodeMappings.find((mapping) => normalizeVenueCode(mapping.code) === normalizedCode && mapping.active);
+}
+
+export function getTikTokCodesByVenueId(venueId: string): TikTokVenueCodeMapping[] {
+  return mockTikTokCodeMappings.filter((mapping) => mapping.venueId === venueId && mapping.active);
+}
+
 export function getVenueByCode(code: string): Venue | undefined {
-  return mockVenues.find((v) => v.venueCode.toLowerCase() === code.toLowerCase());
+  const mapping = getTikTokCodeMapping(code);
+  if (mapping) {
+    return mockVenues.find((v) => v.id === mapping.venueId && v.active);
+  }
+
+  const normalizedCode = normalizeVenueCode(code);
+  return mockVenues.find((v) => normalizeVenueCode(v.venueCode) === normalizedCode && v.active);
 }
 
 export function getReviewsByVenueId(venueId: string): Review[] {
@@ -189,7 +221,8 @@ export function searchVenues(filters: {
     if (!v.active) return false;
     if (filters.query) {
       const q = filters.query.toLowerCase();
-      if (!v.title.toLowerCase().includes(q) && !v.city.toLowerCase().includes(q) && !v.venueCode.toLowerCase().includes(q)) return false;
+      const codes = getTikTokCodesByVenueId(v.id).map((mapping) => mapping.code.toLowerCase());
+      if (!v.title.toLowerCase().includes(q) && !v.city.toLowerCase().includes(q) && !v.venueCode.toLowerCase().includes(q) && !codes.some((code) => code.includes(q))) return false;
     }
     if (filters.city && v.city.toLowerCase() !== filters.city.toLowerCase()) return false;
     if (filters.eventType && !v.eventCategories.includes(filters.eventType)) return false;

@@ -14,7 +14,7 @@ const NotFound = () => {
         </p>
         <button
           onClick={() => navigate("/")}
-          className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground font-body font-semibold text-sm hover:bg-primary/90 transition-colors"
+          className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-primary text-primary-foreground font-body font-semibold text-sm hover:bg-foreground transition-colors"
         >
           <Home className="w-4 h-4" />
           Retour à l'accueil

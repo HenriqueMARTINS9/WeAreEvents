@@ -1,8 +1,20 @@
 import { useState } from "react";
-import { Search, MapPin, Users, Calendar, Tag, Star, ArrowRight, ChevronRight, Sparkles, Building2, CheckCircle } from "lucide-react";
-import { mockVenues, getVenueByCode } from "@/data/venues";
+import {
+  Search,
+  MapPin,
+  Users,
+  Tag,
+  Star,
+  ChevronRight,
+  Sparkles,
+  CheckCircle,
+  ShieldCheck,
+  Clock3,
+  Gem,
+  ArrowRight,
+} from "lucide-react";
+import { mockVenues, mockTikTokCodeMappings, getVenueByCode } from "@/data/venues";
 import { EVENT_TYPES } from "@/types/venue";
-import type { Venue } from "@/types/venue";
 import { useNavigate } from "react-router-dom";
 import logoBlack from "@/assets/logo-black.svg";
 import DesktopNav from "./DesktopNav";
@@ -14,7 +26,10 @@ const DesktopHome = () => {
   const [searchCity, setSearchCity] = useState("");
   const [searchEventType, setSearchEventType] = useState("");
   const [searchGuests, setSearchGuests] = useState("");
+  const [codeError, setCodeError] = useState("");
   const featured = mockVenues.filter((v) => v.featured && v.active);
+  const cityOptions = [...new Set(mockVenues.map((v) => v.city))];
+  const codeExamples = mockTikTokCodeMappings.slice(0, 2).map((mapping) => mapping.code).join(" ou ");
 
   const handleCodeSearch = () => {
     if (!codeInput.trim()) return;
@@ -22,7 +37,7 @@ const DesktopHome = () => {
     if (venue) {
       navigate(`/salle/${venue.slug}`);
     } else {
-      navigate(`/recherche?code=${codeInput.trim()}`);
+      setCodeError("Ce code ne correspond à aucun lieu actif.");
     }
   };
 
@@ -35,139 +50,178 @@ const DesktopHome = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background text-foreground">
       <DesktopNav />
 
-      {/* Hero */}
-      <section className="relative h-[85vh] min-h-[600px] overflow-hidden">
+      <section className="relative h-[82vh] min-h-[560px] max-h-[760px] overflow-hidden bg-foreground">
         <img
           src="https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=1920&q=80"
-          alt="WeAreEvents hero"
-          className="absolute inset-0 w-full h-full object-cover"
+          alt="Reception élégante dans un lieu événementiel"
+          className="absolute inset-0 w-full h-full object-cover image-grade-luxe"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-foreground/40 via-foreground/30 to-foreground/70" />
+        <div className="absolute inset-0 bg-gradient-to-r from-foreground/90 via-foreground/50 to-foreground/20" />
+        <div className="absolute inset-0 bg-gradient-to-t from-foreground/90 via-transparent to-foreground/40" />
 
-        <div className="relative z-10 h-full flex flex-col items-center justify-center px-6 text-center">
-          <h1 className="font-heading text-5xl md:text-6xl lg:text-7xl text-primary-foreground font-bold leading-tight mb-4 max-w-4xl">
-            Trouvez la salle parfaite pour votre événement
-          </h1>
-          <p className="text-primary-foreground/80 text-lg md:text-xl font-body mb-10 max-w-2xl">
-            Découvrez des lieux d'exception à travers la France. Du rooftop parisien au château de la Loire.
-          </p>
+        <div className="relative z-10 h-full max-w-6xl mx-auto px-6 pt-28 pb-10 flex flex-col justify-center">
+          <div className="max-w-3xl">
+            <p className="mb-4 inline-flex items-center gap-2 rounded-lg border border-primary-foreground/20 bg-primary-foreground/10 px-3 py-1.5 text-xs font-body font-semibold text-primary-foreground/90">
+              <Gem className="w-3.5 h-3.5 text-luxe-gold" />
+              Conciergerie événementielle privée
+            </p>
+            <h1 className="font-heading text-5xl md:text-6xl lg:text-7xl text-primary-foreground font-semibold leading-none mb-6">
+              Trouvez un lieu qui signe votre événement.
+            </h1>
+            <p className="text-primary-foreground/80 text-lg md:text-xl font-body leading-relaxed max-w-2xl">
+              Salles confidentielles, rooftops, domaines et châteaux sélectionnés pour des mariages, galas et soirées de marque.
+            </p>
+          </div>
 
-          {/* Search card */}
-          <div className="w-full max-w-4xl bg-background/95 backdrop-blur-md rounded-2xl p-6 shadow-2xl">
-            {/* Code search */}
-            <div className="flex items-center gap-3 mb-4 pb-4 border-b border-border">
-              <Tag className="w-5 h-5 text-primary shrink-0" />
-              <input
-                type="text"
-                value={codeInput}
-                onChange={(e) => setCodeInput(e.target.value.toUpperCase())}
-                placeholder="Entrez un code TikTok (ex: WE-ROOF01)"
-                className="flex-1 text-sm font-body bg-transparent focus:outline-none placeholder:text-muted-foreground"
-                onKeyDown={(e) => e.key === "Enter" && handleCodeSearch()}
-              />
-              <button
-                onClick={handleCodeSearch}
-                className="px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-body font-semibold hover:bg-primary/90 transition-colors"
-              >
-                Trouver
-              </button>
-            </div>
-
-            {/* Multi-filter search */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-              <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-muted/50 border border-border">
-                <MapPin className="w-4 h-4 text-muted-foreground shrink-0" />
-                <select
-                  value={searchCity}
-                  onChange={(e) => setSearchCity(e.target.value)}
-                  className="flex-1 bg-transparent text-sm font-body focus:outline-none"
+          <div className="mt-8 w-full max-w-5xl rounded-lg border border-primary-foreground/20 bg-foreground/50 p-3 shadow-2xl backdrop-blur-xl hairline-top">
+            <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_1fr] gap-3">
+              <div className="flex items-center gap-3 rounded-lg bg-background p-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                  <Tag className="w-4 h-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-body font-semibold text-muted-foreground">
+                    Code TikTok dédié
+                  </p>
+                  <input
+                    type="text"
+                    value={codeInput}
+                    onChange={(e) => {
+                      setCodeInput(e.target.value.toUpperCase());
+                      setCodeError("");
+                    }}
+                    placeholder={`Ex: ${codeExamples}`}
+                    className="w-full bg-transparent text-sm font-body font-semibold text-foreground placeholder:text-muted-foreground focus:outline-none"
+                    onKeyDown={(e) => e.key === "Enter" && handleCodeSearch()}
+                  />
+                  {codeError && (
+                    <p className="mt-1 text-[11px] font-body text-destructive">{codeError}</p>
+                  )}
+                </div>
+                <button
+                  onClick={handleCodeSearch}
+                  className="rounded-lg bg-foreground px-4 py-2.5 text-sm font-body font-semibold text-primary-foreground hover:bg-primary transition-colors"
                 >
-                  <option value="">Toutes les villes</option>
-                  {[...new Set(mockVenues.map((v) => v.city))].map((c) => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
-                </select>
+                  Accéder
+                </button>
               </div>
-              <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-muted/50 border border-border">
-                <Sparkles className="w-4 h-4 text-muted-foreground shrink-0" />
-                <select
-                  value={searchEventType}
-                  onChange={(e) => setSearchEventType(e.target.value)}
-                  className="flex-1 bg-transparent text-sm font-body focus:outline-none"
+
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                <div className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2.5">
+                  <MapPin className="w-4 h-4 text-primary shrink-0" />
+                  <select
+                    value={searchCity}
+                    onChange={(e) => setSearchCity(e.target.value)}
+                    className="min-w-0 flex-1 bg-transparent text-sm font-body focus:outline-none"
+                  >
+                    <option value="">Ville</option>
+                    {cityOptions.map((c) => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2.5">
+                  <Sparkles className="w-4 h-4 text-primary shrink-0" />
+                  <select
+                    value={searchEventType}
+                    onChange={(e) => setSearchEventType(e.target.value)}
+                    className="min-w-0 flex-1 bg-transparent text-sm font-body focus:outline-none"
+                  >
+                    <option value="">Type</option>
+                    {EVENT_TYPES.map((t) => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2.5">
+                  <Users className="w-4 h-4 text-primary shrink-0" />
+                  <input
+                    type="number"
+                    value={searchGuests}
+                    onChange={(e) => setSearchGuests(e.target.value)}
+                    placeholder="Invités"
+                    className="min-w-0 flex-1 bg-transparent text-sm font-body focus:outline-none"
+                  />
+                </div>
+                <button
+                  onClick={handleSearch}
+                  className="flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-body font-semibold text-primary-foreground hover:bg-foreground transition-colors"
                 >
-                  <option value="">Type d'événement</option>
-                  {EVENT_TYPES.map((t) => (
-                    <option key={t} value={t}>{t}</option>
-                  ))}
-                </select>
+                  <Search className="w-4 h-4" />
+                  Rechercher
+                </button>
               </div>
-              <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-muted/50 border border-border">
-                <Users className="w-4 h-4 text-muted-foreground shrink-0" />
-                <input
-                  type="number"
-                  value={searchGuests}
-                  onChange={(e) => setSearchGuests(e.target.value)}
-                  placeholder="Nb de personnes"
-                  className="flex-1 bg-transparent text-sm font-body focus:outline-none"
-                />
-              </div>
-              <button
-                onClick={handleSearch}
-                className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-body font-semibold hover:bg-primary/90 transition-colors"
-              >
-                <Search className="w-4 h-4" />
-                Rechercher
-              </button>
             </div>
           </div>
-        </div>
-      </section>
 
-      {/* How it works */}
-      <section className="py-20 px-6">
-        <div className="max-w-5xl mx-auto text-center">
-          <h2 className="font-heading text-3xl md:text-4xl font-bold mb-4">
-            Comment ça marche ?
-          </h2>
-          <p className="text-muted-foreground font-body mb-12 max-w-xl mx-auto">
-            Du TikTok à la réservation, en quelques clics.
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="mt-6 grid max-w-4xl grid-cols-1 gap-3 sm:grid-cols-3">
             {[
-              { icon: <Tag className="w-8 h-8" />, title: "Découvrez sur TikTok", desc: "Repérez une salle dans nos vidéos et notez son code unique." },
-              { icon: <Search className="w-8 h-8" />, title: "Retrouvez la salle", desc: "Entrez le code sur notre site pour accéder directement à la fiche complète." },
-              { icon: <CheckCircle className="w-8 h-8" />, title: "Réservez", desc: "Envoyez votre demande en quelques secondes. On s'occupe du reste." },
-            ].map((step, i) => (
-              <div key={i} className="flex flex-col items-center p-6 rounded-2xl bg-muted/30 hover:bg-rose-bg transition-colors">
-                <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-4">
-                  {step.icon}
-                </div>
-                <h3 className="font-heading text-lg font-semibold mb-2">{step.title}</h3>
-                <p className="text-muted-foreground text-sm font-body">{step.desc}</p>
+              { icon: <ShieldCheck className="w-4 h-4" />, label: "Lieux vérifiés" },
+              { icon: <Clock3 className="w-4 h-4" />, label: "Réponse sous 24h" },
+              { icon: <Star className="w-4 h-4" />, label: "4,8/5 sur les demandes" },
+            ].map((item) => (
+              <div key={item.label} className="flex items-center gap-2 rounded-lg border border-primary-foreground/20 bg-primary-foreground/10 px-3 py-2 text-sm font-body text-primary-foreground/80 backdrop-blur-md">
+                <span className="text-luxe-gold">{item.icon}</span>
+                {item.label}
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Featured venues */}
-      <section className="py-20 px-6 bg-muted/30">
+      <section className="px-6 py-20">
         <div className="max-w-6xl mx-auto">
-          <div className="flex items-end justify-between mb-10">
+          <div className="grid grid-cols-1 gap-10 md:grid-cols-[0.9fr_1.1fr] md:items-end">
             <div>
-              <h2 className="font-heading text-3xl md:text-4xl font-bold mb-2">
-                Salles à la une
+              <p className="font-body text-sm font-semibold text-primary mb-3">Du code à la visite privée</p>
+              <h2 className="font-heading text-3xl md:text-5xl font-semibold leading-tight">
+                Une recherche courte, une sélection plus exigeante.
               </h2>
-              <p className="text-muted-foreground font-body">
-                Nos lieux les plus demandés ce mois-ci.
+            </div>
+            <p className="font-body text-muted-foreground leading-relaxed">
+              WeAreEvents filtre les lieux, clarifie les capacités et centralise votre demande pour vous faire gagner du temps dès le premier contact.
+            </p>
+          </div>
+
+          <div className="mt-14 grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[
+              { icon: <Tag className="w-6 h-6" />, title: "Repérez le code", desc: "Gardez le code du lieu aperçu dans nos vidéos." },
+              { icon: <Search className="w-6 h-6" />, title: "Accédez au lieu", desc: "Retrouvez la fiche, la capacité, les usages et le tarif indicatif." },
+              { icon: <CheckCircle className="w-6 h-6" />, title: "Demandez une visite", desc: "Envoyez votre brief et recevez un retour qualifié sous 24h." },
+            ].map((step, i) => (
+              <div key={step.title} className="border-t border-border pt-6">
+                <div className="mb-5 flex items-center justify-between">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-foreground text-primary-foreground">
+                    {step.icon}
+                  </div>
+                  <span className="font-heading text-3xl text-muted-foreground/30">0{i + 1}</span>
+                </div>
+                <h3 className="font-heading text-xl font-semibold mb-3">{step.title}</h3>
+                <p className="text-muted-foreground text-sm font-body leading-relaxed">{step.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="px-6 py-20 bg-foreground text-primary-foreground">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between mb-10">
+            <div>
+              <p className="font-body text-sm font-semibold text-luxe-gold mb-3">Sélection du moment</p>
+              <h2 className="font-heading text-3xl md:text-5xl font-semibold mb-3">
+                Lieux à forte demande
+              </h2>
+              <p className="text-primary-foreground/70 font-body max-w-2xl">
+                Des adresses visuelles, lisibles et prêtes à accueillir des moments qui comptent.
               </p>
             </div>
             <button
               onClick={() => navigate("/recherche")}
-              className="hidden md:flex items-center gap-1 text-primary font-body font-semibold text-sm hover:gap-2 transition-all"
+              className="hidden md:flex items-center gap-2 rounded-lg border border-primary-foreground/20 px-4 py-2.5 text-primary-foreground font-body font-semibold text-sm hover:bg-primary-foreground hover:text-foreground transition-colors"
             >
               Voir toutes les salles
               <ChevronRight className="w-4 h-4" />
@@ -183,7 +237,7 @@ const DesktopHome = () => {
           <div className="mt-8 text-center md:hidden">
             <button
               onClick={() => navigate("/recherche")}
-              className="px-6 py-3 rounded-xl bg-primary text-primary-foreground font-body font-semibold text-sm"
+              className="rounded-lg bg-primary-foreground px-6 py-3 text-foreground font-body font-semibold text-sm"
             >
               Voir toutes les salles
             </button>
@@ -191,25 +245,27 @@ const DesktopHome = () => {
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section className="py-20 px-6">
-        <div className="max-w-5xl mx-auto text-center">
-          <h2 className="font-heading text-3xl md:text-4xl font-bold mb-12">
-            Ils nous font confiance
-          </h2>
+      <section className="px-6 py-20 bg-background">
+        <div className="max-w-6xl mx-auto">
+          <div className="mb-12 max-w-2xl">
+            <p className="font-body text-sm font-semibold text-primary mb-3">Confiance</p>
+            <h2 className="font-heading text-3xl md:text-5xl font-semibold">
+              Des demandes plus claires, des lieux mieux qualifiés.
+            </h2>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
-              { name: "Sophie M.", text: "Un service exceptionnel ! La salle était encore plus belle que sur TikTok. Merci WeAreEvents !", rating: 5 },
-              { name: "Thomas D.", text: "Réservation ultra simple, réponse en 24h. Notre séminaire d'entreprise était parfait.", rating: 5 },
-              { name: "Julie R.", text: "On a trouvé notre lieu de mariage grâce à un code TikTok. Le concept est génial !", rating: 5 },
-            ].map((t, i) => (
-              <div key={i} className="p-6 rounded-2xl bg-muted/30 text-left">
-                <div className="flex gap-0.5 mb-3">
+              { name: "Sophie M.", text: "La salle était encore plus belle que sur la vidéo. Le premier échange a été précis et rassurant.", rating: 5 },
+              { name: "Thomas D.", text: "Réponse rapide, informations claires, et un lieu parfaitement aligné avec notre séminaire.", rating: 5 },
+              { name: "Julie R.", text: "On a trouvé notre lieu de mariage grâce au code. La demande était simple, le suivi très sérieux.", rating: 5 },
+            ].map((t) => (
+              <div key={t.name} className="rounded-lg border border-border bg-card p-6 luxury-shadow">
+                <div className="flex gap-0.5 mb-4">
                   {Array.from({ length: t.rating }).map((_, j) => (
-                    <Star key={j} className="w-4 h-4 fill-primary text-primary" />
+                    <Star key={j} className="w-4 h-4 fill-accent text-accent" />
                   ))}
                 </div>
-                <p className="text-sm font-body text-foreground/80 mb-4 italic">"{t.text}"</p>
+                <p className="text-sm font-body text-foreground/80 leading-relaxed mb-5">"{t.text}"</p>
                 <p className="font-body font-semibold text-sm">{t.name}</p>
               </div>
             ))}
@@ -217,33 +273,33 @@ const DesktopHome = () => {
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="py-20 px-6 bg-gradient-rose text-primary-foreground text-center">
-        <div className="max-w-2xl mx-auto">
-          <h2 className="font-heading text-3xl md:text-4xl font-bold mb-4">
-            Prêt à organiser votre événement ?
-          </h2>
-          <p className="font-body text-primary-foreground/80 mb-8">
-            Parcourez nos salles ou entrez votre code TikTok pour commencer.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <button
-              onClick={() => navigate("/recherche")}
-              className="px-8 py-3 rounded-xl bg-background text-foreground font-body font-semibold text-sm hover:bg-background/90 transition-colors"
-            >
-              Trouver ma salle
-            </button>
+      <section className="px-6 py-20 bg-gradient-editorial text-primary-foreground">
+        <div className="max-w-6xl mx-auto grid grid-cols-1 gap-10 md:grid-cols-[1fr_auto] md:items-center">
+          <div className="max-w-2xl">
+            <p className="font-body text-sm font-semibold text-luxe-gold mb-3">Votre prochain lieu</p>
+            <h2 className="font-heading text-3xl md:text-5xl font-semibold mb-4">
+              Recevez une première réponse qualifiée.
+            </h2>
+            <p className="font-body text-primary-foreground/70 leading-relaxed">
+              Partagez votre date, votre format et votre volume d'invités. Nous orientons la demande vers le lieu adapté.
+            </p>
           </div>
+          <button
+            onClick={() => navigate("/recherche")}
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary-foreground px-8 py-3.5 text-foreground font-body font-semibold text-sm hover:bg-accent transition-colors"
+          >
+            Trouver ma salle
+            <ArrowRight className="w-4 h-4" />
+          </button>
         </div>
       </section>
 
-      {/* Footer */}
       <footer className="py-12 px-6 bg-foreground text-primary-foreground">
         <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
             <img src={logoBlack} alt="WeAreEvents" className="h-6 mb-4 brightness-0 invert" />
-            <p className="text-primary-foreground/60 text-sm font-body">
-              La plateforme de découverte et réservation de salles événementielles en France.
+            <p className="text-primary-foreground/60 text-sm font-body leading-relaxed">
+              La conciergerie de découverte et réservation de salles événementielles en France.
             </p>
           </div>
           <div>
@@ -251,7 +307,7 @@ const DesktopHome = () => {
             <div className="space-y-2 text-primary-foreground/60 text-sm font-body">
               <p className="hover:text-primary-foreground cursor-pointer">Accueil</p>
               <p className="hover:text-primary-foreground cursor-pointer">Toutes les salles</p>
-              <p className="hover:text-primary-foreground cursor-pointer">Comment ça marche</p>
+              <p className="hover:text-primary-foreground cursor-pointer">Code lieu</p>
             </div>
           </div>
           <div>
@@ -259,7 +315,7 @@ const DesktopHome = () => {
             <div className="space-y-2 text-primary-foreground/60 text-sm font-body">
               <p className="hover:text-primary-foreground cursor-pointer">Mentions légales</p>
               <p className="hover:text-primary-foreground cursor-pointer">CGU</p>
-              <p className="hover:text-primary-foreground cursor-pointer">Politique de confidentialité</p>
+              <p className="hover:text-primary-foreground cursor-pointer">Confidentialité</p>
             </div>
           </div>
           <div>

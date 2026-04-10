@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { X, Search, ArrowRight } from "lucide-react";
-import { getVenueByCode } from "@/data/venues";
+import { getVenueByCode, mockTikTokCodeMappings } from "@/data/venues";
 import type { Venue } from "@/types/venue";
 
 interface VenueCodeSearchProps {
@@ -11,6 +11,7 @@ interface VenueCodeSearchProps {
 const VenueCodeSearch = ({ onClose, onVenueFound }: VenueCodeSearchProps) => {
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
+  const exampleCodes = mockTikTokCodeMappings.slice(0, 2).map((mapping) => mapping.code).join(" ou ");
 
   const handleSearch = () => {
     if (!code.trim()) return;
@@ -24,17 +25,20 @@ const VenueCodeSearch = ({ onClose, onVenueFound }: VenueCodeSearchProps) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
-      <div className="absolute inset-0 bg-foreground/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full sm:max-w-md bg-background rounded-t-2xl sm:rounded-2xl p-6 pb-8 animate-slide-up">
+      <div className="absolute inset-0 bg-foreground/70 backdrop-blur-md" onClick={onClose} />
+      <div className="relative w-full sm:max-w-md bg-background rounded-t-lg sm:rounded-lg p-6 pb-8 animate-slide-up luxury-shadow">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="font-heading text-xl font-bold">Entrer un code TikTok</h3>
-          <button onClick={onClose} className="p-1 rounded-full hover:bg-muted">
+          <div>
+            <p className="font-body text-xs font-semibold text-primary mb-1">Accès direct au lieu</p>
+            <h3 className="font-heading text-2xl font-semibold">Entrer un code TikTok</h3>
+          </div>
+          <button onClick={onClose} className="p-2 rounded-lg hover:bg-muted transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <p className="text-muted-foreground text-sm font-body mb-4">
-          Entrez le code affiché dans la vidéo TikTok pour retrouver la salle exacte.
+        <p className="text-muted-foreground text-sm font-body leading-relaxed mb-5">
+          Entrez le code aperçu dans la vidéo pour retrouver la fiche, le tarif indicatif et la demande de disponibilité.
         </p>
 
         <div className="flex gap-2">
@@ -47,15 +51,15 @@ const VenueCodeSearch = ({ onClose, onVenueFound }: VenueCodeSearchProps) => {
                 setCode(e.target.value.toUpperCase());
                 setError("");
               }}
-              placeholder="Ex: WE-ROOF01"
-              className="w-full pl-10 pr-4 py-3 rounded-xl border border-border bg-muted/50 text-sm font-body focus:outline-none focus:ring-2 focus:ring-primary/30"
+              placeholder={`Ex: ${exampleCodes}`}
+              className="w-full pl-10 pr-4 py-3 rounded-lg border border-border bg-card text-sm font-body font-semibold focus:outline-none focus:ring-2 focus:ring-primary/30"
               onKeyDown={(e) => e.key === "Enter" && handleSearch()}
               autoFocus
             />
           </div>
           <button
             onClick={handleSearch}
-            className="px-4 py-3 rounded-xl bg-primary text-primary-foreground"
+            className="px-4 py-3 rounded-lg bg-primary text-primary-foreground hover:bg-foreground transition-colors"
           >
             <ArrowRight className="w-5 h-5" />
           </button>

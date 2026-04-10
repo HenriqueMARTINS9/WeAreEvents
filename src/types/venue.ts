@@ -27,15 +27,31 @@ export interface BookingRequest {
   id: string;
   venueId: string;
   venueCode: string;
+  venueTitle: string;
+  venueCity: string;
   firstName: string;
   lastName: string;
   email: string;
-  phone?: string;
-  desiredDate?: string;
-  guestCount?: number;
-  eventType?: string;
+  phone: string;
+  desiredDate: string;
+  guestCount: number;
+  eventType: string;
   message?: string;
+  status: "pending" | "sent" | "failed";
   createdAt: string;
+}
+
+export interface BookingEmailTemplate {
+  to: string;
+  subject: string;
+  preview: string;
+  text: string;
+}
+
+export interface BookingEmailTemplates {
+  customerConfirmation: BookingEmailTemplate;
+  adminNotification: BookingEmailTemplate;
+  venueContactNotification: BookingEmailTemplate;
 }
 
 export interface Review {
@@ -45,6 +61,13 @@ export interface Review {
   rating: number;
   comment: string;
   createdAt: string;
+}
+
+export interface TikTokVenueCodeMapping {
+  code: string;
+  venueId: string;
+  campaignName: string;
+  active: boolean;
 }
 
 export const EVENT_TYPES = [

@@ -1,4 +1,4 @@
-import { X, Star, MapPin, Users, Tag, Wifi, Car, UtensilsCrossed, Music, Camera, TreePine, Waves, ChefHat, Snowflake, Projector, ShirtIcon } from "lucide-react";
+import { X, Star, MapPin, Users, Tag, Wifi, Car, UtensilsCrossed, Music, Camera, TreePine, Waves, ChefHat, Snowflake, Projector, ShirtIcon, ShieldCheck } from "lucide-react";
 import type { Venue } from "@/types/venue";
 import { getReviewsByVenueId } from "@/data/venues";
 
@@ -30,27 +30,34 @@ const VenueDetailSheet = ({ venue, onClose, onBooking }: VenueDetailSheetProps) 
     <div className="fixed inset-0 z-50 bg-background overflow-y-auto animate-slide-up">
       {/* Hero */}
       <div className="relative h-72 sm:h-96">
-        <img src={venue.coverImage} alt={venue.title} className="w-full h-full object-cover" />
+        <img src={venue.coverImage} alt={venue.title} className="w-full h-full object-cover image-grade-luxe" />
         <div className="absolute inset-0 bg-gradient-dark" />
+        <div className="absolute inset-0 bg-gradient-dark-top" />
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 z-10 p-2 rounded-full glass"
+          className="absolute top-4 right-4 z-10 p-2 rounded-lg glass"
         >
           <X className="w-5 h-5 text-primary-foreground" />
         </button>
-        <div className="absolute bottom-4 left-4 z-10">
-          <span className="px-2 py-0.5 rounded-full bg-primary text-primary-foreground text-xs font-body font-semibold">
-            {venue.venueCode}
+        <div className="absolute bottom-5 left-5 right-5 z-10">
+          <span className="px-2 py-1 rounded-lg border border-primary-foreground/20 bg-primary-foreground/10 text-primary-foreground text-xs font-body font-semibold backdrop-blur-md">
+            Code TikTok · {venue.venueCode}
           </span>
+          <h1 className="mt-3 font-heading text-3xl font-semibold leading-none text-primary-foreground">
+            {venue.title}
+          </h1>
         </div>
       </div>
 
       {/* Content */}
       <div className="p-5 pb-32">
-        <div className="flex items-start justify-between mb-1">
-          <h1 className="font-heading text-2xl font-bold">{venue.title}</h1>
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex items-center gap-2 text-sm font-body text-primary">
+            <ShieldCheck className="w-4 h-4" />
+            Lieu vérifié
+          </div>
           <div className="flex items-center gap-1 text-sm font-body shrink-0 ml-2">
-            <Star className="w-4 h-4 fill-primary text-primary" />
+            <Star className="w-4 h-4 fill-accent text-accent" />
             <span className="font-semibold">{venue.rating}</span>
             <span className="text-muted-foreground">({venue.reviewCount})</span>
           </div>
@@ -64,9 +71,9 @@ const VenueDetailSheet = ({ venue, onClose, onBooking }: VenueDetailSheetProps) 
           {venue.minCapacity}–{venue.maxCapacity} personnes
         </div>
 
-        <p className="font-heading text-lg italic text-primary mb-4">"{venue.tagline}"</p>
+        <p className="font-heading text-xl italic text-primary mb-4">"{venue.tagline}"</p>
 
-        <p className="text-sm font-body text-foreground/80 leading-relaxed mb-6">
+        <p className="text-sm font-body text-foreground/80 leading-relaxed mb-7">
           {venue.description}
         </p>
 
@@ -77,7 +84,7 @@ const VenueDetailSheet = ({ venue, onClose, onBooking }: VenueDetailSheetProps) 
               key={i}
               src={img}
               alt={`${venue.title} ${i + 1}`}
-              className="h-32 w-48 rounded-xl object-cover shrink-0"
+              className="h-32 w-48 rounded-lg object-cover shrink-0 image-grade-luxe"
               loading="lazy"
             />
           ))}
@@ -87,7 +94,7 @@ const VenueDetailSheet = ({ venue, onClose, onBooking }: VenueDetailSheetProps) 
         <h3 className="font-heading text-lg font-semibold mb-3">Types d'événements</h3>
         <div className="flex flex-wrap gap-2 mb-6">
           {venue.eventCategories.map((cat) => (
-            <span key={cat} className="px-3 py-1.5 rounded-full bg-secondary text-secondary-foreground text-xs font-body font-medium">
+            <span key={cat} className="px-3 py-1.5 rounded-lg bg-secondary text-secondary-foreground text-xs font-body font-medium">
               {cat}
             </span>
           ))}
@@ -97,7 +104,7 @@ const VenueDetailSheet = ({ venue, onClose, onBooking }: VenueDetailSheetProps) 
         <h3 className="font-heading text-lg font-semibold mb-3">Services & équipements</h3>
         <div className="grid grid-cols-2 gap-2 mb-6">
           {venue.services.map((svc) => (
-            <div key={svc} className="flex items-center gap-2 p-2.5 rounded-xl bg-muted text-sm font-body">
+            <div key={svc} className="flex items-center gap-2 p-2.5 rounded-lg border border-border bg-card text-sm font-body">
               {serviceIcons[svc] || <Tag className="w-4 h-4" />}
               {svc}
             </div>
@@ -105,9 +112,10 @@ const VenueDetailSheet = ({ venue, onClose, onBooking }: VenueDetailSheetProps) 
         </div>
 
         {/* Pricing */}
-        <div className="p-4 rounded-xl bg-rose-bg border border-primary/10 mb-6">
-          <p className="text-xs text-muted-foreground font-body mb-1">Tarif indicatif</p>
-          <p className="font-heading text-xl font-bold text-primary">{venue.pricingText}</p>
+        <div className="p-4 rounded-lg bg-foreground text-primary-foreground mb-6">
+          <p className="text-xs text-primary-foreground/60 font-body mb-1">Tarif indicatif</p>
+          <p className="font-heading text-2xl font-semibold text-luxe-gold">{venue.pricingText}</p>
+          <p className="mt-2 text-xs font-body text-primary-foreground/60">Devis précis après validation de la date et du format.</p>
         </div>
 
         {/* Reviews */}
@@ -117,7 +125,7 @@ const VenueDetailSheet = ({ venue, onClose, onBooking }: VenueDetailSheetProps) 
         {reviews.length > 0 ? (
           <div className="space-y-3 mb-6">
             {reviews.map((review) => (
-              <div key={review.id} className="p-4 rounded-xl bg-muted/50">
+              <div key={review.id} className="p-4 rounded-lg border border-border bg-card">
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-body font-semibold text-sm">{review.authorName}</span>
                   <div className="flex items-center gap-0.5">
@@ -125,7 +133,7 @@ const VenueDetailSheet = ({ venue, onClose, onBooking }: VenueDetailSheetProps) 
                       <Star
                         key={i}
                         className={`w-3 h-3 ${
-                          i < review.rating ? "fill-primary text-primary" : "text-border"
+                          i < review.rating ? "fill-accent text-accent" : "text-border"
                         }`}
                       />
                     ))}
@@ -141,13 +149,14 @@ const VenueDetailSheet = ({ venue, onClose, onBooking }: VenueDetailSheetProps) 
       </div>
 
       {/* Fixed bottom CTA */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/90 backdrop-blur-md border-t border-border z-10">
+      <div className="fixed bottom-0 left-0 right-0 p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] bg-background/95 backdrop-blur-md border-t border-border z-10">
         <button
           onClick={onBooking}
-          className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-body font-semibold text-sm tracking-wide shadow-lg active:scale-[0.98] transition-transform"
+          className="w-full py-3.5 rounded-lg bg-primary text-primary-foreground font-body font-semibold text-sm shadow-lg active:scale-[0.98] transition-transform"
         >
-          Réserver cette salle
+          Demander une disponibilité
         </button>
+        <p className="mt-2 text-center text-[11px] font-body text-muted-foreground">Réponse qualifiée sous 24h</p>
       </div>
     </div>
   );
