@@ -63,7 +63,7 @@ const DesktopHome = () => {
         <div className="absolute inset-0 bg-gradient-to-r from-foreground/90 via-foreground/50 to-foreground/20" />
         <div className="absolute inset-0 bg-gradient-to-t from-foreground/90 via-transparent to-foreground/40" />
 
-        <div className="relative z-10 h-full max-w-6xl mx-auto px-6 pt-28 pb-10 flex flex-col justify-center">
+        <div className="relative z-10 h-full max-w-6xl mx-auto px-6 pt-28 pb-16 flex flex-col justify-center">
           <div className="max-w-3xl">
             <h1 className="font-heading text-5xl md:text-6xl lg:text-7xl text-primary-foreground font-semibold leading-none mb-6">
               Trouvez un lieu qui signe votre événement.
