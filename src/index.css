@@ -200,4 +200,18 @@
   .leaflet-popup-tip {
     box-shadow: none;
   }
+
+  .native-date-time-field {
+    min-height: 2.75rem;
+  }
+
+  .native-date-time-field::-webkit-date-and-time-value {
+    min-height: 0;
+    text-align: left;
+  }
+
+  .native-date-time-field::-webkit-datetime-edit,
+  .native-date-time-field::-webkit-datetime-edit-fields-wrapper {
+    padding: 0;
+  }
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { X, CheckCircle, MapPin, AlertCircle, MailCheck, CalendarDays, Users } from "lucide-react";
 import type { BookingEmailTemplates, BookingRequest, Venue } from "@/types/venue";
 import { EVENT_TYPES } from "@/types/venue";
@@ -30,6 +30,9 @@ const initialForm: BookingFormValues = {
   message: "",
 };
 
+const SWIPE_CLOSE_THRESHOLD = 120;
+const SWIPE_MAX_OFFSET = 240;
+
 const BookingModal = ({ venue, onClose }: BookingModalProps) => {
   const isMobile = useIsMobile();
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
@@ -37,6 +40,10 @@ const BookingModal = ({ venue, onClose }: BookingModalProps) => {
   const [submitError, setSubmitError] = useState("");
   const [result, setResult] = useState<{ request: BookingRequest; emails: BookingEmailTemplates } | null>(null);
   const [form, setForm] = useState<BookingFormValues>(initialForm);
+  const [dragOffset, setDragOffset] = useState(0);
+  const [isDraggingSheet, setIsDraggingSheet] = useState(false);
+  const dragStartYRef = useRef<number | null>(null);
+  const dragOffsetRef = useRef(0);
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -46,6 +53,79 @@ const BookingModal = ({ venue, onClose }: BookingModalProps) => {
       document.body.style.overflow = previousOverflow;
     };
   }, []);
+
+  const resetSheetDrag = () => {
+    dragStartYRef.current = null;
+    dragOffsetRef.current = 0;
+    setDragOffset(0);
+    setIsDraggingSheet(false);
+  };
+
+  const handleSheetTouchStart = (e: React.TouchEvent<HTMLElement>) => {
+    if (!isMobile) return;
+
+    dragStartYRef.current = e.touches[0]?.clientY ?? null;
+    dragOffsetRef.current = 0;
+    setIsDraggingSheet(true);
+  };
+
+  const handleSheetTouchMove = (e: React.TouchEvent<HTMLElement>) => {
+    if (!isMobile || dragStartYRef.current === null) return;
+
+    const nextOffset = (e.touches[0]?.clientY ?? 0) - dragStartYRef.current;
+
+    if (nextOffset <= 0) {
+      dragOffsetRef.current = 0;
+      setDragOffset(0);
+      return;
+    }
+
+    if (e.cancelable) {
+      e.preventDefault();
+    }
+
+    const clampedOffset = Math.min(nextOffset, SWIPE_MAX_OFFSET);
+    dragOffsetRef.current = clampedOffset;
+    setDragOffset(clampedOffset);
+  };
+
+  const handleSheetTouchEnd = () => {
+    if (!isMobile || dragStartYRef.current === null) {
+      resetSheetDrag();
+      return;
+    }
+
+    if (dragOffsetRef.current >= SWIPE_CLOSE_THRESHOLD) {
+      resetSheetDrag();
+      onClose();
+      return;
+    }
+
+    resetSheetDrag();
+  };
+
+  const mobileSheetDragProps = isMobile
+    ? {
+        onTouchStart: handleSheetTouchStart,
+        onTouchMove: handleSheetTouchMove,
+        onTouchEnd: handleSheetTouchEnd,
+        onTouchCancel: handleSheetTouchEnd,
+      }
+    : {};
+
+  const mobileSheetStyle = isMobile
+    ? {
+        top: `${dragOffset}px`,
+        transition: isDraggingSheet ? "none" : "top 220ms ease",
+      }
+    : undefined;
+
+  const mobileBackdropStyle = isMobile
+    ? {
+        opacity: 1 - Math.min(dragOffset / 320, 0.4),
+        transition: isDraggingSheet ? "none" : "opacity 220ms ease",
+      }
+    : undefined;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -102,7 +182,14 @@ const BookingModal = ({ venue, onClose }: BookingModalProps) => {
   };
 
   const fieldClass = (field: keyof BookingFormValues) =>
-    `min-w-0 max-w-full w-full rounded-lg border bg-card px-3 py-2.5 text-sm font-body focus:outline-none focus:ring-2 ${
+    `h-11 min-w-0 max-w-full w-full rounded-lg border bg-card px-3 text-sm font-body leading-none focus:outline-none focus:ring-2 ${
+      fieldErrors[field]
+        ? "border-destructive focus:ring-destructive/20"
+        : "border-border focus:ring-primary/30"
+    }`;
+
+  const textareaClass = (field: keyof BookingFormValues) =>
+    `min-h-[7rem] min-w-0 max-w-full w-full rounded-lg border bg-card px-3 py-2.5 text-sm font-body focus:outline-none focus:ring-2 ${
       fieldErrors[field]
         ? "border-destructive focus:ring-destructive/20"
         : "border-border focus:ring-primary/30"
@@ -118,13 +205,14 @@ const BookingModal = ({ venue, onClose }: BookingModalProps) => {
 
     return (
       <div className="fixed inset-0 z-50 flex items-end justify-center overflow-x-hidden sm:items-center">
-        <div className="absolute inset-0 bg-foreground/75 backdrop-blur-md" onClick={onClose} />
+        <div className="absolute inset-0 bg-foreground/75 backdrop-blur-md" onClick={onClose} style={mobileBackdropStyle} />
         <div
           className={`relative animate-scale-in bg-background ${
             isMobile
               ? "flex h-[100dvh] w-full flex-col overflow-hidden"
               : "w-full max-w-lg rounded-t-lg p-7 sm:rounded-lg luxury-shadow"
           }`}
+          style={mobileSheetStyle}
         >
           <div
             className={`${
@@ -132,6 +220,8 @@ const BookingModal = ({ venue, onClose }: BookingModalProps) => {
                 ? "sticky top-0 z-10 border-b border-border bg-background/95 px-5 pb-3 pt-[max(1rem,env(safe-area-inset-top))] backdrop-blur-md"
                 : ""
             }`}
+            style={isMobile ? { touchAction: "none" } : undefined}
+            {...mobileSheetDragProps}
           >
             {isMobile && <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-border" />}
             <div className="flex items-center justify-between">
@@ -205,19 +295,22 @@ const BookingModal = ({ venue, onClose }: BookingModalProps) => {
   }
 
   return (
-      <div className="fixed inset-0 z-50 flex items-end justify-center overflow-x-hidden sm:items-center">
-      <div className="absolute inset-0 bg-foreground/70 backdrop-blur-md" onClick={onClose} />
+    <div className="fixed inset-0 z-50 flex items-end justify-center overflow-x-hidden sm:items-center">
+      <div className="absolute inset-0 bg-foreground/70 backdrop-blur-md" onClick={onClose} style={mobileBackdropStyle} />
       <div
         className={`relative w-full animate-slide-up bg-background ${
           isMobile
             ? "flex h-[100dvh] flex-col overflow-hidden"
             : "max-h-[90vh] max-w-md overflow-y-auto rounded-t-lg sm:rounded-lg luxury-shadow"
         }`}
+        style={mobileSheetStyle}
       >
         <div
           className={`sticky top-0 z-10 border-b border-border bg-background/95 backdrop-blur-md ${
             isMobile ? "px-5 pb-3 pt-[max(1rem,env(safe-area-inset-top))]" : "p-5 pb-3"
           }`}
+          style={isMobile ? { touchAction: "none" } : undefined}
+          {...mobileSheetDragProps}
         >
           {isMobile && <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-border" />}
           <div className="flex items-center justify-between">
@@ -375,7 +468,7 @@ const BookingModal = ({ venue, onClose }: BookingModalProps) => {
                   type="date"
                   value={form.desiredDate}
                   onChange={(e) => updateField("desiredDate", e.target.value)}
-                  className={`${fieldClass("desiredDate")} pl-9 text-[13px] sm:text-sm`}
+                  className={`${fieldClass("desiredDate")} native-date-time-field pl-9`}
                   aria-invalid={Boolean(fieldErrors.desiredDate)}
                 />
               </div>
@@ -390,7 +483,7 @@ const BookingModal = ({ venue, onClose }: BookingModalProps) => {
                   type="time"
                   value={form.startTime}
                   onChange={(e) => updateField("startTime", e.target.value)}
-                  className={`${fieldClass("startTime")} text-[13px] sm:text-sm`}
+                  className={`${fieldClass("startTime")} native-date-time-field`}
                   aria-invalid={Boolean(fieldErrors.startTime)}
                 />
                 {renderError("startTime")}
@@ -403,7 +496,7 @@ const BookingModal = ({ venue, onClose }: BookingModalProps) => {
                   type="time"
                   value={form.endTime}
                   onChange={(e) => updateField("endTime", e.target.value)}
-                  className={`${fieldClass("endTime")} text-[13px] sm:text-sm`}
+                  className={`${fieldClass("endTime")} native-date-time-field`}
                   aria-invalid={Boolean(fieldErrors.endTime)}
                 />
                 {renderError("endTime")}
@@ -456,7 +549,7 @@ const BookingModal = ({ venue, onClose }: BookingModalProps) => {
               value={form.message}
               onChange={(e) => updateField("message", e.target.value)}
               placeholder="Précisez l'ambiance, les horaires ou les besoins de production."
-              className={`${fieldClass("message")} resize-none`}
+              className={`${textareaClass("message")} resize-none`}
               aria-invalid={Boolean(fieldErrors.message)}
             />
             {renderError("message")}
