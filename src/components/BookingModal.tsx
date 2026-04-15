@@ -468,7 +468,7 @@ const BookingModal = ({ venue, onClose }: BookingModalProps) => {
                   type="date"
                   value={form.desiredDate}
                   onChange={(e) => updateField("desiredDate", e.target.value)}
-                  className={`${fieldClass("desiredDate")} native-date-time-field pl-9`}
+                  className={`${fieldClass("desiredDate")} native-date-time-field`}
                   aria-invalid={Boolean(fieldErrors.desiredDate)}
                 />
               </div>
