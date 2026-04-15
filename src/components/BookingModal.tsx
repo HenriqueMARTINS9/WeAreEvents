@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { X, CheckCircle, MapPin, AlertCircle, MailCheck, CalendarDays, Users } from "lucide-react";
 import type { BookingEmailTemplates, BookingRequest, Venue } from "@/types/venue";
 import { EVENT_TYPES } from "@/types/venue";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   type BookingFieldErrors,
   type BookingFormValues,
@@ -30,11 +31,21 @@ const initialForm: BookingFormValues = {
 };
 
 const BookingModal = ({ venue, onClose }: BookingModalProps) => {
+  const isMobile = useIsMobile();
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
   const [fieldErrors, setFieldErrors] = useState<BookingFieldErrors>({});
   const [submitError, setSubmitError] = useState("");
   const [result, setResult] = useState<{ request: BookingRequest; emails: BookingEmailTemplates } | null>(null);
   const [form, setForm] = useState<BookingFormValues>(initialForm);
+
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -108,57 +119,86 @@ const BookingModal = ({ venue, onClose }: BookingModalProps) => {
     return (
       <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
         <div className="absolute inset-0 bg-foreground/75 backdrop-blur-md" onClick={onClose} />
-        <div className="relative w-full sm:max-w-lg bg-background rounded-t-lg sm:rounded-lg p-7 animate-scale-in luxury-shadow">
-          <div className="rounded-lg bg-foreground p-6 text-primary-foreground text-center">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-lg bg-primary">
-              <CheckCircle className="w-7 h-7" />
-            </div>
-            <p className="font-body text-xs font-semibold text-luxe-gold mb-2">Demande confiée à notre conciergerie</p>
-            <h3 className="font-heading text-3xl font-semibold mb-3">Nous avons tout ce qu'il faut.</h3>
-            <p className="text-sm font-body text-primary-foreground/72 leading-relaxed">
-              Votre demande pour <strong>{request.venueTitle}</strong> est enregistrée. Un retour qualifié vous sera adressé sous 24h ouvrées.
-            </p>
-          </div>
-
-          <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="rounded-lg border border-border bg-card p-4">
-              <p className="text-xs font-body text-muted-foreground mb-1">Référence</p>
-              <p className="font-heading text-xl font-semibold text-primary">{request.id}</p>
-            </div>
-            <div className="rounded-lg border border-border bg-card p-4">
-              <p className="text-xs font-body text-muted-foreground mb-1">Horaires demandés</p>
-              <p className="font-heading text-xl font-semibold text-primary">{request.startTime} - {request.endTime}</p>
-            </div>
-          </div>
-
-          <div className="mt-5 rounded-lg border border-border bg-card p-4">
-            <p className="text-xs font-body font-semibold text-primary mb-3">Emails préparés</p>
-            <div className="space-y-2 text-sm font-body text-foreground/80">
-              <p className="flex items-center gap-2">
-                <MailCheck className="w-4 h-4 text-primary" />
-                Confirmation client : {emails.customerConfirmation.to}
-              </p>
-              <p className="flex items-center gap-2">
-                <MailCheck className="w-4 h-4 text-primary" />
-                Notification équipe : {emails.adminNotification.to}
-              </p>
-              <p className="flex items-center gap-2">
-                <MailCheck className="w-4 h-4 text-primary" />
-                Notification lieu : {emails.venueContactNotification.to}
-              </p>
-              <p className="flex items-center gap-2">
-                <MailCheck className="w-4 h-4 text-primary" />
-                Relance avis J+1 : programmée le lendemain de l'événement
-              </p>
-            </div>
-          </div>
-
-          <button
-            onClick={onClose}
-            className="mt-5 w-full py-3 rounded-lg bg-primary text-primary-foreground font-body font-semibold text-sm"
+        <div
+          className={`relative animate-scale-in bg-background ${
+            isMobile
+              ? "flex h-[100dvh] w-full flex-col overflow-hidden"
+              : "w-full max-w-lg rounded-t-lg p-7 sm:rounded-lg luxury-shadow"
+          }`}
+        >
+          <div
+            className={`${
+              isMobile
+                ? "sticky top-0 z-10 border-b border-border bg-background/95 px-5 pb-3 pt-[max(1rem,env(safe-area-inset-top))] backdrop-blur-md"
+                : ""
+            }`}
           >
-            Fermer
-          </button>
+            {isMobile && <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-border" />}
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-body text-xs font-semibold text-primary mb-1">Demande envoyée</p>
+                <h3 className="font-heading text-2xl font-semibold">Votre brief est enregistré</h3>
+              </div>
+              <button onClick={onClose} className="p-2 rounded-lg hover:bg-muted transition-colors" aria-label="Fermer">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+
+          <div className={isMobile ? "flex-1 overflow-y-auto overscroll-contain px-5 pb-6 pt-4" : "space-y-5"}>
+            <div className="rounded-lg bg-foreground p-5 text-center text-primary-foreground">
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-lg bg-primary">
+                <CheckCircle className="w-7 h-7" />
+              </div>
+              <p className="mb-2 font-body text-xs font-semibold text-luxe-gold">Demande confiée à notre conciergerie</p>
+              <h3 className="mb-3 font-heading text-3xl font-semibold">Nous avons tout ce qu'il faut.</h3>
+              <p className="text-sm font-body leading-relaxed text-primary-foreground/72">
+                Votre demande pour <strong>{request.venueTitle}</strong> est enregistrée. Un retour qualifié vous sera adressé sous 24h ouvrées.
+              </p>
+            </div>
+
+            <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="rounded-lg border border-border bg-card p-4">
+                <p className="mb-1 text-xs font-body text-muted-foreground">Référence</p>
+                <p className="break-all font-heading text-lg font-semibold text-primary">{request.id}</p>
+              </div>
+              <div className="rounded-lg border border-border bg-card p-4">
+                <p className="mb-1 text-xs font-body text-muted-foreground">Horaires demandés</p>
+                <p className="font-heading text-lg font-semibold text-primary">{request.startTime} - {request.endTime}</p>
+              </div>
+            </div>
+
+            <div className="mt-5 rounded-lg border border-border bg-card p-4">
+              <p className="mb-3 text-xs font-body font-semibold text-primary">Emails préparés</p>
+              <div className="space-y-2 text-sm font-body text-foreground/80">
+                <p className="flex items-start gap-2">
+                  <MailCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                  <span className="min-w-0 break-words">Confirmation client : {emails.customerConfirmation.to}</span>
+                </p>
+                <p className="flex items-start gap-2">
+                  <MailCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                  <span className="min-w-0 break-words">Notification équipe : {emails.adminNotification.to}</span>
+                </p>
+                <p className="flex items-start gap-2">
+                  <MailCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                  <span className="min-w-0 break-words">Notification lieu : {emails.venueContactNotification.to}</span>
+                </p>
+                <p className="flex items-start gap-2">
+                  <MailCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                  <span className="min-w-0 break-words">Relance avis J+1 : programmée le lendemain de l'événement</span>
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className={isMobile ? "border-t border-border bg-background/95 px-5 pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-4 backdrop-blur-md" : "mt-5"}>
+            <button
+              onClick={onClose}
+              className="w-full rounded-lg bg-primary py-3 text-sm font-body font-semibold text-primary-foreground"
+            >
+              Fermer
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -167,12 +207,23 @@ const BookingModal = ({ venue, onClose }: BookingModalProps) => {
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
       <div className="absolute inset-0 bg-foreground/70 backdrop-blur-md" onClick={onClose} />
-      <div className="relative w-full sm:max-w-md max-h-[90vh] bg-background rounded-t-lg sm:rounded-lg overflow-y-auto animate-slide-up luxury-shadow">
-        <div className="sticky top-0 bg-background/95 backdrop-blur-md p-5 pb-3 border-b border-border z-10">
+      <div
+        className={`relative w-full animate-slide-up bg-background ${
+          isMobile
+            ? "flex h-[100dvh] flex-col overflow-hidden"
+            : "max-h-[90vh] max-w-md overflow-y-auto rounded-t-lg sm:rounded-lg luxury-shadow"
+        }`}
+      >
+        <div
+          className={`sticky top-0 z-10 border-b border-border bg-background/95 backdrop-blur-md ${
+            isMobile ? "px-5 pb-3 pt-[max(1rem,env(safe-area-inset-top))]" : "p-5 pb-3"
+          }`}
+        >
+          {isMobile && <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-border" />}
           <div className="flex items-center justify-between">
             <div>
               <p className="font-body text-xs font-semibold text-primary mb-1">Demande de disponibilité</p>
-              <h3 className="font-heading text-2xl font-semibold">Brief événement</h3>
+              <h3 className={`font-heading font-semibold ${isMobile ? "text-[1.75rem]" : "text-2xl"}`}>Brief événement</h3>
             </div>
             <button onClick={onClose} className="p-2 rounded-lg hover:bg-muted transition-colors" aria-label="Fermer">
               <X className="w-5 h-5" />
@@ -187,7 +238,8 @@ const BookingModal = ({ venue, onClose }: BookingModalProps) => {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-5 space-y-4" noValidate>
+        <form onSubmit={handleSubmit} className={`flex flex-1 flex-col ${isMobile ? "overflow-hidden" : ""}`} noValidate>
+          <div className={`space-y-4 ${isMobile ? "flex-1 overflow-y-auto overscroll-contain px-5 py-4 pb-28" : "p-5"}`}>
           <div className="rounded-lg border border-primary/20 bg-secondary p-3">
             <p className="font-body text-sm font-semibold text-foreground">100 % gratuit, sans engagement</p>
             <p className="mt-1 text-xs font-body text-muted-foreground">
@@ -409,17 +461,20 @@ const BookingModal = ({ venue, onClose }: BookingModalProps) => {
             />
             {renderError("message")}
           </div>
+          </div>
 
-          <button
-            type="submit"
-            disabled={status === "submitting"}
-            className="w-full py-3.5 rounded-lg bg-primary text-primary-foreground font-body font-semibold text-sm shadow-lg disabled:opacity-60 active:scale-[0.98] transition-transform"
-          >
-            {status === "submitting" ? "Préparation de la demande..." : "Envoyer ma demande de disponibilité"}
-          </button>
-          <p className="text-center text-[11px] font-body text-muted-foreground">
-            Confirmation client, notifications équipe et lieu, puis relance avis Google le lendemain de l'événement.
-          </p>
+          <div className={isMobile ? "border-t border-border bg-background/95 px-5 pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-4 backdrop-blur-md" : "p-5 pt-0"}>
+            <button
+              type="submit"
+              disabled={status === "submitting"}
+              className="w-full py-3.5 rounded-lg bg-primary text-primary-foreground font-body font-semibold text-sm shadow-lg disabled:opacity-60 active:scale-[0.98] transition-transform"
+            >
+              {status === "submitting" ? "Préparation de la demande..." : "Envoyer ma demande de disponibilité"}
+            </button>
+            <p className="mt-2 text-center text-[11px] font-body text-muted-foreground">
+              Confirmation client, notifications équipe et lieu, puis relance avis Google le lendemain de l'événement.
+            </p>
+          </div>
         </form>
       </div>
     </div>

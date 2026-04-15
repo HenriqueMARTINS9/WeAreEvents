@@ -78,9 +78,16 @@ const VenueCard = ({ venue, isActive, onOpenDetail, onBooking }: VenueCardProps)
       <div className="absolute inset-0 bg-gradient-dark-top z-10" />
       <div className="absolute inset-0 z-10 bg-[radial-gradient(circle_at_22%_78%,rgba(190,154,83,0.18),transparent_32%)]" />
 
+      <button
+        type="button"
+        onClick={onOpenDetail}
+        aria-label={`Ouvrir les détails de ${venue.title}`}
+        className="absolute inset-0 z-[15]"
+      />
+
       {/* Content overlay */}
       <div className="absolute bottom-12 left-0 right-16 z-20 px-5">
-        <button onClick={onOpenDetail} className="text-left w-full">
+        <button type="button" onClick={onOpenDetail} className="text-left w-full">
           <div className="flex flex-wrap items-center gap-2 mb-3">
             <span className="px-2 py-1 rounded-lg border border-primary-foreground/20 bg-primary-foreground/10 text-primary-foreground text-[11px] font-body font-semibold">
               Code TikTok · {venue.venueCode}
