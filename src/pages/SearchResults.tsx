@@ -1,10 +1,11 @@
 import { useState, useMemo } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { Search, MapPin, Users, SlidersHorizontal, Tag, ShieldCheck, ArrowRight } from "lucide-react";
+import { Search, MapPin, Users, SlidersHorizontal, Tag, ShieldCheck } from "lucide-react";
 import { searchVenues, mockVenues, getVenueByCode } from "@/data/venues";
 import { EVENT_TYPES } from "@/types/venue";
 import DesktopNav from "@/components/DesktopNav";
 import FilterSelect from "@/components/FilterSelect";
+import SiteFooter from "@/components/SiteFooter";
 import VenueGridCard from "@/components/VenueGridCard";
 import { useEffect } from "react";
 
@@ -15,8 +16,6 @@ const SearchResults = () => {
   const [eventType, setEventType] = useState(searchParams.get("type") || "");
   const [guests, setGuests] = useState(searchParams.get("guests") || "");
   const [query, setQuery] = useState(searchParams.get("q") || "");
-  const [codeInput, setCodeInput] = useState(searchParams.get("code") || "");
-  const [codeError, setCodeError] = useState("");
   const codeParam = searchParams.get("code");
   const cityOptions = [...new Set(mockVenues.map((v) => v.city))];
 
@@ -25,22 +24,9 @@ const SearchResults = () => {
       const v = getVenueByCode(codeParam);
       if (v) {
         navigate(`/salle/${v.slug}`, { replace: true });
-      } else {
-        setCodeInput(codeParam.toUpperCase());
-        setCodeError("Aucun lieu actif ne correspond à ce code TikTok.");
       }
     }
   }, [codeParam, navigate]);
-
-  const handleCodeSearch = () => {
-    if (!codeInput.trim()) return;
-    const venue = getVenueByCode(codeInput.trim());
-    if (venue) {
-      navigate(`/salle/${venue.slug}`);
-    } else {
-      setCodeError("Aucun lieu actif ne correspond à ce code TikTok.");
-    }
-  };
 
   const results = useMemo(() => {
     return searchVenues({
@@ -73,46 +59,6 @@ const SearchResults = () => {
             <div className="rounded-lg border border-border bg-card px-4 py-3 text-sm font-body text-muted-foreground">
               <span className="font-semibold text-foreground">{results.length}</span> salle{results.length !== 1 ? "s" : ""} trouvée{results.length !== 1 ? "s" : ""}
             </div>
-          </div>
-
-          <div className="mb-4 rounded-lg border border-border bg-foreground p-3 text-primary-foreground luxury-shadow">
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-[auto_1fr_auto] md:items-center">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
-                <Tag className="w-4 h-4" />
-              </div>
-              <div>
-                <p className="text-xs font-body font-semibold text-primary-foreground/60">Accès direct par code TikTok</p>
-                <input
-                  type="text"
-                  value={codeInput}
-                  onChange={(e) => {
-                    setCodeInput(e.target.value.toUpperCase());
-                    setCodeError("");
-                  }}
-                  placeholder="Ex: WE-ROOF01 ou TT-PARIS-ROOF"
-                  className="mt-1 w-full bg-transparent text-sm font-body font-semibold text-primary-foreground placeholder:text-primary-foreground/45 focus:outline-none"
-                  onKeyDown={(e) => e.key === "Enter" && handleCodeSearch()}
-                />
-                {codeError && (
-                  <p className="mt-1 text-[11px] font-body text-luxe-gold">{codeError}</p>
-                )}
-              </div>
-              <button
-                onClick={handleCodeSearch}
-                className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-body font-semibold text-primary-foreground hover:bg-primary-foreground hover:text-foreground transition-colors"
-              >
-                Ouvrir la fiche
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-
-          <div className="mb-4 flex items-center gap-3">
-            <div className="h-px flex-1 bg-border" />
-            <span className="rounded-lg border border-border bg-card px-3 py-1 text-[11px] font-body font-semibold text-muted-foreground">
-              ou
-            </span>
-            <div className="h-px flex-1 bg-border" />
           </div>
 
           {/* Filters */}
@@ -176,6 +122,8 @@ const SearchResults = () => {
           )}
         </div>
       </div>
+
+      <SiteFooter />
     </div>
   );
 };

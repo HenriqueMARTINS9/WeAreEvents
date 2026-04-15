@@ -21,8 +21,11 @@ const initialForm: BookingFormValues = {
   email: "",
   phone: "",
   desiredDate: "",
+  startTime: "",
+  endTime: "",
   guestCount: "",
   eventType: "",
+  requestedSpaces: [],
   message: "",
 };
 
@@ -71,6 +74,22 @@ const BookingModal = ({ venue, onClose }: BookingModalProps) => {
     if (status === "error") setStatus("idle");
   };
 
+  const toggleSpace = (spaceId: string) => {
+    setForm((prev) => ({
+      ...prev,
+      requestedSpaces: prev.requestedSpaces.includes(spaceId)
+        ? prev.requestedSpaces.filter((id) => id !== spaceId)
+        : [...prev.requestedSpaces, spaceId],
+    }));
+    setFieldErrors((prev) => {
+      const next = { ...prev };
+      delete next.requestedSpaces;
+      return next;
+    });
+    setSubmitError("");
+    if (status === "error") setStatus("idle");
+  };
+
   const fieldClass = (field: keyof BookingFormValues) =>
     `w-full px-3 py-2.5 rounded-lg border bg-card text-sm font-body focus:outline-none focus:ring-2 ${
       fieldErrors[field]
@@ -107,8 +126,8 @@ const BookingModal = ({ venue, onClose }: BookingModalProps) => {
               <p className="font-heading text-xl font-semibold text-primary">{request.id}</p>
             </div>
             <div className="rounded-lg border border-border bg-card p-4">
-              <p className="text-xs font-body text-muted-foreground mb-1">Code TikTok</p>
-              <p className="font-heading text-xl font-semibold text-primary">{request.venueCode}</p>
+              <p className="text-xs font-body text-muted-foreground mb-1">Horaires demandés</p>
+              <p className="font-heading text-xl font-semibold text-primary">{request.startTime} - {request.endTime}</p>
             </div>
           </div>
 
@@ -126,6 +145,10 @@ const BookingModal = ({ venue, onClose }: BookingModalProps) => {
               <p className="flex items-center gap-2">
                 <MailCheck className="w-4 h-4 text-primary" />
                 Notification lieu : {emails.venueContactNotification.to}
+              </p>
+              <p className="flex items-center gap-2">
+                <MailCheck className="w-4 h-4 text-primary" />
+                Relance avis J+1 : programmée le lendemain de l'événement
               </p>
             </div>
           </div>
@@ -162,12 +185,16 @@ const BookingModal = ({ venue, onClose }: BookingModalProps) => {
               <span className="text-muted-foreground shrink-0">· {venue.city}</span>
             </div>
           </div>
-          <span className="inline-block mt-2 px-2 py-1 rounded-lg bg-secondary text-primary text-xs font-body font-semibold">
-            Code TikTok · {venue.venueCode}
-          </span>
         </div>
 
         <form onSubmit={handleSubmit} className="p-5 space-y-4" noValidate>
+          <div className="rounded-lg border border-primary/20 bg-secondary p-3">
+            <p className="font-body text-sm font-semibold text-foreground">100 % gratuit, sans engagement</p>
+            <p className="mt-1 text-xs font-body text-muted-foreground">
+              Votre demande est transmise rapidement. Première réponse qualifiée en moins de 24h ouvrées.
+            </p>
+          </div>
+
           <div>
             <label className="text-xs font-body font-medium text-muted-foreground mb-1 block">
               Lieu sélectionné
@@ -175,9 +202,43 @@ const BookingModal = ({ venue, onClose }: BookingModalProps) => {
             <div className="rounded-lg border border-border bg-foreground p-3 text-primary-foreground">
               <p className="font-body text-sm font-semibold">{venue.title}</p>
               <p className="mt-1 text-xs font-body text-primary-foreground/65">
-                {venue.city} · {venue.minCapacity}-{venue.maxCapacity} invités · {venue.venueCode}
+                {venue.city} · {venue.address}
               </p>
             </div>
+          </div>
+
+          <div>
+            <label className="text-xs font-body font-medium text-muted-foreground mb-2 block">
+              Espaces à réserver *
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {venue.spaces.map((space) => {
+                const selected = form.requestedSpaces.includes(space.id);
+                return (
+                  <button
+                    key={space.id}
+                    type="button"
+                    onClick={() => toggleSpace(space.id)}
+                    className={`rounded-lg border p-3 text-left transition-colors ${
+                      selected
+                        ? "border-primary bg-secondary"
+                        : "border-border bg-card hover:border-primary/40"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-body font-semibold">{space.name}</p>
+                        <p className="mt-1 text-xs font-body text-muted-foreground">{space.description}</p>
+                      </div>
+                      <span className="shrink-0 rounded-lg bg-background px-2 py-1 text-[11px] font-body font-semibold text-foreground">
+                        {space.capacity}
+                      </span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+            {renderError("requestedSpaces")}
           </div>
 
           {submitError && (
@@ -268,6 +329,37 @@ const BookingModal = ({ venue, onClose }: BookingModalProps) => {
               </div>
               {renderError("desiredDate")}
             </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-body font-medium text-muted-foreground mb-1 block">
+                  Début *
+                </label>
+                <input
+                  type="time"
+                  value={form.startTime}
+                  onChange={(e) => updateField("startTime", e.target.value)}
+                  className={fieldClass("startTime")}
+                  aria-invalid={Boolean(fieldErrors.startTime)}
+                />
+                {renderError("startTime")}
+              </div>
+              <div>
+                <label className="text-xs font-body font-medium text-muted-foreground mb-1 block">
+                  Fin *
+                </label>
+                <input
+                  type="time"
+                  value={form.endTime}
+                  onChange={(e) => updateField("endTime", e.target.value)}
+                  className={fieldClass("endTime")}
+                  aria-invalid={Boolean(fieldErrors.endTime)}
+                />
+                {renderError("endTime")}
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="text-xs font-body font-medium text-muted-foreground mb-1 block">
                 Nb d'invités *
@@ -284,24 +376,23 @@ const BookingModal = ({ venue, onClose }: BookingModalProps) => {
               </div>
               {renderError("guestCount")}
             </div>
-          </div>
-
-          <div>
-            <label className="text-xs font-body font-medium text-muted-foreground mb-1 block">
-              Type d'événement *
-            </label>
-            <select
-              value={form.eventType}
-              onChange={(e) => updateField("eventType", e.target.value)}
-              className={fieldClass("eventType")}
-              aria-invalid={Boolean(fieldErrors.eventType)}
-            >
-              <option value="">Sélectionner...</option>
-              {EVENT_TYPES.map((t) => (
-                <option key={t} value={t}>{t}</option>
-              ))}
-            </select>
-            {renderError("eventType")}
+            <div>
+              <label className="text-xs font-body font-medium text-muted-foreground mb-1 block">
+                Type d'événement *
+              </label>
+              <select
+                value={form.eventType}
+                onChange={(e) => updateField("eventType", e.target.value)}
+                className={fieldClass("eventType")}
+                aria-invalid={Boolean(fieldErrors.eventType)}
+              >
+                <option value="">Sélectionner...</option>
+                {EVENT_TYPES.map((t) => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
+              {renderError("eventType")}
+            </div>
           </div>
 
           <div>
@@ -327,7 +418,7 @@ const BookingModal = ({ venue, onClose }: BookingModalProps) => {
             {status === "submitting" ? "Préparation de la demande..." : "Envoyer ma demande de disponibilité"}
           </button>
           <p className="text-center text-[11px] font-body text-muted-foreground">
-            Confirmation client, notification équipe et notification lieu préparées à l'envoi.
+            Confirmation client, notifications équipe et lieu, puis relance avis Google le lendemain de l'événement.
           </p>
         </form>
       </div>

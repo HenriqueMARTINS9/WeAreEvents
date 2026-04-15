@@ -1,0 +1,48 @@
+import { Link } from "react-router-dom";
+import logoBlack from "@/assets/logo-black.svg";
+
+const SiteFooter = () => {
+  return (
+    <footer className="py-12 px-6 bg-foreground text-primary-foreground">
+      <div className="mx-auto grid max-w-7xl grid-cols-1 gap-8 md:grid-cols-4 xl:px-2">
+        <div>
+          <img src={logoBlack} alt="WeAreEvents" className="h-6 mb-4 brightness-0 invert" />
+          <p className="text-primary-foreground/60 text-sm font-body leading-relaxed">
+            La conciergerie de réservation de lieux événementiels pour les marques, entreprises et événements privés.
+          </p>
+        </div>
+        <div>
+          <h4 className="font-body font-semibold text-sm mb-3">Navigation</h4>
+          <div className="space-y-2 text-primary-foreground/60 text-sm font-body">
+            <Link to="/" className="hover:text-primary-foreground transition-colors">Accueil</Link>
+            <Link to="/recherche" className="block hover:text-primary-foreground transition-colors">Toutes les salles</Link>
+            <Link to="/#referencer-etablissement" className="block hover:text-primary-foreground transition-colors">Référencer mon établissement</Link>
+          </div>
+        </div>
+        <div>
+          <h4 className="font-body font-semibold text-sm mb-3">Légal</h4>
+          <div className="space-y-2 text-primary-foreground/60 text-sm font-body">
+            <p>Mentions légales</p>
+            <p>CGU</p>
+            <p>Confidentialité</p>
+          </div>
+        </div>
+        <div>
+          <h4 className="font-body font-semibold text-sm mb-3">Contact</h4>
+          <div className="space-y-2 text-primary-foreground/60 text-sm font-body">
+            <p>contact@wearevents.fr</p>
+            <p>Paris, France</p>
+            <Link to="/#referencer-etablissement" className="inline-flex rounded-lg border border-primary-foreground/15 px-3 py-2 text-primary-foreground hover:bg-primary-foreground hover:text-foreground transition-colors">
+              Référencer mon établissement
+            </Link>
+          </div>
+        </div>
+      </div>
+      <div className="mx-auto mt-8 max-w-7xl border-t border-primary-foreground/10 pt-6 text-center text-xs font-body text-primary-foreground/40 xl:px-2">
+        © 2026 WeAreEvents. Tous droits réservés.
+      </div>
+    </footer>
+  );
+};
+
+export default SiteFooter;

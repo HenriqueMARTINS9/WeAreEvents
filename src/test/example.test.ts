@@ -33,8 +33,11 @@ describe("booking workflow", () => {
     email: "camille@example.com",
     phone: "+33 6 12 34 56 78",
     desiredDate: "2099-06-12",
+    startTime: "18:00",
+    endTime: "23:30",
     guestCount: "120",
     eventType: "Gala",
+    requestedSpaces: ["roof-main"],
     message: "Cocktail dinatoire suivi d'une soirée privée.",
   };
 
@@ -51,6 +54,8 @@ describe("booking workflow", () => {
     expect(request.venueId).toBe(venue.id);
     expect(request.venueTitle).toBe(venue.title);
     expect(request.venueCode).toBe(venue.venueCode);
+    expect(request.startTime).toBe("18:00");
+    expect(request.requestedSpaces).toContain("Terrasse principale");
     expect(request.status).toBe("sent");
   });
 
@@ -63,5 +68,7 @@ describe("booking workflow", () => {
     expect(templates.venueContactNotification.to).toBe(venue.contactEmail);
     expect(templates.customerConfirmation.text).toContain(venue.title);
     expect(templates.venueContactNotification.text).toContain(request.phone);
+    expect(templates.postEventReviewFollowUp.to).toBe(validForm.email);
+    expect(templates.postEventReviewFollowUp.scheduledFor).toContain("2099-06-13");
   });
 });

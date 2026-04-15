@@ -1,10 +1,11 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { getVenueBySlug, getReviewsByVenueId } from "@/data/venues";
-import { Star, MapPin, Users, Tag, ShieldCheck, ArrowRight } from "lucide-react";
+import { Star, MapPin, Users, Tag, ShieldCheck, ArrowRight, Route, Info } from "lucide-react";
 import { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import DesktopNav from "@/components/DesktopNav";
 import BookingModal from "@/components/BookingModal";
+import SiteFooter from "@/components/SiteFooter";
 import VenueDetailSheet from "@/components/VenueDetailSheet";
 
 const VenueDetail = () => {
@@ -51,10 +52,6 @@ const VenueDetail = () => {
           <div className="absolute inset-0 bg-gradient-to-r from-foreground/70 via-foreground/25 to-transparent" />
           <div className="absolute bottom-10 left-0 right-0 z-10">
             <div className="max-w-6xl mx-auto px-6">
-              <span className="px-3 py-1.5 rounded-lg border border-primary-foreground/20 bg-primary-foreground/10 text-primary-foreground text-sm font-body font-semibold mb-4 inline-block backdrop-blur-md">
-                Code TikTok · {venue.venueCode}
-              </span>
-
               <h1 className="font-heading text-5xl md:text-7xl text-primary-foreground font-semibold leading-none mb-5">{venue.title}</h1>
               <div className="flex flex-wrap items-center gap-4 text-primary-foreground/80 font-body text-sm">
                 <span className="flex items-center gap-1"><MapPin className="w-4 h-4" />{venue.city}</span>
@@ -83,6 +80,69 @@ const VenueDetail = () => {
           </div>
 
           {/* Event types */}
+          <div>
+            <h3 className="font-heading text-xl font-semibold mb-3">Espaces disponibles</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {venue.spaces.map((space) => (
+                <div key={space.id} className="rounded-lg border border-border bg-card p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <h4 className="font-body font-semibold text-sm">{space.name}</h4>
+                      <p className="mt-2 text-sm font-body text-foreground/70 leading-relaxed">{space.description}</p>
+                    </div>
+                    <span className="shrink-0 rounded-lg bg-secondary px-2 py-1 text-xs font-body font-semibold text-secondary-foreground">
+                      Jusqu'à {space.capacity}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <h3 className="font-heading text-xl font-semibold mb-3">Lieu exact</h3>
+              <div className="rounded-lg border border-border bg-card p-4">
+                <div className="flex items-start gap-3">
+                  <MapPin className="w-4 h-4 mt-0.5 text-primary" />
+                  <div>
+                    <p className="font-body font-semibold text-sm">{venue.address}</p>
+                    <p className="mt-2 text-sm font-body text-foreground/70 leading-relaxed">
+                      Adresse communiquée aux invités et aux prestataires dès confirmation de la réservation.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div>
+              <h3 className="font-heading text-xl font-semibold mb-3">Comment y accéder</h3>
+              <div className="rounded-lg border border-border bg-card p-4">
+                <div className="space-y-3">
+                  {venue.accessDetails.map((detail) => (
+                    <div key={detail} className="flex items-start gap-3">
+                      <Route className="w-4 h-4 mt-0.5 text-primary" />
+                      <p className="text-sm font-body text-foreground/75">{detail}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h3 className="font-heading text-xl font-semibold mb-3">Informations utiles</h3>
+            <div className="rounded-lg border border-border bg-card p-4">
+              <div className="space-y-3">
+                {venue.usefulInformation.map((detail) => (
+                  <div key={detail} className="flex items-start gap-3">
+                    <Info className="w-4 h-4 mt-0.5 text-primary" />
+                    <p className="text-sm font-body text-foreground/75">{detail}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
           <div>
             <h3 className="font-heading text-xl font-semibold mb-3">Types d'événements</h3>
             <div className="flex flex-wrap gap-2">
@@ -143,16 +203,17 @@ const VenueDetail = () => {
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>
-            <div className="p-4 rounded-lg bg-card border border-border text-center">
-              <p className="text-xs text-muted-foreground font-body mb-1">Code TikTok</p>
-              <p className="font-heading text-xl font-semibold text-primary">{venue.venueCode}</p>
-              <p className="mt-2 text-xs font-body text-muted-foreground">Idéal pour retrouver ce lieu depuis TikTok.</p>
+            <div className="p-4 rounded-lg bg-card border border-border">
+              <p className="text-xs text-muted-foreground font-body mb-1">Adresse</p>
+              <p className="font-body text-sm font-semibold">{venue.address}</p>
+              <p className="mt-2 text-xs font-body text-muted-foreground">Accès détaillé communiqué avec la confirmation.</p>
             </div>
           </div>
         </div>
       </div>
 
       {bookingOpen && <BookingModal venue={venue} onClose={() => setBookingOpen(false)} />}
+      <SiteFooter />
     </div>
   );
 };

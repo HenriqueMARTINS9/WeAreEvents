@@ -7,8 +7,11 @@ export interface BookingFormValues {
   email: string;
   phone: string;
   desiredDate: string;
+  startTime: string;
+  endTime: string;
   guestCount: string;
   eventType: string;
+  requestedSpaces: string[];
   message: string;
 }
 
@@ -30,8 +33,11 @@ const trimForm = (form: BookingFormValues): BookingFormValues => ({
   email: form.email.trim().toLowerCase(),
   phone: form.phone.trim(),
   desiredDate: form.desiredDate,
+  startTime: form.startTime,
+  endTime: form.endTime,
   guestCount: form.guestCount.trim(),
   eventType: form.eventType,
+  requestedSpaces: form.requestedSpaces,
   message: form.message.trim(),
 });
 
@@ -52,6 +58,24 @@ const formatDate = (dateValue: string) =>
 const formatGuestCount = (guestCount: number) => `${guestCount} invité${guestCount > 1 ? "s" : ""}`;
 
 const buildRequestId = () => `WAE-${Date.now().toString(36).toUpperCase()}`;
+
+const getRequestedCapacity = (requestedSpaces: string[], venue: Venue) => {
+  if (requestedSpaces.length === 0) return venue.maxCapacity;
+  return venue.spaces
+    .filter((space) => requestedSpaces.includes(space.id))
+    .reduce((total, space) => total + space.capacity, 0);
+};
+
+const isInvalidTimeRange = (startTime: string, endTime: string) => {
+  if (!startTime || !endTime) return false;
+  return startTime >= endTime;
+};
+
+const buildReviewFollowUpDate = (dateValue: string) => {
+  const nextDay = new Date(`${dateValue}T10:00:00`);
+  nextDay.setDate(nextDay.getDate() + 1);
+  return nextDay.toISOString();
+};
 
 export const validateBookingForm = (form: BookingFormValues, venue: Venue): BookingFieldErrors => {
   const values = trimForm(form);
@@ -79,12 +103,28 @@ export const validateBookingForm = (form: BookingFormValues, venue: Venue): Book
     errors.desiredDate = "Sélectionnez une date à venir.";
   }
 
+  if (!values.startTime) {
+    errors.startTime = "Indiquez un horaire de début.";
+  }
+
+  if (!values.endTime) {
+    errors.endTime = "Indiquez un horaire de fin.";
+  } else if (isInvalidTimeRange(values.startTime, values.endTime)) {
+    errors.endTime = "L'horaire de fin doit être postérieur au début.";
+  }
+
   if (!values.guestCount) {
     errors.guestCount = "Indiquez le nombre d'invités.";
   } else if (!Number.isInteger(guestCount) || guestCount <= 0) {
     errors.guestCount = "Indiquez un nombre d'invités valide.";
   } else if (guestCount < venue.minCapacity || guestCount > venue.maxCapacity) {
     errors.guestCount = `Ce lieu accueille entre ${venue.minCapacity} et ${venue.maxCapacity} invités.`;
+  } else if (guestCount > getRequestedCapacity(values.requestedSpaces, venue)) {
+    errors.guestCount = `Les espaces sélectionnés accueillent jusqu'à ${getRequestedCapacity(values.requestedSpaces, venue)} invités.`;
+  }
+
+  if (values.requestedSpaces.length === 0) {
+    errors.requestedSpaces = "Sélectionnez au moins un espace.";
   }
 
   if (!values.eventType) {
@@ -114,8 +154,13 @@ export const createBookingRequest = (form: BookingFormValues, venue: Venue): Boo
     email: values.email,
     phone: values.phone,
     desiredDate: values.desiredDate,
+    startTime: values.startTime,
+    endTime: values.endTime,
     guestCount: Number(values.guestCount),
     eventType: values.eventType,
+    requestedSpaces: venue.spaces
+      .filter((space) => values.requestedSpaces.includes(space.id))
+      .map((space) => space.name),
     message: values.message || undefined,
     status: "sent",
     createdAt: new Date().toISOString(),
@@ -127,6 +172,8 @@ export const buildBookingEmailTemplates = (request: BookingRequest, venue: Venue
   const formattedDate = formatDate(request.desiredDate);
   const guests = formatGuestCount(request.guestCount);
   const message = request.message || "Aucun message complémentaire.";
+  const requestedSpaces = request.requestedSpaces.join(", ");
+  const platformReviewUrl = "https://www.wearevents.fr/avis";
 
   return {
     customerConfirmation: {
@@ -139,12 +186,13 @@ Votre demande pour ${venue.title} a bien été reçue.
 
 Récapitulatif
 Lieu : ${venue.title}, ${venue.city}
-Code TikTok : ${venue.venueCode}
 Date souhaitée : ${formattedDate}
+Horaires souhaités : ${request.startTime} - ${request.endTime}
+Espaces demandés : ${requestedSpaces}
 Format : ${request.eventType}
 Nombre d'invités : ${guests}
 
-Notre équipe vérifie la disponibilité et les conditions du lieu. Vous recevrez un retour qualifié sous 24h ouvrées.
+Votre demande est 100 % gratuite. Notre équipe vérifie la disponibilité et les conditions du lieu. Vous recevrez un retour qualifié sous 24h ouvrées.
 
 Merci pour votre confiance,
 L'équipe WeAreEvents`,
@@ -157,12 +205,14 @@ L'équipe WeAreEvents`,
 
 Référence : ${request.id}
 Lieu : ${venue.title}
-Code TikTok : ${venue.venueCode}
 Ville : ${venue.city}
+Adresse : ${venue.address}
 Contact : ${customerName}
 Email : ${request.email}
 Téléphone : ${request.phone}
 Date souhaitée : ${formattedDate}
+Horaires : ${request.startTime} - ${request.endTime}
+Espaces demandés : ${requestedSpaces}
 Format : ${request.eventType}
 Nombre d'invités : ${guests}
 Message : ${message}
@@ -179,6 +229,8 @@ Nous vous transmettons une demande qualifiée pour ${venue.title}.
 
 Référence WeAreEvents : ${request.id}
 Date souhaitée : ${formattedDate}
+Horaires : ${request.startTime} - ${request.endTime}
+Espaces demandés : ${requestedSpaces}
 Format : ${request.eventType}
 Nombre d'invités : ${guests}
 Client : ${customerName}
@@ -188,6 +240,25 @@ Message : ${message}
 
 Merci de nous confirmer la disponibilité et les conditions applicables afin que nous puissions accompagner le client avec le niveau de service attendu.
 
+L'équipe WeAreEvents`,
+    },
+    postEventReviewFollowUp: {
+      to: request.email,
+      subject: `Votre retour après ${venue.title}`,
+      preview: "Un mot sur le lieu et sur WeAreEvents nous serait précieux.",
+      scheduledFor: buildReviewFollowUpDate(request.desiredDate),
+      text: `Bonjour ${request.firstName},
+
+Nous espérons que votre événement chez ${venue.title} s'est parfaitement déroulé.
+
+Si vous avez apprécié l'expérience, vous pouvez nous aider en laissant deux avis :
+
+Avis Google du lieu : ${venue.googleReviewUrl}
+Avis WeAreEvents : ${platformReviewUrl}
+
+Quelques lignes suffisent et aident autant l'établissement que les prochains organisateurs.
+
+Merci encore pour votre confiance,
 L'équipe WeAreEvents`,
     },
   };

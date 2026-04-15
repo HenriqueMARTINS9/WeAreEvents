@@ -1,3 +1,10 @@
+export interface VenueSpace {
+  id: string;
+  name: string;
+  capacity: number;
+  description: string;
+}
+
 export interface Venue {
   id: string;
   title: string;
@@ -5,17 +12,21 @@ export interface Venue {
   tagline: string;
   description: string;
   city: string;
-  address?: string;
+  address: string;
   venueCode: string;
   minCapacity: number;
   maxCapacity: number;
   eventCategories: string[];
   services: string[];
+  spaces: VenueSpace[];
+  accessDetails: string[];
+  usefulInformation: string[];
   pricingText: string;
   coverImage: string;
   gallery: string[];
   videoUrl?: string;
   tiktokUrl?: string;
+  googleReviewUrl: string;
   featured: boolean;
   active: boolean;
   contactEmail: string;
@@ -34,8 +45,11 @@ export interface BookingRequest {
   email: string;
   phone: string;
   desiredDate: string;
+  startTime: string;
+  endTime: string;
   guestCount: number;
   eventType: string;
+  requestedSpaces: string[];
   message?: string;
   status: "pending" | "sent" | "failed";
   createdAt: string;
@@ -46,12 +60,14 @@ export interface BookingEmailTemplate {
   subject: string;
   preview: string;
   text: string;
+  scheduledFor?: string;
 }
 
 export interface BookingEmailTemplates {
   customerConfirmation: BookingEmailTemplate;
   adminNotification: BookingEmailTemplate;
   venueContactNotification: BookingEmailTemplate;
+  postEventReviewFollowUp: BookingEmailTemplate;
 }
 
 export interface Review {

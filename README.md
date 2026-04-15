@@ -1,3 +1,3 @@
-# Welcome to your Lovable project
+# WeAreEvents
 
-TODO: Document your project here
+Interface React/Vite pour la découverte, la qualification et la réservation de lieux événementiels.

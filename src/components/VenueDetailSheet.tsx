@@ -1,4 +1,4 @@
-import { X, Star, MapPin, Users, Tag, Wifi, Car, UtensilsCrossed, Music, Camera, TreePine, Waves, ChefHat, Snowflake, Projector, ShirtIcon, ShieldCheck } from "lucide-react";
+import { X, Star, MapPin, Users, Tag, Wifi, Car, UtensilsCrossed, Music, Camera, TreePine, Waves, ChefHat, Snowflake, Projector, ShirtIcon, ShieldCheck, Route, Info } from "lucide-react";
 import type { Venue } from "@/types/venue";
 import { getReviewsByVenueId } from "@/data/venues";
 
@@ -76,6 +76,51 @@ const VenueDetailSheet = ({ venue, onClose, onBooking }: VenueDetailSheetProps) 
         <p className="text-sm font-body text-foreground/80 leading-relaxed mb-7">
           {venue.description}
         </p>
+
+        <h3 className="font-heading text-lg font-semibold mb-3">Espaces disponibles</h3>
+        <div className="space-y-2 mb-6">
+          {venue.spaces.map((space) => (
+            <div key={space.id} className="rounded-lg border border-border bg-card p-3">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm font-body font-semibold">{space.name}</p>
+                  <p className="mt-1 text-sm font-body text-foreground/70">{space.description}</p>
+                </div>
+                <span className="shrink-0 rounded-lg bg-secondary px-2 py-1 text-[11px] font-body font-semibold text-secondary-foreground">
+                  {space.capacity}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <h3 className="font-heading text-lg font-semibold mb-3">Lieu exact</h3>
+        <div className="rounded-lg border border-border bg-card p-4 mb-6">
+          <div className="flex items-start gap-3">
+            <MapPin className="w-4 h-4 mt-0.5 text-primary" />
+            <p className="text-sm font-body text-foreground/75">{venue.address}</p>
+          </div>
+        </div>
+
+        <h3 className="font-heading text-lg font-semibold mb-3">Comment y accéder</h3>
+        <div className="rounded-lg border border-border bg-card p-4 mb-6 space-y-3">
+          {venue.accessDetails.map((detail) => (
+            <div key={detail} className="flex items-start gap-3">
+              <Route className="w-4 h-4 mt-0.5 text-primary" />
+              <p className="text-sm font-body text-foreground/75">{detail}</p>
+            </div>
+          ))}
+        </div>
+
+        <h3 className="font-heading text-lg font-semibold mb-3">Informations utiles</h3>
+        <div className="rounded-lg border border-border bg-card p-4 mb-6 space-y-3">
+          {venue.usefulInformation.map((detail) => (
+            <div key={detail} className="flex items-start gap-3">
+              <Info className="w-4 h-4 mt-0.5 text-primary" />
+              <p className="text-sm font-body text-foreground/75">{detail}</p>
+            </div>
+          ))}
+        </div>
 
         {/* Gallery */}
         <div className="flex gap-2 overflow-x-auto hide-scrollbar mb-6 -mx-5 px-5">

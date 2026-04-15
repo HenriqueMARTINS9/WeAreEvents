@@ -3,44 +3,32 @@ import {
   Search,
   MapPin,
   Users,
-  Tag,
   Star,
   ChevronRight,
   Sparkles,
-  CheckCircle,
   ShieldCheck,
   Clock3,
-  Gem,
   ArrowRight,
+  CheckCircle2,
+  BadgeCheck,
+  Zap,
 } from "lucide-react";
-import { mockVenues, mockTikTokCodeMappings, getVenueByCode } from "@/data/venues";
+import { mockVenues } from "@/data/venues";
 import { EVENT_TYPES } from "@/types/venue";
 import { useNavigate } from "react-router-dom";
-import logoBlack from "@/assets/logo-black.svg";
 import DesktopNav from "./DesktopNav";
+import EstablishmentReferralSection from "./EstablishmentReferralSection";
 import FilterSelect from "./FilterSelect";
+import SiteFooter from "./SiteFooter";
 import VenueGridCard from "./VenueGridCard";
 
 const DesktopHome = () => {
   const navigate = useNavigate();
-  const [codeInput, setCodeInput] = useState("");
   const [searchCity, setSearchCity] = useState("");
   const [searchEventType, setSearchEventType] = useState("");
   const [searchGuests, setSearchGuests] = useState("");
-  const [codeError, setCodeError] = useState("");
   const featured = mockVenues.filter((v) => v.featured && v.active);
   const cityOptions = [...new Set(mockVenues.map((v) => v.city))];
-  const codeExamples = mockTikTokCodeMappings.slice(0, 2).map((mapping) => mapping.code).join(" ou ");
-
-  const handleCodeSearch = () => {
-    if (!codeInput.trim()) return;
-    const venue = getVenueByCode(codeInput.trim());
-    if (venue) {
-      navigate(`/salle/${venue.slug}`);
-    } else {
-      setCodeError("Ce code ne correspond à aucun lieu actif.");
-    }
-  };
 
   const handleSearch = () => {
     const params = new URLSearchParams();
@@ -54,7 +42,7 @@ const DesktopHome = () => {
     <div className="min-h-screen bg-background text-foreground">
       <DesktopNav />
 
-      <section className="relative h-[82vh] min-h-[560px] max-h-[760px] overflow-hidden bg-foreground">
+      <section className="relative h-[78vh] min-h-[620px] max-h-[760px] overflow-hidden bg-foreground">
         <img
           src="https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=1920&q=80"
           alt="Reception élégante dans un lieu événementiel"
@@ -63,96 +51,55 @@ const DesktopHome = () => {
         <div className="absolute inset-0 bg-gradient-to-r from-foreground/90 via-foreground/50 to-foreground/20" />
         <div className="absolute inset-0 bg-gradient-to-t from-foreground/90 via-transparent to-foreground/40" />
 
-        <div className="relative z-10 h-full max-w-6xl mx-auto px-6 pt-28 pb-16 flex flex-col justify-center">
-          <div className="max-w-3xl">
-            <h1 className="font-heading text-5xl md:text-6xl lg:text-7xl text-primary-foreground font-semibold leading-none mb-6">
+        <div className="relative z-10 flex h-full max-w-7xl mx-auto flex-col justify-center px-6 pb-14 pt-24 xl:px-8">
+          <div className="max-w-4xl">
+            <h1 className="font-heading text-5xl xl:text-6xl 2xl:text-7xl text-primary-foreground font-semibold leading-[0.92] mb-6">
               Trouvez un lieu qui signe votre événement.
             </h1>
-            <p className="text-primary-foreground/80 text-lg md:text-xl font-body leading-relaxed max-w-2xl">
+            <p className="max-w-3xl text-lg font-body leading-relaxed text-primary-foreground/80 xl:text-xl">
               Salles confidentielles, rooftops, domaines et châteaux sélectionnés pour des mariages, galas et soirées de marque.
             </p>
           </div>
 
-          <div className="mt-8 w-full max-w-5xl rounded-lg border border-primary-foreground/20 bg-foreground/50 p-4 shadow-2xl backdrop-blur-xl hairline-top">
-            <div className="space-y-3">
-              <div className="grid grid-cols-1 gap-3 rounded-lg bg-background p-3 md:grid-cols-[auto_1fr_auto] md:items-center">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                  <Tag className="w-4 h-4" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-body font-semibold text-muted-foreground">
-                    Code TikTok dédié
-                  </p>
-                  <input
-                    type="text"
-                    value={codeInput}
-                    onChange={(e) => {
-                      setCodeInput(e.target.value.toUpperCase());
-                      setCodeError("");
-                    }}
-                    placeholder={`Ex: ${codeExamples}`}
-                    className="w-full bg-transparent text-sm font-body font-semibold text-foreground placeholder:text-muted-foreground focus:outline-none"
-                    onKeyDown={(e) => e.key === "Enter" && handleCodeSearch()}
-                  />
-                  {codeError && (
-                    <p className="mt-1 text-[11px] font-body text-destructive">{codeError}</p>
-                  )}
-                </div>
-                <button
-                  onClick={handleCodeSearch}
-                  className="rounded-lg bg-foreground px-5 py-2.5 text-sm font-body font-semibold text-primary-foreground hover:bg-primary transition-colors"
-                >
-                  Accéder
-                </button>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <div className="h-px flex-1 bg-primary-foreground/15" />
-                <span className="rounded-lg border border-primary-foreground/15 bg-primary-foreground/10 px-3 py-1 text-[11px] font-body font-semibold text-primary-foreground/70">
-                  ou
-                </span>
-                <div className="h-px flex-1 bg-primary-foreground/15" />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-[1fr_1.4fr_0.9fr_auto] gap-3">
-                <FilterSelect
-                  value={searchCity}
-                  onChange={setSearchCity}
-                  placeholder="Ville"
-                  emptyLabel="Toutes les villes"
-                  options={cityOptions}
-                  icon={<MapPin className="w-4 h-4" />}
+          <div className="mt-8 w-full max-w-6xl rounded-lg border border-primary-foreground/20 bg-foreground/50 p-4 shadow-2xl backdrop-blur-xl hairline-top">
+            <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 2xl:grid-cols-[0.95fr_1.15fr_0.95fr_auto]">
+              <FilterSelect
+                value={searchCity}
+                onChange={setSearchCity}
+                placeholder="Ville"
+                emptyLabel="Toutes les villes"
+                options={cityOptions}
+                icon={<MapPin className="w-4 h-4" />}
+              />
+              <FilterSelect
+                value={searchEventType}
+                onChange={setSearchEventType}
+                placeholder="Type d'événement"
+                emptyLabel="Tous les types"
+                options={EVENT_TYPES}
+                icon={<Sparkles className="w-4 h-4" />}
+              />
+              <div className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2.5">
+                <Users className="w-4 h-4 text-primary shrink-0" />
+                <input
+                  type="number"
+                  value={searchGuests}
+                  onChange={(e) => setSearchGuests(e.target.value)}
+                  placeholder="Nombre d'invités"
+                  className="min-w-0 flex-1 bg-transparent text-sm font-body focus:outline-none"
                 />
-                <FilterSelect
-                  value={searchEventType}
-                  onChange={setSearchEventType}
-                  placeholder="Type d'événement"
-                  emptyLabel="Tous les types"
-                  options={EVENT_TYPES}
-                  icon={<Sparkles className="w-4 h-4" />}
-                />
-                <div className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2.5">
-                  <Users className="w-4 h-4 text-primary shrink-0" />
-                  <input
-                    type="number"
-                    value={searchGuests}
-                    onChange={(e) => setSearchGuests(e.target.value)}
-                    placeholder="Nombre d'invités"
-                    className="min-w-0 flex-1 bg-transparent text-sm font-body focus:outline-none"
-                  />
-                </div>
-                <button
-                  onClick={handleSearch}
-                  className="flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-body font-semibold text-primary-foreground hover:bg-foreground transition-colors"
-                >
-                  <Search className="w-4 h-4" />
-                  Rechercher
-                </button>
               </div>
+              <button
+                onClick={handleSearch}
+                className="flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-body font-semibold text-primary-foreground transition-colors hover:bg-foreground lg:col-span-2 2xl:col-span-1"
+              >
+                <Search className="w-4 h-4" />
+                Rechercher
+              </button>
             </div>
           </div>
 
-          <div className="mt-6 grid max-w-4xl grid-cols-1 gap-3 sm:grid-cols-3">
+          <div className="mt-6 grid max-w-5xl grid-cols-1 gap-3 lg:grid-cols-3">
             {[
               { icon: <ShieldCheck className="w-4 h-4" />, label: "Lieux vérifiés" },
               { icon: <Clock3 className="w-4 h-4" />, label: "Réponse sous 24h" },
@@ -168,24 +115,24 @@ const DesktopHome = () => {
       </section>
 
       <section className="px-6 py-20">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 gap-10 md:grid-cols-[0.9fr_1.1fr] md:items-end">
-            <div>
-              <p className="font-body text-sm font-semibold text-primary mb-3">Du code à la visite privée</p>
-              <h2 className="font-heading text-3xl md:text-5xl font-semibold leading-tight">
-                Une recherche courte, une sélection plus exigeante.
+        <div className="max-w-7xl mx-auto xl:px-2">
+          <div className="grid grid-cols-1 gap-8 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)] xl:items-end xl:gap-12">
+            <div className="max-w-3xl">
+              <p className="font-body text-sm font-semibold text-primary mb-3">Pourquoi WeAreEvents</p>
+              <h2 className="font-heading text-4xl 2xl:text-5xl font-semibold leading-[1.02]">
+                Une sélection premium, une réservation plus fluide.
               </h2>
             </div>
-            <p className="font-body text-muted-foreground leading-relaxed">
-              WeAreEvents filtre les lieux, clarifie les capacités et centralise votre demande pour vous faire gagner du temps dès le premier contact.
+            <p className="max-w-xl font-body text-muted-foreground leading-relaxed xl:justify-self-end">
+              Nous mettons en avant des lieux clairs, rapidement joignables et pensés pour des demandes sérieuses, sans friction inutile.
             </p>
           </div>
 
-          <div className="mt-14 grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="mt-14 grid grid-cols-1 gap-8 xl:grid-cols-3">
             {[
-              { icon: <Tag className="w-6 h-6" />, title: "Repérez le code", desc: "Gardez le code du lieu aperçu dans nos vidéos." },
-              { icon: <Search className="w-6 h-6" />, title: "Accédez au lieu", desc: "Retrouvez la fiche, la capacité, les usages et le tarif indicatif." },
-              { icon: <CheckCircle className="w-6 h-6" />, title: "Demandez une visite", desc: "Envoyez votre brief et recevez un retour qualifié sous 24h." },
+              { icon: <BadgeCheck className="w-6 h-6" />, title: "Lieux vérifiés", desc: "Adresses sélectionnées, informations utiles et capacités clairement indiquées." },
+              { icon: <Zap className="w-6 h-6" />, title: "Demande 100 % gratuite", desc: "Aucun frais pour envoyer une demande, comparer et affiner votre brief." },
+              { icon: <CheckCircle2 className="w-6 h-6" />, title: "Réponse rapide", desc: "Premiers retours qualifiés en moins de 24h ouvrées sur les demandes sérieuses." },
             ].map((step, i) => (
               <div key={step.title} className="border-t border-border pt-6">
                 <div className="mb-5 flex items-center justify-between">
@@ -203,11 +150,11 @@ const DesktopHome = () => {
       </section>
 
       <section className="px-6 py-20 bg-foreground text-primary-foreground">
-        <div className="max-w-6xl mx-auto">
-          <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between mb-10">
+        <div className="max-w-7xl mx-auto xl:px-2">
+          <div className="mb-10 flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
             <div>
               <p className="font-body text-sm font-semibold text-luxe-gold mb-3">Sélection du moment</p>
-              <h2 className="font-heading text-3xl md:text-5xl font-semibold mb-3">
+              <h2 className="font-heading text-4xl 2xl:text-5xl font-semibold mb-3 leading-[1.02]">
                 Lieux à forte demande
               </h2>
               <p className="text-primary-foreground/70 font-body max-w-2xl">
@@ -216,20 +163,20 @@ const DesktopHome = () => {
             </div>
             <button
               onClick={() => navigate("/recherche")}
-              className="hidden md:flex items-center gap-2 rounded-lg border border-primary-foreground/20 px-4 py-2.5 text-primary-foreground font-body font-semibold text-sm hover:bg-primary-foreground hover:text-foreground transition-colors"
+              className="hidden xl:flex items-center gap-2 rounded-lg border border-primary-foreground/20 px-4 py-2.5 text-primary-foreground font-body font-semibold text-sm hover:bg-primary-foreground hover:text-foreground transition-colors"
             >
               Voir toutes les salles
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 2xl:grid-cols-4">
             {featured.map((venue) => (
               <VenueGridCard key={venue.id} venue={venue} />
             ))}
           </div>
 
-          <div className="mt-8 text-center md:hidden">
+          <div className="mt-8 text-center xl:hidden">
             <button
               onClick={() => navigate("/recherche")}
               className="rounded-lg bg-primary-foreground px-6 py-3 text-foreground font-body font-semibold text-sm"
@@ -241,18 +188,18 @@ const DesktopHome = () => {
       </section>
 
       <section className="px-6 py-20 bg-background">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-7xl mx-auto xl:px-2">
           <div className="mb-12 max-w-2xl">
             <p className="font-body text-sm font-semibold text-primary mb-3">Ils nous font confiance</p>
-            <h2 className="font-heading text-3xl md:text-5xl font-semibold">
+            <h2 className="font-heading text-4xl 2xl:text-5xl font-semibold leading-[1.02]">
               Des demandes plus claires, des lieux mieux qualifiés.
             </h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
             {[
               { name: "Sophie M.", text: "La salle était encore plus belle que sur la vidéo. Le premier échange a été précis et rassurant.", rating: 5 },
               { name: "Thomas D.", text: "Réponse rapide, informations claires, et un lieu parfaitement aligné avec notre séminaire.", rating: 5 },
-              { name: "Julie R.", text: "On a trouvé notre lieu de mariage grâce au code. La demande était simple, le suivi très sérieux.", rating: 5 },
+              { name: "Julie R.", text: "On a trouvé notre lieu de mariage en quelques minutes. La demande était simple, le suivi très sérieux.", rating: 5 },
             ].map((t) => (
               <div key={t.name} className="rounded-lg border border-border bg-card p-6 luxury-shadow">
                 <div className="flex gap-0.5 mb-4">
@@ -268,11 +215,13 @@ const DesktopHome = () => {
         </div>
       </section>
 
+      <EstablishmentReferralSection />
+
       <section className="px-6 py-20 bg-gradient-editorial text-primary-foreground">
-        <div className="max-w-6xl mx-auto grid grid-cols-1 gap-10 md:grid-cols-[1fr_auto] md:items-center">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 gap-10 xl:grid-cols-[1fr_auto] xl:items-center xl:px-2">
           <div className="max-w-2xl">
             <p className="font-body text-sm font-semibold text-luxe-gold mb-3">Votre prochain lieu</p>
-            <h2 className="font-heading text-3xl md:text-5xl font-semibold mb-4">
+            <h2 className="font-heading text-4xl 2xl:text-5xl font-semibold mb-4 leading-[1.02]">
               Recevez une première réponse qualifiée.
             </h2>
             <p className="font-body text-primary-foreground/70 leading-relaxed">
@@ -289,39 +238,7 @@ const DesktopHome = () => {
         </div>
       </section>
 
-      <footer className="py-12 px-6 bg-foreground text-primary-foreground">
-        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div>
-            <img src={logoBlack} alt="WeAreEvents" className="h-6 mb-4 brightness-0 invert" />
-          </div>
-          <div>
-            <h4 className="font-body font-semibold text-sm mb-3">Navigation</h4>
-            <div className="space-y-2 text-primary-foreground/60 text-sm font-body">
-              <p className="hover:text-primary-foreground cursor-pointer">Accueil</p>
-              <p className="hover:text-primary-foreground cursor-pointer">Toutes les salles</p>
-              <p className="hover:text-primary-foreground cursor-pointer">Code lieu</p>
-            </div>
-          </div>
-          <div>
-            <h4 className="font-body font-semibold text-sm mb-3">Légal</h4>
-            <div className="space-y-2 text-primary-foreground/60 text-sm font-body">
-              <p className="hover:text-primary-foreground cursor-pointer">Mentions légales</p>
-              <p className="hover:text-primary-foreground cursor-pointer">CGU</p>
-              <p className="hover:text-primary-foreground cursor-pointer">Confidentialité</p>
-            </div>
-          </div>
-          <div>
-            <h4 className="font-body font-semibold text-sm mb-3">Contact</h4>
-            <div className="space-y-2 text-primary-foreground/60 text-sm font-body">
-              <p>contact@wearevents.fr</p>
-              <p>Paris, France</p>
-            </div>
-          </div>
-        </div>
-        <div className="max-w-6xl mx-auto mt-8 pt-6 border-t border-primary-foreground/10 text-center text-primary-foreground/40 text-xs font-body">
-          © 2026 WeAreEvents. Tous droits réservés.
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 };
