@@ -16,6 +16,7 @@ const SearchResults = () => {
   const [eventType, setEventType] = useState(searchParams.get("type") || "");
   const [guests, setGuests] = useState(searchParams.get("guests") || "");
   const [query, setQuery] = useState(searchParams.get("q") || "");
+  const [visibleVenueIds, setVisibleVenueIds] = useState<string[] | null>(null);
   const codeParam = searchParams.get("code");
   const cityOptions = [...new Set(mockVenues.map((v) => v.city))];
 
@@ -28,7 +29,7 @@ const SearchResults = () => {
     }
   }, [codeParam, navigate]);
 
-  const results = useMemo(() => {
+  const filteredResults = useMemo(() => {
     return searchVenues({
       query: query || undefined,
       city: city || undefined,
@@ -36,6 +37,20 @@ const SearchResults = () => {
       minGuests: guests ? parseInt(guests, 10) : undefined,
     });
   }, [query, city, eventType, guests]);
+
+  useEffect(() => {
+    setVisibleVenueIds(null);
+  }, [filteredResults]);
+
+  const results = useMemo(() => {
+    if (visibleVenueIds === null) return filteredResults;
+
+    const visibleSet = new Set(visibleVenueIds);
+    return filteredResults.filter((venue) => visibleSet.has(venue.id));
+  }, [filteredResults, visibleVenueIds]);
+
+  const isMapZoneFilteringActive =
+    visibleVenueIds !== null && results.length !== filteredResults.length;
 
   return (
     <div className="min-h-screen bg-background">
@@ -57,7 +72,11 @@ const SearchResults = () => {
               </p>
             </div>
             <div className="rounded-lg border border-border bg-card px-4 py-3 text-sm font-body text-muted-foreground">
-              <span className="font-semibold text-foreground">{results.length}</span> salle{results.length !== 1 ? "s" : ""} trouvée{results.length !== 1 ? "s" : ""}
+              <span className="font-semibold text-foreground">{results.length}</span>{" "}
+              salle{results.length !== 1 ? "s" : ""} {isMapZoneFilteringActive ? "dans la zone" : "trouvée"}{results.length !== 1 ? "s" : ""}
+              {isMapZoneFilteringActive && (
+                <span className="ml-1 text-muted-foreground/80">sur {filteredResults.length}</span>
+              )}
             </div>
           </div>
 
@@ -105,7 +124,9 @@ const SearchResults = () => {
 
           <div className="mb-6 flex items-center gap-2 text-sm font-body text-muted-foreground">
             <SlidersHorizontal className="w-4 h-4 text-primary" />
-            Sélection affinée en temps réel
+            {isMapZoneFilteringActive
+              ? "Résultats ajustés à la zone actuellement visible sur la carte"
+              : "Sélection affinée en temps réel"}
           </div>
 
           <div className="grid grid-cols-1 gap-8 xl:grid-cols-[minmax(0,1.08fr)_minmax(360px,0.92fr)]">
@@ -116,6 +137,13 @@ const SearchResults = () => {
                     <VenueGridCard key={venue.id} venue={venue} />
                   ))}
                 </div>
+              ) : filteredResults.length > 0 ? (
+                <div className="rounded-lg border border-border bg-card py-20 text-center">
+                  <p className="mb-2 font-heading text-2xl font-semibold">Aucune salle dans la zone affichée</p>
+                  <p className="text-sm font-body text-muted-foreground">
+                    Déplacez la carte ou cliquez sur “Recentrer” pour revoir l'ensemble des lieux correspondant à vos filtres.
+                  </p>
+                </div>
               ) : (
                 <div className="rounded-lg border border-border bg-card py-20 text-center">
                   <p className="mb-2 font-heading text-2xl font-semibold">Aucune salle trouvée</p>
@@ -125,7 +153,7 @@ const SearchResults = () => {
             </div>
 
             <aside className="order-1 xl:order-2 xl:sticky xl:top-24 xl:self-start">
-              <SearchResultsMap venues={results} />
+              <SearchResultsMap venues={filteredResults} onVisibleVenuesChange={setVisibleVenueIds} />
             </aside>
           </div>
         </div>
