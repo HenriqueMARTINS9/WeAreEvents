@@ -471,9 +471,6 @@ const BookingModal = ({ venue, onClose }: BookingModalProps) => {
             >
               {status === "submitting" ? "Préparation de la demande..." : "Envoyer ma demande de disponibilité"}
             </button>
-            <p className="mt-2 text-center text-[11px] font-body text-muted-foreground">
-              Confirmation client, notifications équipe et lieu, puis relance avis Google le lendemain de l'événement.
-            </p>
           </div>
         </form>
       </div>
