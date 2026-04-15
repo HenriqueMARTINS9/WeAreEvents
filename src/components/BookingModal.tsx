@@ -32,6 +32,8 @@ const initialForm: BookingFormValues = {
 
 const SWIPE_CLOSE_THRESHOLD = 120;
 const SWIPE_MAX_OFFSET = 240;
+const SWIPE_RESISTANCE_START = 88;
+const SWIPE_RESISTANCE_FACTOR = 0.42;
 
 const BookingModal = ({ venue, onClose }: BookingModalProps) => {
   const isMobile = useIsMobile();
@@ -43,6 +45,7 @@ const BookingModal = ({ venue, onClose }: BookingModalProps) => {
   const [dragOffset, setDragOffset] = useState(0);
   const [isDraggingSheet, setIsDraggingSheet] = useState(false);
   const dragStartYRef = useRef<number | null>(null);
+  const dragDistanceRef = useRef(0);
   const dragOffsetRef = useRef(0);
 
   useEffect(() => {
@@ -56,15 +59,30 @@ const BookingModal = ({ venue, onClose }: BookingModalProps) => {
 
   const resetSheetDrag = () => {
     dragStartYRef.current = null;
+    dragDistanceRef.current = 0;
     dragOffsetRef.current = 0;
     setDragOffset(0);
     setIsDraggingSheet(false);
+  };
+
+  const getResistedOffset = (offset: number) => {
+    if (offset <= 0) return 0;
+
+    if (offset <= SWIPE_RESISTANCE_START) {
+      return offset * 0.94;
+    }
+
+    return (
+      SWIPE_RESISTANCE_START * 0.94 +
+      (offset - SWIPE_RESISTANCE_START) * SWIPE_RESISTANCE_FACTOR
+    );
   };
 
   const handleSheetTouchStart = (e: React.TouchEvent<HTMLElement>) => {
     if (!isMobile) return;
 
     dragStartYRef.current = e.touches[0]?.clientY ?? null;
+    dragDistanceRef.current = 0;
     dragOffsetRef.current = 0;
     setIsDraggingSheet(true);
   };
@@ -75,6 +93,7 @@ const BookingModal = ({ venue, onClose }: BookingModalProps) => {
     const nextOffset = (e.touches[0]?.clientY ?? 0) - dragStartYRef.current;
 
     if (nextOffset <= 0) {
+      dragDistanceRef.current = 0;
       dragOffsetRef.current = 0;
       setDragOffset(0);
       return;
@@ -84,7 +103,8 @@ const BookingModal = ({ venue, onClose }: BookingModalProps) => {
       e.preventDefault();
     }
 
-    const clampedOffset = Math.min(nextOffset, SWIPE_MAX_OFFSET);
+    dragDistanceRef.current = nextOffset;
+    const clampedOffset = Math.min(getResistedOffset(nextOffset), SWIPE_MAX_OFFSET);
     dragOffsetRef.current = clampedOffset;
     setDragOffset(clampedOffset);
   };
@@ -95,7 +115,7 @@ const BookingModal = ({ venue, onClose }: BookingModalProps) => {
       return;
     }
 
-    if (dragOffsetRef.current >= SWIPE_CLOSE_THRESHOLD) {
+    if (dragDistanceRef.current >= SWIPE_CLOSE_THRESHOLD) {
       resetSheetDrag();
       onClose();
       return;
@@ -115,15 +135,17 @@ const BookingModal = ({ venue, onClose }: BookingModalProps) => {
 
   const mobileSheetStyle = isMobile
     ? {
-        top: `${dragOffset}px`,
-        transition: isDraggingSheet ? "none" : "top 220ms ease",
+        transform: `translate3d(0, ${dragOffset}px, 0) scale(${1 - Math.min(dragOffset / 1800, 0.018)})`,
+        transformOrigin: "top center" as const,
+        transition: isDraggingSheet ? "none" : "transform 340ms cubic-bezier(0.22, 1, 0.36, 1)",
+        willChange: "transform" as const,
       }
     : undefined;
 
   const mobileBackdropStyle = isMobile
     ? {
-        opacity: 1 - Math.min(dragOffset / 320, 0.4),
-        transition: isDraggingSheet ? "none" : "opacity 220ms ease",
+        opacity: 1 - Math.min(dragOffset / 260, 0.5),
+        transition: isDraggingSheet ? "none" : "opacity 340ms cubic-bezier(0.22, 1, 0.36, 1)",
       }
     : undefined;
 
