@@ -27,7 +27,7 @@ const VenueDetailSheet = ({ venue, onClose, onBooking }: VenueDetailSheetProps) 
   const reviews = getReviewsByVenueId(venue.id);
 
   return (
-    <div className="fixed inset-0 z-50 bg-background overflow-y-auto animate-slide-up">
+    <div className="fixed inset-0 z-50 overflow-x-hidden overflow-y-auto bg-background animate-slide-up">
       {/* Hero */}
       <div className="relative h-72 sm:h-96">
         <img src={venue.coverImage} alt={venue.title} className="w-full h-full object-cover image-grade-luxe" />
@@ -63,7 +63,7 @@ const VenueDetailSheet = ({ venue, onClose, onBooking }: VenueDetailSheetProps) 
           </div>
         </div>
 
-        <div className="flex items-center gap-2 text-muted-foreground text-sm font-body mb-4">
+        <div className="flex flex-wrap items-center gap-2 text-muted-foreground text-sm font-body mb-4">
           <MapPin className="w-4 h-4" />
           {venue.city}
           <span className="mx-1">·</span>
@@ -82,9 +82,9 @@ const VenueDetailSheet = ({ venue, onClose, onBooking }: VenueDetailSheetProps) 
           {venue.spaces.map((space) => (
             <div key={space.id} className="rounded-lg border border-border bg-card p-3">
               <div className="flex items-start justify-between gap-3">
-                <div>
+                <div className="min-w-0">
                   <p className="text-sm font-body font-semibold">{space.name}</p>
-                  <p className="mt-1 text-sm font-body text-foreground/70">{space.description}</p>
+                  <p className="mt-1 break-words text-sm font-body text-foreground/70">{space.description}</p>
                 </div>
                 <span className="shrink-0 rounded-lg bg-secondary px-2 py-1 text-[11px] font-body font-semibold text-secondary-foreground">
                   {space.capacity}
@@ -98,7 +98,7 @@ const VenueDetailSheet = ({ venue, onClose, onBooking }: VenueDetailSheetProps) 
         <div className="rounded-lg border border-border bg-card p-4 mb-6">
           <div className="flex items-start gap-3">
             <MapPin className="w-4 h-4 mt-0.5 text-primary" />
-            <p className="text-sm font-body text-foreground/75">{venue.address}</p>
+            <p className="min-w-0 break-words text-sm font-body text-foreground/75">{venue.address}</p>
           </div>
         </div>
 
@@ -107,7 +107,7 @@ const VenueDetailSheet = ({ venue, onClose, onBooking }: VenueDetailSheetProps) 
           {venue.accessDetails.map((detail) => (
             <div key={detail} className="flex items-start gap-3">
               <Route className="w-4 h-4 mt-0.5 text-primary" />
-              <p className="text-sm font-body text-foreground/75">{detail}</p>
+              <p className="min-w-0 break-words text-sm font-body text-foreground/75">{detail}</p>
             </div>
           ))}
         </div>
@@ -117,13 +117,13 @@ const VenueDetailSheet = ({ venue, onClose, onBooking }: VenueDetailSheetProps) 
           {venue.usefulInformation.map((detail) => (
             <div key={detail} className="flex items-start gap-3">
               <Info className="w-4 h-4 mt-0.5 text-primary" />
-              <p className="text-sm font-body text-foreground/75">{detail}</p>
+              <p className="min-w-0 break-words text-sm font-body text-foreground/75">{detail}</p>
             </div>
           ))}
         </div>
 
         {/* Gallery */}
-        <div className="flex gap-2 overflow-x-auto hide-scrollbar mb-6 -mx-5 px-5">
+        <div className="mb-6 flex gap-2 overflow-x-auto pb-1 hide-scrollbar">
           {venue.gallery.map((img, i) => (
             <img
               key={i}
@@ -149,9 +149,9 @@ const VenueDetailSheet = ({ venue, onClose, onBooking }: VenueDetailSheetProps) 
         <h3 className="font-heading text-lg font-semibold mb-3">Services & équipements</h3>
         <div className="grid grid-cols-2 gap-2 mb-6">
           {venue.services.map((svc) => (
-            <div key={svc} className="flex items-center gap-2 p-2.5 rounded-lg border border-border bg-card text-sm font-body">
+            <div key={svc} className="flex min-w-0 items-center gap-2 rounded-lg border border-border bg-card p-2.5 text-sm font-body">
               {serviceIcons[svc] || <Tag className="w-4 h-4" />}
-              {svc}
+              <span className="truncate">{svc}</span>
             </div>
           ))}
         </div>
@@ -184,7 +184,7 @@ const VenueDetailSheet = ({ venue, onClose, onBooking }: VenueDetailSheetProps) 
                     ))}
                   </div>
                 </div>
-                <p className="text-sm font-body text-foreground/70">{review.comment}</p>
+                <p className="break-words text-sm font-body text-foreground/70">{review.comment}</p>
               </div>
             ))}
           </div>

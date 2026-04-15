@@ -24,9 +24,9 @@ const VenueCodeSearch = ({ onClose, onVenueFound }: VenueCodeSearchProps) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-end justify-center overflow-x-hidden sm:items-center">
       <div className="absolute inset-0 bg-foreground/70 backdrop-blur-md" onClick={onClose} />
-      <div className="relative w-full sm:max-w-md bg-background rounded-t-lg sm:rounded-lg p-6 pb-8 animate-slide-up luxury-shadow">
+      <div className="relative w-full overflow-x-hidden rounded-t-lg bg-background p-6 pb-8 animate-slide-up luxury-shadow sm:max-w-md sm:rounded-lg">
         <div className="flex items-center justify-between mb-6">
           <div>
             <p className="font-body text-xs font-semibold text-primary mb-1">Accès direct au lieu</p>

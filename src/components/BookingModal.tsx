@@ -117,7 +117,7 @@ const BookingModal = ({ venue, onClose }: BookingModalProps) => {
     const { request, emails } = result;
 
     return (
-      <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+      <div className="fixed inset-0 z-50 flex items-end justify-center overflow-x-hidden sm:items-center">
         <div className="absolute inset-0 bg-foreground/75 backdrop-blur-md" onClick={onClose} />
         <div
           className={`relative animate-scale-in bg-background ${
@@ -135,7 +135,7 @@ const BookingModal = ({ venue, onClose }: BookingModalProps) => {
           >
             {isMobile && <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-border" />}
             <div className="flex items-center justify-between">
-              <div>
+              <div className="min-w-0 pr-3">
                 <p className="font-body text-xs font-semibold text-primary mb-1">Demande envoyée</p>
                 <h3 className="font-heading text-2xl font-semibold">Votre brief est enregistré</h3>
               </div>
@@ -145,7 +145,7 @@ const BookingModal = ({ venue, onClose }: BookingModalProps) => {
             </div>
           </div>
 
-          <div className={isMobile ? "flex-1 overflow-y-auto overscroll-contain px-5 pb-6 pt-4" : "space-y-5"}>
+          <div className={isMobile ? "flex-1 overflow-x-hidden overflow-y-auto overscroll-contain px-5 pb-6 pt-4" : "space-y-5"}>
             <div className="rounded-lg bg-foreground p-5 text-center text-primary-foreground">
               <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-lg bg-primary">
                 <CheckCircle className="w-7 h-7" />
@@ -205,7 +205,7 @@ const BookingModal = ({ venue, onClose }: BookingModalProps) => {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+      <div className="fixed inset-0 z-50 flex items-end justify-center overflow-x-hidden sm:items-center">
       <div className="absolute inset-0 bg-foreground/70 backdrop-blur-md" onClick={onClose} />
       <div
         className={`relative w-full animate-slide-up bg-background ${
@@ -221,7 +221,7 @@ const BookingModal = ({ venue, onClose }: BookingModalProps) => {
         >
           {isMobile && <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-border" />}
           <div className="flex items-center justify-between">
-            <div>
+            <div className="min-w-0 pr-3">
               <p className="font-body text-xs font-semibold text-primary mb-1">Demande de disponibilité</p>
               <h3 className={`font-heading font-semibold ${isMobile ? "text-[1.75rem]" : "text-2xl"}`}>Brief événement</h3>
             </div>
@@ -229,17 +229,17 @@ const BookingModal = ({ venue, onClose }: BookingModalProps) => {
               <X className="w-5 h-5" />
             </button>
           </div>
-          <div className="flex items-center gap-2 mt-2">
+          <div className="mt-2 flex items-center gap-2">
             <div className="min-w-0 flex items-center gap-1.5 text-sm font-body">
               <MapPin className="w-3.5 h-3.5 text-primary" />
               <span className="font-semibold truncate">{venue.title}</span>
-              <span className="text-muted-foreground shrink-0">· {venue.city}</span>
+              <span className="truncate text-muted-foreground">· {venue.city}</span>
             </div>
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className={`flex flex-1 flex-col ${isMobile ? "overflow-hidden" : ""}`} noValidate>
-          <div className={`space-y-4 ${isMobile ? "flex-1 overflow-y-auto overscroll-contain px-5 py-4 pb-28" : "p-5"}`}>
+          <div className={`space-y-4 ${isMobile ? "flex-1 overflow-x-hidden overflow-y-auto overscroll-contain px-5 py-4 pb-28" : "p-5"}`}>
           <div className="rounded-lg border border-primary/20 bg-secondary p-3">
             <p className="font-body text-sm font-semibold text-foreground">100 % gratuit, sans engagement</p>
             <p className="mt-1 text-xs font-body text-muted-foreground">
@@ -253,7 +253,7 @@ const BookingModal = ({ venue, onClose }: BookingModalProps) => {
             </label>
             <div className="rounded-lg border border-border bg-foreground p-3 text-primary-foreground">
               <p className="font-body text-sm font-semibold">{venue.title}</p>
-              <p className="mt-1 text-xs font-body text-primary-foreground/65">
+              <p className="mt-1 break-words text-xs font-body text-primary-foreground/65">
                 {venue.city} · {venue.address}
               </p>
             </div>
@@ -278,9 +278,9 @@ const BookingModal = ({ venue, onClose }: BookingModalProps) => {
                     }`}
                   >
                     <div className="flex items-start justify-between gap-3">
-                      <div>
+                      <div className="min-w-0">
                         <p className="text-sm font-body font-semibold">{space.name}</p>
-                        <p className="mt-1 text-xs font-body text-muted-foreground">{space.description}</p>
+                        <p className="mt-1 break-words text-xs font-body text-muted-foreground">{space.description}</p>
                       </div>
                       <span className="shrink-0 rounded-lg bg-background px-2 py-1 text-[11px] font-body font-semibold text-foreground">
                         {space.capacity}

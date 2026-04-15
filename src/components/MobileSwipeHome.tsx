@@ -25,7 +25,7 @@ const MobileSwipeHome = () => {
   }, [venues.length]);
 
   return (
-    <div className="fixed inset-0 bg-foreground">
+    <div className="fixed inset-0 overflow-x-hidden bg-foreground">
       <MobileHeader
         onCodeSearch={() => setShowCodeSearch(true)}
       />
