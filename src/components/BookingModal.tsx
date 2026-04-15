@@ -102,7 +102,7 @@ const BookingModal = ({ venue, onClose }: BookingModalProps) => {
   };
 
   const fieldClass = (field: keyof BookingFormValues) =>
-    `w-full px-3 py-2.5 rounded-lg border bg-card text-sm font-body focus:outline-none focus:ring-2 ${
+    `min-w-0 max-w-full w-full rounded-lg border bg-card px-3 py-2.5 text-sm font-body focus:outline-none focus:ring-2 ${
       fieldErrors[field]
         ? "border-destructive focus:ring-destructive/20"
         : "border-border focus:ring-primary/30"
@@ -375,13 +375,13 @@ const BookingModal = ({ venue, onClose }: BookingModalProps) => {
                   type="date"
                   value={form.desiredDate}
                   onChange={(e) => updateField("desiredDate", e.target.value)}
-                  className={`${fieldClass("desiredDate")} pl-9`}
+                  className={`${fieldClass("desiredDate")} pl-9 text-[13px] sm:text-sm`}
                   aria-invalid={Boolean(fieldErrors.desiredDate)}
                 />
               </div>
               {renderError("desiredDate")}
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
                 <label className="text-xs font-body font-medium text-muted-foreground mb-1 block">
                   Début *
@@ -390,7 +390,7 @@ const BookingModal = ({ venue, onClose }: BookingModalProps) => {
                   type="time"
                   value={form.startTime}
                   onChange={(e) => updateField("startTime", e.target.value)}
-                  className={fieldClass("startTime")}
+                  className={`${fieldClass("startTime")} text-[13px] sm:text-sm`}
                   aria-invalid={Boolean(fieldErrors.startTime)}
                 />
                 {renderError("startTime")}
@@ -403,7 +403,7 @@ const BookingModal = ({ venue, onClose }: BookingModalProps) => {
                   type="time"
                   value={form.endTime}
                   onChange={(e) => updateField("endTime", e.target.value)}
-                  className={fieldClass("endTime")}
+                  className={`${fieldClass("endTime")} text-[13px] sm:text-sm`}
                   aria-invalid={Boolean(fieldErrors.endTime)}
                 />
                 {renderError("endTime")}
