@@ -71,4 +71,14 @@ describe("booking workflow", () => {
     expect(templates.postEventReviewFollowUp.to).toBe(validForm.email);
     expect(templates.postEventReviewFollowUp.scheduledFor).toContain("2099-06-13");
   });
+
+  it("keeps map coordinates available for every active venue", () => {
+    expect(
+      mockVenues.every(
+        (item) =>
+          Number.isFinite(item.location.lat) &&
+          Number.isFinite(item.location.lng),
+      ),
+    ).toBe(true);
+  });
 });

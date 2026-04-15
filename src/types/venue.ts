@@ -5,6 +5,11 @@ export interface VenueSpace {
   description: string;
 }
 
+export interface VenueLocation {
+  lat: number;
+  lng: number;
+}
+
 export interface Venue {
   id: string;
   title: string;
@@ -13,6 +18,7 @@ export interface Venue {
   description: string;
   city: string;
   address: string;
+  location: VenueLocation;
   venueCode: string;
   minCapacity: number;
   maxCapacity: number;

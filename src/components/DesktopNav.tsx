@@ -2,10 +2,12 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Search } from "lucide-react";
 import logoBlack from "@/assets/logo-black.svg";
+import { useEstablishmentReferralModal } from "@/lib/establishment-referral-modal";
 import VenueCodeSearch from "./VenueCodeSearch";
 
 const DesktopNav = () => {
   const navigate = useNavigate();
+  const { openModal } = useEstablishmentReferralModal();
   const [showCodeSearch, setShowCodeSearch] = useState(false);
 
   return (
@@ -19,9 +21,13 @@ const DesktopNav = () => {
             <Link to="/recherche" className="text-sm font-body font-medium text-foreground/70 hover:text-foreground transition-colors">
               Toutes les salles
             </Link>
-            <Link to="/#referencer-etablissement" className="hidden xl:inline text-sm font-body font-medium text-foreground/70 hover:text-foreground transition-colors">
+            <button
+              type="button"
+              onClick={openModal}
+              className="hidden xl:inline text-sm font-body font-medium text-foreground/70 transition-colors hover:text-foreground"
+            >
               Référencer mon établissement
-            </Link>
+            </button>
             <button
               onClick={() => setShowCodeSearch(true)}
               className="hidden sm:inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm font-body font-semibold text-foreground hover:border-primary/40 transition-colors"

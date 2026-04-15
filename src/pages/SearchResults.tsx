@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Search, MapPin, Users, SlidersHorizontal, Tag, ShieldCheck } from "lucide-react";
 import { searchVenues, mockVenues, getVenueByCode } from "@/data/venues";
@@ -6,8 +6,8 @@ import { EVENT_TYPES } from "@/types/venue";
 import DesktopNav from "@/components/DesktopNav";
 import FilterSelect from "@/components/FilterSelect";
 import SiteFooter from "@/components/SiteFooter";
+import SearchResultsMap from "@/components/SearchResultsMap";
 import VenueGridCard from "@/components/VenueGridCard";
-import { useEffect } from "react";
 
 const SearchResults = () => {
   const [searchParams] = useSearchParams();
@@ -33,7 +33,7 @@ const SearchResults = () => {
       query: query || undefined,
       city: city || undefined,
       eventType: eventType || undefined,
-      minGuests: guests ? parseInt(guests) : undefined,
+      minGuests: guests ? parseInt(guests, 10) : undefined,
     });
   }, [query, city, eventType, guests]);
 
@@ -42,7 +42,7 @@ const SearchResults = () => {
       <DesktopNav />
 
       <div className="pt-32 pb-16 px-6">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-7xl mx-auto">
           <div className="mb-10 grid grid-cols-1 gap-6 md:grid-cols-[1fr_auto] md:items-end">
             <div>
               <p className="mb-3 inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-body font-semibold text-primary">
@@ -108,18 +108,26 @@ const SearchResults = () => {
             Sélection affinée en temps réel
           </div>
 
-          {results.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {results.map((venue) => (
-                <VenueGridCard key={venue.id} venue={venue} />
-              ))}
+          <div className="grid grid-cols-1 gap-8 xl:grid-cols-[minmax(0,1.08fr)_minmax(360px,0.92fr)]">
+            <div className="order-2 xl:order-1">
+              {results.length > 0 ? (
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                  {results.map((venue) => (
+                    <VenueGridCard key={venue.id} venue={venue} />
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-lg border border-border bg-card py-20 text-center">
+                  <p className="mb-2 font-heading text-2xl font-semibold">Aucune salle trouvée</p>
+                  <p className="text-sm font-body text-muted-foreground">Essayez une autre ville, un autre format ou un volume d'invités différent.</p>
+                </div>
+              )}
             </div>
-          ) : (
-            <div className="text-center py-20 rounded-lg border border-border bg-card">
-              <p className="font-heading text-2xl font-semibold mb-2">Aucune salle trouvée</p>
-              <p className="text-muted-foreground font-body text-sm">Essayez une autre ville, un autre format ou un volume d'invités différent.</p>
-            </div>
-          )}
+
+            <aside className="order-1 xl:order-2 xl:sticky xl:top-24 xl:self-start">
+              <SearchResultsMap venues={results} />
+            </aside>
+          </div>
         </div>
       </div>
 

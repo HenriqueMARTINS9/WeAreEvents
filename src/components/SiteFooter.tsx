@@ -1,7 +1,10 @@
 import { Link } from "react-router-dom";
 import logoBlack from "@/assets/logo-black.svg";
+import { useEstablishmentReferralModal } from "@/lib/establishment-referral-modal";
 
 const SiteFooter = () => {
+  const { openModal } = useEstablishmentReferralModal();
+
   return (
     <footer className="py-12 px-6 bg-foreground text-primary-foreground">
       <div className="mx-auto grid max-w-7xl grid-cols-1 gap-8 md:grid-cols-4 xl:px-2">
@@ -16,7 +19,9 @@ const SiteFooter = () => {
           <div className="space-y-2 text-primary-foreground/60 text-sm font-body">
             <Link to="/" className="hover:text-primary-foreground transition-colors">Accueil</Link>
             <Link to="/recherche" className="block hover:text-primary-foreground transition-colors">Toutes les salles</Link>
-            <Link to="/#referencer-etablissement" className="block hover:text-primary-foreground transition-colors">Référencer mon établissement</Link>
+            <button type="button" onClick={openModal} className="block hover:text-primary-foreground transition-colors">
+              Référencer mon établissement
+            </button>
           </div>
         </div>
         <div>
@@ -32,9 +37,13 @@ const SiteFooter = () => {
           <div className="space-y-2 text-primary-foreground/60 text-sm font-body">
             <p>contact@wearevents.fr</p>
             <p>Paris, France</p>
-            <Link to="/#referencer-etablissement" className="inline-flex rounded-lg border border-primary-foreground/15 px-3 py-2 text-primary-foreground hover:bg-primary-foreground hover:text-foreground transition-colors">
+            <button
+              type="button"
+              onClick={openModal}
+              className="inline-flex rounded-lg border border-primary-foreground/15 px-3 py-2 text-primary-foreground transition-colors hover:bg-primary-foreground hover:text-foreground"
+            >
               Référencer mon établissement
-            </Link>
+            </button>
           </div>
         </div>
       </div>
