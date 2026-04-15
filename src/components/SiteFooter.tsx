@@ -9,7 +9,7 @@ const SiteFooter = () => {
     <footer className="py-12 px-6 bg-foreground text-primary-foreground">
       <div className="mx-auto grid max-w-7xl grid-cols-1 gap-8 md:grid-cols-4 xl:px-2">
         <div>
-          <img src={logoBlack} alt="WeAreEvents" className="h-6 mb-4 brightness-0 invert" />
+          <img src={logoBlack} alt="WeAreEvents" className="mb-4 h-8 md:h-9 brightness-0 invert" />
           <p className="text-primary-foreground/60 text-sm font-body leading-relaxed">
             La conciergerie de réservation de lieux événementiels pour les marques, entreprises et événements privés.
           </p>

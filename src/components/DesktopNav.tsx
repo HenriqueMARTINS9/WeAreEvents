@@ -13,9 +13,9 @@ const DesktopNav = () => {
   return (
     <>
       <nav className="fixed top-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-xl border-b border-border/70">
-        <div className="mx-auto flex h-[4.5rem] min-h-16 max-w-7xl items-center justify-between gap-4 px-6 xl:px-8">
+        <div className="mx-auto flex h-20 min-h-20 max-w-7xl items-center justify-between gap-4 px-6 xl:px-8">
           <Link to="/" className="shrink-0">
-            <img src={logoBlack} alt="WeAreEvents" className="h-6" />
+            <img src={logoBlack} alt="WeAreEvents" className="h-8 xl:h-9" />
           </Link>
           <div className="flex items-center gap-3 xl:gap-5">
             <Link to="/recherche" className="text-sm font-body font-medium text-foreground/70 hover:text-foreground transition-colors">

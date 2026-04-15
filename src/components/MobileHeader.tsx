@@ -9,7 +9,7 @@ const MobileHeader = ({ onCodeSearch }: MobileHeaderProps) => {
   return (
     <div className="fixed top-0 left-0 right-0 z-40 px-4 pt-4 pb-3 flex items-center justify-between">
       <div className="min-w-0">
-        <img src={logoWhite} alt="WeAreEvents" className="h-7 drop-shadow" />
+        <img src={logoWhite} alt="WeAreEvents" className="h-8 drop-shadow" />
         <p className="mt-1 truncate text-[10px] font-body text-primary-foreground/70">
           Lieux sélectionnés, réponse sous 24h
         </p>
