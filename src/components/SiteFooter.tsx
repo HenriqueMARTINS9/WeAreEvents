@@ -10,9 +10,6 @@ const SiteFooter = () => {
       <div className="mx-auto grid max-w-7xl grid-cols-1 gap-8 md:grid-cols-4 xl:px-2">
         <div>
           <img src={logoBlack} alt="WeAreEvents" className="mb-4 h-8 md:h-9 brightness-0 invert" />
-          <p className="text-primary-foreground/60 text-sm font-body leading-relaxed">
-            La conciergerie de réservation de lieux événementiels pour les marques, entreprises et événements privés.
-          </p>
         </div>
         <div>
           <h4 className="font-body font-semibold text-sm mb-3">Navigation</h4>

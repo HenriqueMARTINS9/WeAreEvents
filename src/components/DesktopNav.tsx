@@ -12,7 +12,7 @@ const DesktopNav = () => {
 
   return (
     <>
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-xl border-b border-border/70">
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-background/20 backdrop-blur-xl">
         <div className="mx-auto flex h-20 min-h-20 max-w-7xl items-center justify-between gap-4 px-6 xl:px-8">
           <Link to="/" className="shrink-0">
             <img src={logoBlack} alt="WeAreEvents" className="h-8 xl:h-9" />

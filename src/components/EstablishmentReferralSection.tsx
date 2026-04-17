@@ -5,27 +5,27 @@ const EstablishmentReferralSection = () => {
   const { openModal } = useEstablishmentReferralModal();
 
   return (
-    <section className="px-6 py-20 bg-foreground text-primary-foreground">
+    <section className="bg-background px-6 py-20 text-foreground">
       <div className="mx-auto grid max-w-7xl grid-cols-1 gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:items-start xl:px-2">
         <div className="max-w-xl">
           <p className="font-body text-sm font-semibold text-luxe-gold mb-3">Professionnels du secteur</p>
           <h2 className="font-heading text-3xl md:text-5xl font-semibold leading-tight mb-5">
             Vous souhaitez référencer votre établissement ?
           </h2>
-          <p className="font-body text-primary-foreground/72 leading-relaxed mb-5">
+          <p className="mb-5 font-body leading-relaxed text-muted-foreground">
             Gagnez de nombreux clients parmi les visiteurs qui cherchent chaque mois un lieu fiable, lisible et rapide à réserver.
           </p>
-          <p className="font-body text-primary-foreground/72 leading-relaxed mb-5">
+          <p className="mb-5 font-body leading-relaxed text-muted-foreground">
             Pas de commissions et sans engagement, vous payez un montant fixe sans risque de voir déraper la facture.
           </p>
-          <div className="space-y-3 text-sm font-body text-primary-foreground/80">
+          <div className="space-y-3 text-sm font-body text-foreground/80">
             <p>Visibilité premium auprès d'organisateurs qualifiés.</p>
             <p>Demandes centralisées, triées et accompagnées par notre équipe.</p>
             <p>Modèle simple, 100 % lisible et sans surprise.</p>
           </div>
         </div>
 
-        <div className="rounded-lg border border-primary-foreground/15 bg-background p-6 text-foreground luxury-shadow">
+        <div className="rounded-lg border border-border bg-card p-6 text-foreground luxury-shadow">
           <div className="flex items-center gap-2 text-xs font-body font-semibold text-primary">
             <Building2 className="h-4 w-4" />
             Référencement premium

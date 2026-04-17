@@ -16,6 +16,7 @@ import { getVenueLocationSuggestions, mockVenues } from "@/data/venues";
 import { EVENT_TYPES } from "@/types/venue";
 import { useNavigate } from "react-router-dom";
 import DesktopNav from "./DesktopNav";
+import EstablishmentReferralSection from "./EstablishmentReferralSection";
 import FilterSelect from "./FilterSelect";
 import LocationAutocomplete from "./LocationAutocomplete";
 import SiteFooter from "./SiteFooter";
@@ -94,14 +95,14 @@ const DesktopHome = () => {
 
         <div className="relative z-10 flex h-full max-w-7xl mx-auto flex-col justify-center px-6 pb-14 pt-24 xl:px-8">
           <div className="max-w-4xl">
-            <p className="mb-4 inline-flex rounded-lg border border-primary-foreground/15 bg-primary-foreground/10 px-3 py-1.5 text-xs font-body font-semibold text-primary-foreground/82 backdrop-blur-md">
+            <p className="mb-4 inline-flex rounded-lg border border-primary-foreground/15 bg-primary-foreground/10 px-3 py-1.5 text-xs font-body font-semibold text-primary backdrop-blur-md">
               Lieux premium pour événements privés et corporate
             </p>
             <h1 className="font-heading text-5xl xl:text-6xl 2xl:text-7xl text-primary-foreground font-semibold leading-[0.92] mb-6">
               Des lieux qui signent
               <br />
               votre{" "}
-              <span key={activeHero.label} className="hero-copy-enter text-luxe-gold">
+              <span key={activeHero.label} className="hero-copy-enter text-primary">
                 {activeHero.noun}.
               </span>
             </h1>
@@ -203,7 +204,7 @@ const DesktopHome = () => {
         <div className="max-w-7xl mx-auto xl:px-2">
           <div className="mb-10 flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
             <div>
-              <p className="font-body text-sm font-semibold text-luxe-gold mb-3">Sélection du moment</p>
+              <p className="font-body text-sm font-semibold text-primary mb-3">Sélection du moment</p>
               <h2 className="font-heading text-4xl 2xl:text-5xl font-semibold mb-3 leading-[1.02]">
                 Lieux à forte demande
               </h2>
@@ -236,6 +237,8 @@ const DesktopHome = () => {
           </div>
         </div>
       </section>
+
+      <EstablishmentReferralSection />
 
       <SiteFooter />
     </div>
