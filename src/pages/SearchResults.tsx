@@ -118,7 +118,7 @@ const SearchResults = () => {
           </div>
 
           <div className="grid grid-cols-1 gap-8 xl:grid-cols-[minmax(0,1.08fr)_minmax(360px,0.92fr)]">
-            <div className="order-2 xl:order-1">
+            <div className="order-2 xl:order-1 xl:max-h-[calc(100vh-15rem)] xl:overflow-y-auto xl:pr-3">
               {results.length > 0 ? (
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                   {results.map((venue) => (

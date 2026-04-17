@@ -86,15 +86,6 @@ const SearchResultsMap = ({ venues, onVisibleVenuesChange }: SearchResultsMapPro
         <p className="text-xs font-body text-muted-foreground">
           Le scroll de page reste sur la liste. Faites glisser la carte pour ajuster la zone affichée.
         </p>
-        <button
-          type="button"
-          onClick={() => {
-            if (mapInstance) fitMapToVenues(mapInstance, venues);
-          }}
-          className="shrink-0 rounded-lg border border-border bg-background px-3 py-2 text-xs font-body font-semibold text-foreground transition-colors hover:border-primary/30 hover:text-primary"
-        >
-          Recentrer
-        </button>
       </div>
 
       <div className="relative h-[360px] md:h-[420px] xl:h-[calc(100vh-15rem)] xl:min-h-[560px]">
@@ -102,7 +93,7 @@ const SearchResultsMap = ({ venues, onVisibleVenuesChange }: SearchResultsMapPro
           key={mapKey}
           center={FRANCE_CENTER}
           zoom={5.5}
-          scrollWheelZoom={false}
+          scrollWheelZoom={!isMobile}
           dragging={!isMobile}
           touchZoom={false}
           doubleClickZoom={!isMobile}
