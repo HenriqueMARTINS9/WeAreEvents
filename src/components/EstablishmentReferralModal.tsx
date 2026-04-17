@@ -100,7 +100,7 @@ const EstablishmentReferralModal = ({ isOpen, onClose }: EstablishmentReferralMo
         ) : (
           <div className="grid grid-cols-1 overflow-hidden lg:grid-cols-[0.95fr_1.05fr]">
             <div className="bg-gradient-editorial px-6 py-10 text-primary-foreground sm:px-8 lg:py-12">
-              <p className="mb-3 text-sm font-body font-semibold text-luxe-gold">Professionnels du secteur</p>
+              <p className="mb-3 text-sm font-body font-semibold text-primary">Professionnels du secteur</p>
               <h2 className="font-heading text-3xl font-semibold leading-tight sm:text-4xl">
                 Vous souhaitez référencer votre établissement ?
               </h2>
