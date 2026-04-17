@@ -8,7 +8,7 @@ const EstablishmentReferralSection = () => {
     <section className="bg-background px-6 py-20 text-foreground">
       <div className="mx-auto grid max-w-7xl grid-cols-1 gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:items-start xl:px-2">
         <div className="max-w-xl">
-          <p className="font-body text-sm font-semibold text-luxe-gold mb-3">Professionnels du secteur</p>
+          <p className="font-body text-sm font-semibold text-primary mb-3">Professionnels du secteur</p>
           <h2 className="font-heading text-3xl md:text-5xl font-semibold leading-tight mb-5">
             Vous souhaitez référencer votre établissement ?
           </h2>
