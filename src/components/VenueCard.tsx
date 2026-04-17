@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Heart, Share2, MessageCircle, Star, MapPin, Users, Tag, ShieldCheck } from "lucide-react";
 import type { Venue } from "@/types/venue";
+import { toast } from "sonner";
 
 interface VenueCardProps {
   venue: Venue;
@@ -14,6 +15,39 @@ const VenueCard = ({ venue, isActive, onOpenDetail, onBooking }: VenueCardProps)
   const [liked, setLiked] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout>>();
+
+  const handleShare = async () => {
+    const shareUrl = typeof window !== "undefined"
+      ? `${window.location.origin}/salle/${venue.slug}`
+      : `/salle/${venue.slug}`;
+
+    const shareData = {
+      title: venue.title,
+      text: `${venue.title} · ${venue.city}`,
+      url: shareUrl,
+    };
+
+    try {
+      if (typeof navigator !== "undefined" && "share" in navigator) {
+        await navigator.share(shareData);
+        return;
+      }
+
+      if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareUrl);
+        toast.success("Lien du lieu copié.");
+        return;
+      }
+
+      toast.error("Le partage n'est pas disponible sur cet appareil.");
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") {
+        return;
+      }
+
+      toast.error("Impossible de partager le lieu pour le moment.");
+    }
+  };
 
   useEffect(() => {
     if (isActive && venue.videoUrl) {
@@ -169,7 +203,12 @@ const VenueCard = ({ venue, isActive, onOpenDetail, onBooking }: VenueCardProps)
           <span className="text-[10px] font-body">{venue.reviewCount}</span>
         </button>
 
-        <button className="flex flex-col items-center gap-1 text-primary-foreground">
+        <button
+          type="button"
+          onClick={handleShare}
+          className="flex flex-col items-center gap-1 text-primary-foreground"
+          aria-label={`Partager ${venue.title}`}
+        >
           <span className="p-2 rounded-lg glass-dark">
             <Share2 className="w-6 h-6" />
           </span>

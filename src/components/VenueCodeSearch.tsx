@@ -2,6 +2,7 @@ import { useState } from "react";
 import { X, Search, ArrowRight } from "lucide-react";
 import { getVenueByCode, mockTikTokCodeMappings } from "@/data/venues";
 import type { Venue } from "@/types/venue";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface VenueCodeSearchProps {
   onClose: () => void;
@@ -10,17 +11,19 @@ interface VenueCodeSearchProps {
 }
 
 const VenueCodeSearch = ({ onClose, onVenueFound, mode = "default" }: VenueCodeSearchProps) => {
+  const isMobile = useIsMobile();
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
   const exampleCodes = mockTikTokCodeMappings.slice(0, 2).map((mapping) => mapping.code).join(" ou ");
   const isEntryMode = mode === "entry";
+  const useUnifiedMobileExperience = isMobile || isEntryMode;
 
-  const copy = isEntryMode
+  const copy = useUnifiedMobileExperience
     ? {
         eyebrow: "Accès direct depuis les réseaux",
         title: "Tu viens d'Insta ou TikTok ?",
         description: "Voici où entrer ton code pour retrouver immédiatement le lieu, le tarif indicatif et la demande de disponibilité.",
-        helper: "Sinon, continue simplement vers la découverte.",
+        helper: "Continuer vers la découverte",
         buttonLabel: "Accéder au lieu",
       }
     : {
@@ -55,7 +58,7 @@ const VenueCodeSearch = ({ onClose, onVenueFound, mode = "default" }: VenueCodeS
           </button>
         </div>
 
-        {isEntryMode && (
+        {useUnifiedMobileExperience && (
           <div className="mb-5 flex flex-wrap gap-2">
             {["Instagram", "TikTok"].map((source) => (
               <span
@@ -92,7 +95,7 @@ const VenueCodeSearch = ({ onClose, onVenueFound, mode = "default" }: VenueCodeS
             onClick={handleSearch}
             className="brand-primary-button inline-flex items-center justify-center gap-2 rounded-lg px-4 py-3 text-primary-foreground transition-all hover:brightness-95"
           >
-            {isEntryMode && <span className="hidden text-sm font-body font-semibold sm:inline">{copy.buttonLabel}</span>}
+            {useUnifiedMobileExperience && <span className="hidden text-sm font-body font-semibold sm:inline">{copy.buttonLabel}</span>}
             <ArrowRight className="w-5 h-5" />
           </button>
         </div>
@@ -101,7 +104,7 @@ const VenueCodeSearch = ({ onClose, onVenueFound, mode = "default" }: VenueCodeS
           <p className="text-destructive text-xs font-body mt-2">{error}</p>
         )}
 
-        {isEntryMode && (
+        {useUnifiedMobileExperience && (
           <button
             type="button"
             onClick={onClose}
