@@ -53,7 +53,7 @@ const EstablishmentReferralSection = () => {
           <button
             type="button"
             onClick={openModal}
-            className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-5 py-3 text-sm font-body font-semibold text-primary-foreground transition-colors hover:bg-foreground"
+            className="brand-primary-button mt-6 inline-flex w-full items-center justify-center gap-2 rounded-lg px-5 py-3 text-sm font-body font-semibold text-primary-foreground transition-all hover:brightness-95"
           >
             Référencer mon établissement
             <ArrowRight className="h-4 w-4" />

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { getVenueByCode, mockTikTokCodeMappings, mockVenues } from "@/data/venues";
+import { getVenueByCode, getVenueLocationSuggestions, mockTikTokCodeMappings, mockVenues, searchVenues } from "@/data/venues";
 import {
   buildBookingEmailTemplates,
   createBookingRequest,
@@ -22,6 +22,16 @@ describe("venue code lookup", () => {
 
   it("keeps mock TikTok mappings connected to active venues", () => {
     expect(mockTikTokCodeMappings.every((mapping) => Boolean(getVenueByCode(mapping.code)))).toBe(true);
+  });
+
+  it("supports searching venues by postal code", () => {
+    expect(searchVenues({ locationQuery: "75008" }).map((venue) => venue.slug)).toContain("le-rooftop-etoile");
+  });
+
+  it("builds city suggestions with matching postal codes", () => {
+    const parisSuggestion = getVenueLocationSuggestions().find((item) => item.city === "Paris");
+
+    expect(parisSuggestion?.postalCodes).toContain("75008");
   });
 });
 

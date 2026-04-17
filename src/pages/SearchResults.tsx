@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { Search, MapPin, Users, SlidersHorizontal, Tag, ShieldCheck } from "lucide-react";
-import { searchVenues, mockVenues, getVenueByCode } from "@/data/venues";
+import { MapPin, Users, SlidersHorizontal, Tag, ShieldCheck } from "lucide-react";
+import { searchVenues, getVenueByCode, getVenueLocationSuggestions } from "@/data/venues";
 import { EVENT_TYPES } from "@/types/venue";
 import DesktopNav from "@/components/DesktopNav";
 import FilterSelect from "@/components/FilterSelect";
+import LocationAutocomplete from "@/components/LocationAutocomplete";
 import SiteFooter from "@/components/SiteFooter";
 import SearchResultsMap from "@/components/SearchResultsMap";
 import VenueGridCard from "@/components/VenueGridCard";
@@ -12,13 +13,12 @@ import VenueGridCard from "@/components/VenueGridCard";
 const SearchResults = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const [city, setCity] = useState(searchParams.get("city") || "");
+  const [locationQuery, setLocationQuery] = useState(searchParams.get("location") || searchParams.get("city") || "");
   const [eventType, setEventType] = useState(searchParams.get("type") || "");
   const [guests, setGuests] = useState(searchParams.get("guests") || "");
-  const [query, setQuery] = useState(searchParams.get("q") || "");
   const [visibleVenueIds, setVisibleVenueIds] = useState<string[] | null>(null);
   const codeParam = searchParams.get("code");
-  const cityOptions = [...new Set(mockVenues.map((v) => v.city))];
+  const locationOptions = getVenueLocationSuggestions();
 
   useEffect(() => {
     if (codeParam) {
@@ -31,12 +31,11 @@ const SearchResults = () => {
 
   const filteredResults = useMemo(() => {
     return searchVenues({
-      query: query || undefined,
-      city: city || undefined,
+      locationQuery: locationQuery || undefined,
       eventType: eventType || undefined,
       minGuests: guests ? parseInt(guests, 10) : undefined,
     });
-  }, [query, city, eventType, guests]);
+  }, [locationQuery, eventType, guests]);
 
   useEffect(() => {
     setVisibleVenueIds(null);
@@ -68,7 +67,7 @@ const SearchResults = () => {
                 Trouvez votre prochaine adresse.
               </h1>
               <p className="max-w-2xl text-muted-foreground font-body leading-relaxed">
-                Filtrez les lieux par ville, capacité et format d'événement, puis envoyez une demande qualifiée.
+                Filtrez les lieux par ville ou code postal, capacité et format d'événement, puis envoyez une demande qualifiée.
               </p>
             </div>
             <div className="rounded-lg border border-border bg-card px-4 py-3 text-sm font-body text-muted-foreground">
@@ -81,25 +80,14 @@ const SearchResults = () => {
           </div>
 
           {/* Filters */}
-          <div className="mb-8 grid grid-cols-1 gap-3 rounded-lg border border-border bg-card p-3 luxury-shadow md:grid-cols-[1.2fr_1fr_1.35fr_0.8fr]">
-            <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-muted border border-border">
-              <Search className="w-4 h-4 text-muted-foreground" />
-              <input
-                type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Nom ou ville"
-                className="min-w-0 flex-1 bg-transparent text-sm font-body focus:outline-none"
-              />
-            </div>
-            <FilterSelect
-              value={city}
-              onChange={setCity}
-              placeholder="Ville"
-              emptyLabel="Toutes les villes"
-              options={cityOptions}
+          <div className="mb-8 grid grid-cols-1 gap-3 rounded-lg border border-border bg-card p-3 luxury-shadow lg:grid-cols-[minmax(0,1.18fr)_minmax(0,1fr)_minmax(0,1fr)] lg:items-stretch">
+            <LocationAutocomplete
+              value={locationQuery}
+              onChange={setLocationQuery}
+              options={locationOptions}
+              placeholder="Ville ou code postal"
+              className="h-12 bg-muted"
               icon={<MapPin className="w-4 h-4" />}
-              className="bg-muted"
             />
             <FilterSelect
               value={eventType}
@@ -108,9 +96,9 @@ const SearchResults = () => {
               emptyLabel="Tous les types"
               options={EVENT_TYPES}
               icon={<Tag className="w-4 h-4" />}
-              className="bg-muted"
+              className="h-12 bg-muted"
             />
-            <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-muted border border-border">
+            <div className="flex h-12 items-center gap-2 rounded-lg border border-border bg-muted px-3">
               <Users className="w-4 h-4 text-muted-foreground" />
               <input
                 type="number"

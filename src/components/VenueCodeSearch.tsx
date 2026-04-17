@@ -6,12 +6,30 @@ import type { Venue } from "@/types/venue";
 interface VenueCodeSearchProps {
   onClose: () => void;
   onVenueFound: (venue: Venue) => void;
+  mode?: "default" | "entry";
 }
 
-const VenueCodeSearch = ({ onClose, onVenueFound }: VenueCodeSearchProps) => {
+const VenueCodeSearch = ({ onClose, onVenueFound, mode = "default" }: VenueCodeSearchProps) => {
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
   const exampleCodes = mockTikTokCodeMappings.slice(0, 2).map((mapping) => mapping.code).join(" ou ");
+  const isEntryMode = mode === "entry";
+
+  const copy = isEntryMode
+    ? {
+        eyebrow: "Accès direct depuis les réseaux",
+        title: "Tu viens d'Insta ou TikTok ?",
+        description: "Voici où entrer ton code pour retrouver immédiatement le lieu, le tarif indicatif et la demande de disponibilité.",
+        helper: "Sinon, continue simplement vers la découverte.",
+        buttonLabel: "Accéder au lieu",
+      }
+    : {
+        eyebrow: "Accès direct au lieu",
+        title: "Entrer un code TikTok",
+        description: "Entrez le code aperçu dans la vidéo pour retrouver la fiche, le tarif indicatif et la demande de disponibilité.",
+        helper: "",
+        buttonLabel: "",
+      };
 
   const handleSearch = () => {
     if (!code.trim()) return;
@@ -29,16 +47,29 @@ const VenueCodeSearch = ({ onClose, onVenueFound }: VenueCodeSearchProps) => {
       <div className="relative w-full overflow-x-hidden rounded-t-lg bg-background p-6 pb-8 animate-slide-up luxury-shadow sm:max-w-md sm:rounded-lg">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <p className="font-body text-xs font-semibold text-primary mb-1">Accès direct au lieu</p>
-            <h3 className="font-heading text-2xl font-semibold">Entrer un code TikTok</h3>
+            <p className="font-body text-xs font-semibold text-primary mb-1">{copy.eyebrow}</p>
+            <h3 className="font-heading text-2xl font-semibold">{copy.title}</h3>
           </div>
           <button onClick={onClose} className="p-2 rounded-lg hover:bg-muted transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>
 
+        {isEntryMode && (
+          <div className="mb-5 flex flex-wrap gap-2">
+            {["Instagram", "TikTok"].map((source) => (
+              <span
+                key={source}
+                className="inline-flex items-center rounded-lg border border-primary/20 bg-secondary px-3 py-2 text-xs font-body font-semibold text-foreground"
+              >
+                {source}
+              </span>
+            ))}
+          </div>
+        )}
+
         <p className="text-muted-foreground text-sm font-body leading-relaxed mb-5">
-          Entrez le code aperçu dans la vidéo pour retrouver la fiche, le tarif indicatif et la demande de disponibilité.
+          {copy.description}
         </p>
 
         <div className="flex gap-2">
@@ -59,14 +90,25 @@ const VenueCodeSearch = ({ onClose, onVenueFound }: VenueCodeSearchProps) => {
           </div>
           <button
             onClick={handleSearch}
-            className="px-4 py-3 rounded-lg bg-primary text-primary-foreground hover:bg-foreground transition-colors"
+            className="brand-primary-button inline-flex items-center justify-center gap-2 rounded-lg px-4 py-3 text-primary-foreground transition-all hover:brightness-95"
           >
+            {isEntryMode && <span className="hidden text-sm font-body font-semibold sm:inline">{copy.buttonLabel}</span>}
             <ArrowRight className="w-5 h-5" />
           </button>
         </div>
 
         {error && (
           <p className="text-destructive text-xs font-body mt-2">{error}</p>
+        )}
+
+        {isEntryMode && (
+          <button
+            type="button"
+            onClick={onClose}
+            className="mt-4 text-sm font-body font-medium text-muted-foreground transition-colors hover:text-foreground"
+          >
+            {copy.helper}
+          </button>
         )}
       </div>
     </div>

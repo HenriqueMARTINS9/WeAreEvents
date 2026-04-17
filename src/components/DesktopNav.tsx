@@ -18,9 +18,6 @@ const DesktopNav = () => {
             <img src={logoBlack} alt="WeAreEvents" className="h-8 xl:h-9" />
           </Link>
           <div className="flex items-center gap-3 xl:gap-5">
-            <Link to="/recherche" className="text-sm font-body font-medium text-foreground/70 hover:text-foreground transition-colors">
-              Toutes les salles
-            </Link>
             <button
               type="button"
               onClick={openModal}
@@ -37,7 +34,7 @@ const DesktopNav = () => {
             </button>
             <Link
               to="/recherche"
-              className="px-4 py-2 rounded-lg bg-foreground text-primary-foreground text-sm font-body font-semibold hover:bg-primary transition-colors"
+              className="brand-primary-button inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-body font-semibold text-primary-foreground transition-all hover:brightness-95"
             >
               Trouver ma salle
             </Link>

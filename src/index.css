@@ -15,7 +15,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 7%;
 
-    --primary: 346 52% 35%;
+    --primary: 349.09 64.08% 59.61%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 142 10% 91%;
@@ -32,7 +32,7 @@
 
     --border: 0 0% 84%;
     --input: 0 0% 84%;
-    --ring: 346 52% 35%;
+    --ring: 349.09 64.08% 59.61%;
 
     --radius: 0.5rem;
 
@@ -44,6 +44,7 @@
     --luxe-sage: 142 10% 38%;
     --luxe-ink: 0 0% 7%;
     --luxe-line: 0 0% 78%;
+    --brand-dot: 349.09 64.08% 59.61%;
 
     --font-heading: 'Playfair Display', Georgia, serif;
     --font-body: 'Inter', system-ui, sans-serif;
@@ -143,6 +144,75 @@
 
   .luxury-shadow {
     box-shadow: 0 24px 80px rgba(10,10,10,0.16);
+  }
+
+  .brand-primary-button {
+    background: hsl(var(--brand-dot));
+    box-shadow: 0 18px 38px rgba(218, 86, 110, 0.22);
+  }
+
+  .hero-copy-enter {
+    animation: hero-copy-enter 720ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .hero-image-active {
+    animation: hero-image-zoom 6.2s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .hero-video-active {
+    animation: hero-video-float 11s cubic-bezier(0.22, 1, 0.36, 1) infinite alternate;
+  }
+
+  .hero-swap-enter {
+    animation: hero-swap-enter 900ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  @keyframes hero-copy-enter {
+    from {
+      opacity: 0;
+      transform: translate3d(0, 18px, 0);
+    }
+
+    to {
+      opacity: 1;
+      transform: translate3d(0, 0, 0);
+    }
+  }
+
+  @keyframes hero-image-zoom {
+    from {
+      transform: scale(1.08);
+    }
+
+    to {
+      transform: scale(1);
+    }
+  }
+
+  @keyframes hero-video-float {
+    from {
+      transform: scale(1.05) translate3d(0, 0, 0);
+    }
+
+    50% {
+      transform: scale(1.08) translate3d(-1%, -0.75%, 0);
+    }
+
+    to {
+      transform: scale(1.06) translate3d(1.4%, 0.8%, 0);
+    }
+  }
+
+  @keyframes hero-swap-enter {
+    from {
+      opacity: 0;
+      transform: translate3d(0, 12px, 0);
+    }
+
+    to {
+      opacity: 1;
+      transform: translate3d(0, 0, 0);
+    }
   }
 
   .snap-container {

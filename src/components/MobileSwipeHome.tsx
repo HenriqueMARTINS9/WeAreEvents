@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { mockVenues } from "@/data/venues";
 import VenueCard from "./VenueCard";
@@ -12,10 +12,12 @@ const MobileSwipeHome = () => {
   const navigate = useNavigate();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showCodeSearch, setShowCodeSearch] = useState(false);
+  const [showEntryPrompt, setShowEntryPrompt] = useState(false);
   const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null);
   const [bookingVenue, setBookingVenue] = useState<Venue | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const venues = mockVenues.filter((v) => v.active);
+  const entryPromptStorageKey = "wearevents-mobile-code-entry-seen";
 
   const handleScroll = useCallback(() => {
     const container = containerRef.current;
@@ -23,6 +25,25 @@ const MobileSwipeHome = () => {
     const idx = Math.round(container.scrollTop / container.clientHeight);
     setCurrentIndex(Math.min(idx, venues.length - 1));
   }, [venues.length]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (window.sessionStorage.getItem(entryPromptStorageKey)) return;
+
+    const timeout = window.setTimeout(() => {
+      setShowEntryPrompt(true);
+    }, 320);
+
+    return () => window.clearTimeout(timeout);
+  }, []);
+
+  const dismissEntryPrompt = () => {
+    if (typeof window !== "undefined") {
+      window.sessionStorage.setItem(entryPromptStorageKey, "true");
+    }
+
+    setShowEntryPrompt(false);
+  };
 
   return (
     <div className="fixed inset-0 overflow-x-hidden bg-foreground">
@@ -57,6 +78,17 @@ const MobileSwipeHome = () => {
           />
         ))}
       </div>
+
+      {showEntryPrompt && (
+        <VenueCodeSearch
+          mode="entry"
+          onClose={dismissEntryPrompt}
+          onVenueFound={(venue) => {
+            dismissEntryPrompt();
+            navigate(`/salle/${venue.slug}`);
+          }}
+        />
+      )}
 
       {showCodeSearch && (
         <VenueCodeSearch

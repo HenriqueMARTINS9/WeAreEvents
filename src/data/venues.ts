@@ -288,6 +288,13 @@ export const mockTikTokCodeMappings: TikTokVenueCodeMapping[] = [
 ];
 
 const normalizeVenueCode = (code: string) => code.trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+const normalizeSearchValue = (value: string) =>
+  value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+const getPostalCodeFromAddress = (address: string) => address.match(/\b\d{5}\b/)?.[0] ?? "";
 
 export function getVenueBySlug(slug: string): Venue | undefined {
   return mockVenues.find((v) => v.slug === slug);
@@ -316,20 +323,48 @@ export function getReviewsByVenueId(venueId: string): Review[] {
   return mockReviews.filter((r) => r.venueId === venueId);
 }
 
+export function getVenueLocationSuggestions() {
+  const locations = new Map<string, Set<string>>();
+
+  mockVenues.forEach((venue) => {
+    if (!venue.active) return;
+
+    const cityKey = venue.city;
+    const postalCode = getPostalCodeFromAddress(venue.address);
+    const cityPostcodes = locations.get(cityKey) ?? new Set<string>();
+
+    if (postalCode) {
+      cityPostcodes.add(postalCode);
+    }
+
+    locations.set(cityKey, cityPostcodes);
+  });
+
+  return Array.from(locations.entries())
+    .map(([city, postalCodes]) => ({
+      city,
+      postalCodes: Array.from(postalCodes).sort(),
+    }))
+    .sort((a, b) => a.city.localeCompare(b.city, "fr"));
+}
+
 export function searchVenues(filters: {
-  query?: string;
-  city?: string;
+  locationQuery?: string;
   eventType?: string;
   minGuests?: number;
 }): Venue[] {
   return mockVenues.filter((v) => {
     if (!v.active) return false;
-    if (filters.query) {
-      const q = filters.query.toLowerCase();
-      const codes = getTikTokCodesByVenueId(v.id).map((mapping) => mapping.code.toLowerCase());
-      if (!v.title.toLowerCase().includes(q) && !v.city.toLowerCase().includes(q) && !v.venueCode.toLowerCase().includes(q) && !codes.some((code) => code.includes(q))) return false;
+    if (filters.locationQuery) {
+      const locationQuery = normalizeSearchValue(filters.locationQuery);
+      const city = normalizeSearchValue(v.city);
+      const address = normalizeSearchValue(v.address);
+      const postalCode = getPostalCodeFromAddress(v.address);
+
+      if (!city.includes(locationQuery) && !address.includes(locationQuery) && !postalCode.startsWith(locationQuery)) {
+        return false;
+      }
     }
-    if (filters.city && v.city.toLowerCase() !== filters.city.toLowerCase()) return false;
     if (filters.eventType && !v.eventCategories.includes(filters.eventType)) return false;
     if (filters.minGuests && v.maxCapacity < filters.minGuests) return false;
     return true;

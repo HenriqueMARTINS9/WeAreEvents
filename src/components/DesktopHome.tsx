@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Search,
   MapPin,
@@ -8,31 +8,65 @@ import {
   Sparkles,
   ShieldCheck,
   Clock3,
-  ArrowRight,
   CheckCircle2,
   BadgeCheck,
   Zap,
 } from "lucide-react";
-import { mockVenues } from "@/data/venues";
+import { getVenueLocationSuggestions, mockVenues } from "@/data/venues";
 import { EVENT_TYPES } from "@/types/venue";
 import { useNavigate } from "react-router-dom";
 import DesktopNav from "./DesktopNav";
-import EstablishmentReferralSection from "./EstablishmentReferralSection";
 import FilterSelect from "./FilterSelect";
+import LocationAutocomplete from "./LocationAutocomplete";
 import SiteFooter from "./SiteFooter";
 import VenueGridCard from "./VenueGridCard";
 
+const HERO_MOMENTS = [
+  {
+    label: "Mariage",
+    noun: "mariage",
+    image: "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=1920&q=80",
+  },
+  {
+    label: "Gala",
+    noun: "gala",
+    image: "https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=1920&q=80",
+  },
+  {
+    label: "Séminaire",
+    noun: "séminaire",
+    image: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=1920&q=80",
+  },
+  {
+    label: "Lancement",
+    noun: "lancement",
+    image: "https://images.unsplash.com/photo-1505236858219-8359eb29e329?w=1920&q=80",
+  },
+] as const;
+
+const HERO_BACKGROUND_VIDEO = "https://videos.pexels.com/video-files/3571264/3571264-uhd_2560_1440_30fps.mp4";
+
 const DesktopHome = () => {
   const navigate = useNavigate();
-  const [searchCity, setSearchCity] = useState("");
+  const [searchLocation, setSearchLocation] = useState("");
   const [searchEventType, setSearchEventType] = useState("");
   const [searchGuests, setSearchGuests] = useState("");
+  const [activeHeroIndex, setActiveHeroIndex] = useState(0);
   const featured = mockVenues.filter((v) => v.featured && v.active);
-  const cityOptions = [...new Set(mockVenues.map((v) => v.city))];
+  const locationOptions = getVenueLocationSuggestions();
+  const activeHero = HERO_MOMENTS[activeHeroIndex];
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      setActiveHeroIndex((current) => (current + 1) % HERO_MOMENTS.length);
+    }, 4600);
+
+    return () => window.clearInterval(interval);
+  }, []);
 
   const handleSearch = () => {
     const params = new URLSearchParams();
-    if (searchCity) params.set("city", searchCity);
+    if (searchLocation) params.set("location", searchLocation);
     if (searchEventType) params.set("type", searchEventType);
     if (searchGuests) params.set("guests", searchGuests);
     navigate(`/recherche?${params.toString()}`);
@@ -43,32 +77,47 @@ const DesktopHome = () => {
       <DesktopNav />
 
       <section className="relative h-[78vh] min-h-[620px] max-h-[760px] overflow-hidden bg-foreground">
-        <img
-          src="https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=1920&q=80"
-          alt="Reception élégante dans un lieu événementiel"
-          className="absolute inset-0 w-full h-full object-cover image-grade-luxe"
-        />
+        <video
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          poster={activeHero.image}
+          className="absolute inset-0 h-full w-full object-cover image-grade-luxe hero-video-active"
+        >
+          <source src={HERO_BACKGROUND_VIDEO} type="video/mp4" />
+        </video>
         <div className="absolute inset-0 bg-gradient-to-r from-foreground/90 via-foreground/50 to-foreground/20" />
         <div className="absolute inset-0 bg-gradient-to-t from-foreground/90 via-transparent to-foreground/40" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_22%,rgba(218,86,110,0.22),transparent_30%),radial-gradient(circle_at_78%_24%,rgba(216,180,96,0.2),transparent_24%)]" />
 
         <div className="relative z-10 flex h-full max-w-7xl mx-auto flex-col justify-center px-6 pb-14 pt-24 xl:px-8">
           <div className="max-w-4xl">
+            <p className="mb-4 inline-flex rounded-lg border border-primary-foreground/15 bg-primary-foreground/10 px-3 py-1.5 text-xs font-body font-semibold text-primary-foreground/82 backdrop-blur-md">
+              Lieux premium pour événements privés et corporate
+            </p>
             <h1 className="font-heading text-5xl xl:text-6xl 2xl:text-7xl text-primary-foreground font-semibold leading-[0.92] mb-6">
-              Trouvez un lieu qui signe votre événement.
+              Des lieux qui signent
+              <br />
+              votre{" "}
+              <span key={activeHero.label} className="hero-copy-enter text-luxe-gold">
+                {activeHero.noun}.
+              </span>
             </h1>
             <p className="max-w-3xl text-lg font-body leading-relaxed text-primary-foreground/80 xl:text-xl">
-              Salles confidentielles, rooftops, domaines et châteaux sélectionnés pour des mariages, galas et soirées de marque.
+              Une sélection premium de lieux clairs, visuels et immédiatement réservables pour vos moments qui comptent.
             </p>
           </div>
 
           <div className="mt-8 w-full max-w-6xl rounded-lg border border-primary-foreground/20 bg-foreground/50 p-4 shadow-2xl backdrop-blur-xl hairline-top">
-            <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 2xl:grid-cols-[0.95fr_1.15fr_0.95fr_auto]">
-              <FilterSelect
-                value={searchCity}
-                onChange={setSearchCity}
-                placeholder="Ville"
-                emptyLabel="Toutes les villes"
-                options={cityOptions}
+            <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1.18fr)_minmax(0,1fr)_minmax(0,1fr)_auto] lg:items-stretch">
+              <LocationAutocomplete
+                value={searchLocation}
+                onChange={setSearchLocation}
+                options={locationOptions}
+                placeholder="Ville ou code postal"
+                className="h-12 bg-background"
                 icon={<MapPin className="w-4 h-4" />}
               />
               <FilterSelect
@@ -78,8 +127,9 @@ const DesktopHome = () => {
                 emptyLabel="Tous les types"
                 options={EVENT_TYPES}
                 icon={<Sparkles className="w-4 h-4" />}
+                className="h-12"
               />
-              <div className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2.5">
+              <div className="flex h-12 items-center gap-2 rounded-lg border border-border bg-background px-3">
                 <Users className="w-4 h-4 text-primary shrink-0" />
                 <input
                   type="number"
@@ -91,7 +141,7 @@ const DesktopHome = () => {
               </div>
               <button
                 onClick={handleSearch}
-                className="flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-body font-semibold text-primary-foreground transition-colors hover:bg-foreground lg:col-span-2 2xl:col-span-1"
+                className="brand-primary-button flex h-12 items-center justify-center gap-2 rounded-lg px-5 text-sm font-body font-semibold text-primary-foreground transition-all hover:brightness-95"
               >
                 <Search className="w-4 h-4" />
                 Rechercher
@@ -184,57 +234,6 @@ const DesktopHome = () => {
               Voir toutes les salles
             </button>
           </div>
-        </div>
-      </section>
-
-      <section className="px-6 py-20 bg-background">
-        <div className="max-w-7xl mx-auto xl:px-2">
-          <div className="mb-12 max-w-2xl">
-            <p className="font-body text-sm font-semibold text-primary mb-3">Ils nous font confiance</p>
-            <h2 className="font-heading text-4xl 2xl:text-5xl font-semibold leading-[1.02]">
-              Des demandes plus claires, des lieux mieux qualifiés.
-            </h2>
-          </div>
-          <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
-            {[
-              { name: "Sophie M.", text: "La salle était encore plus belle que sur la vidéo. Le premier échange a été précis et rassurant.", rating: 5 },
-              { name: "Thomas D.", text: "Réponse rapide, informations claires, et un lieu parfaitement aligné avec notre séminaire.", rating: 5 },
-              { name: "Julie R.", text: "On a trouvé notre lieu de mariage en quelques minutes. La demande était simple, le suivi très sérieux.", rating: 5 },
-            ].map((t) => (
-              <div key={t.name} className="rounded-lg border border-border bg-card p-6 luxury-shadow">
-                <div className="flex gap-0.5 mb-4">
-                  {Array.from({ length: t.rating }).map((_, j) => (
-                    <Star key={j} className="w-4 h-4 fill-accent text-accent" />
-                  ))}
-                </div>
-                <p className="text-sm font-body text-foreground/80 leading-relaxed mb-5">"{t.text}"</p>
-                <p className="font-body font-semibold text-sm">{t.name}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <EstablishmentReferralSection />
-
-      <section className="px-6 py-20 bg-gradient-editorial text-primary-foreground">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 gap-10 xl:grid-cols-[1fr_auto] xl:items-center xl:px-2">
-          <div className="max-w-2xl">
-            <p className="font-body text-sm font-semibold text-luxe-gold mb-3">Votre prochain lieu</p>
-            <h2 className="font-heading text-4xl 2xl:text-5xl font-semibold mb-4 leading-[1.02]">
-              Recevez une première réponse qualifiée.
-            </h2>
-            <p className="font-body text-primary-foreground/70 leading-relaxed">
-              Partagez votre date, votre format et votre volume d'invités. Nous orientons la demande vers le lieu adapté.
-            </p>
-          </div>
-          <button
-            onClick={() => navigate("/recherche")}
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary-foreground px-8 py-3.5 text-foreground font-body font-semibold text-sm hover:bg-accent transition-colors"
-          >
-            Trouver ma salle
-            <ArrowRight className="w-4 h-4" />
-          </button>
         </div>
       </section>
 
