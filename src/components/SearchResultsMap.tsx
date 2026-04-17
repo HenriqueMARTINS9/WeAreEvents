@@ -2,8 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { divIcon, latLngBounds, type Map as LeafletMap } from "leaflet";
 import { MapContainer, Marker, Popup, TileLayer, useMapEvents } from "react-leaflet";
-import { ArrowUpRight, Lock, MapPin, Move } from "lucide-react";
+import { ArrowUpRight, MapPin } from "lucide-react";
 import type { Venue } from "@/types/venue";
+import { useIsMobile } from "@/hooks/use-mobile";
 import "leaflet/dist/leaflet.css";
 
 interface SearchResultsMapProps {
@@ -62,13 +63,9 @@ const MapViewport = ({
 
 const SearchResultsMap = ({ venues, onVisibleVenuesChange }: SearchResultsMapProps) => {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const mapKey = useMemo(() => venues.map((venue) => venue.id).join("-") || "empty", [venues]);
   const [mapInstance, setMapInstance] = useState<LeafletMap | null>(null);
-  const [mapInteractionEnabled, setMapInteractionEnabled] = useState(false);
-
-  useEffect(() => {
-    setMapInteractionEnabled(false);
-  }, [venues]);
 
   return (
     <div className="overflow-hidden rounded-lg border border-border bg-card luxury-shadow">
@@ -87,40 +84,17 @@ const SearchResultsMap = ({ venues, onVisibleVenuesChange }: SearchResultsMapPro
 
       <div className="flex items-center justify-between gap-3 border-b border-border bg-muted/40 px-4 py-3">
         <p className="text-xs font-body text-muted-foreground">
-          Carte figée au scroll. Activez le déplacement pour ajuster la sélection affichée.
+          Le scroll de page reste sur la liste. Faites glisser la carte pour ajuster la zone affichée.
         </p>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setMapInteractionEnabled((current) => !current)}
-            className={`shrink-0 rounded-lg border px-3 py-2 text-xs font-body font-semibold transition-colors ${
-              mapInteractionEnabled
-                ? "border-primary/25 bg-primary/10 text-primary"
-                : "border-border bg-background text-foreground hover:border-primary/30 hover:text-primary"
-            }`}
-          >
-            {mapInteractionEnabled ? (
-              <span className="inline-flex items-center gap-2">
-                <Move className="h-3.5 w-3.5" />
-                Déplacement actif
-              </span>
-            ) : (
-              <span className="inline-flex items-center gap-2">
-                <Lock className="h-3.5 w-3.5" />
-                Activer la carte
-              </span>
-            )}
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              if (mapInstance) fitMapToVenues(mapInstance, venues);
-            }}
-            className="shrink-0 rounded-lg border border-border bg-background px-3 py-2 text-xs font-body font-semibold text-foreground transition-colors hover:border-primary/30 hover:text-primary"
-          >
-            Recentrer
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={() => {
+            if (mapInstance) fitMapToVenues(mapInstance, venues);
+          }}
+          className="shrink-0 rounded-lg border border-border bg-background px-3 py-2 text-xs font-body font-semibold text-foreground transition-colors hover:border-primary/30 hover:text-primary"
+        >
+          Recentrer
+        </button>
       </div>
 
       <div className="relative h-[360px] md:h-[420px] xl:h-[calc(100vh-15rem)] xl:min-h-[560px]">
@@ -129,9 +103,9 @@ const SearchResultsMap = ({ venues, onVisibleVenuesChange }: SearchResultsMapPro
           center={FRANCE_CENTER}
           zoom={5.5}
           scrollWheelZoom={false}
-          dragging={mapInteractionEnabled}
-          touchZoom={mapInteractionEnabled}
-          doubleClickZoom={mapInteractionEnabled}
+          dragging={!isMobile}
+          touchZoom={false}
+          doubleClickZoom={!isMobile}
           boxZoom={false}
           keyboard={false}
           className="h-full w-full"
