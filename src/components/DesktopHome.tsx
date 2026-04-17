@@ -95,9 +95,6 @@ const DesktopHome = () => {
 
         <div className="relative z-10 flex h-full max-w-7xl mx-auto flex-col justify-center px-6 pb-14 pt-24 xl:px-8">
           <div className="max-w-4xl">
-            <p className="mb-4 inline-flex rounded-lg border border-primary-foreground/15 bg-primary-foreground/10 px-3 py-1.5 text-xs font-body font-semibold text-primary backdrop-blur-md">
-              Lieux premium pour événements privés et corporate
-            </p>
             <h1 className="font-heading text-5xl xl:text-6xl 2xl:text-7xl text-primary-foreground font-semibold leading-[0.92] mb-6">
               Des lieux qui signent
               <br />
