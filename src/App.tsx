@@ -6,6 +6,8 @@ import EstablishmentReferralModalProvider from "@/components/EstablishmentReferr
 import Index from "./pages/Index.tsx";
 import VenueDetail from "./pages/VenueDetail.tsx";
 import SearchResults from "./pages/SearchResults.tsx";
+import Blog from "./pages/Blog.tsx";
+import Admin from "./pages/Admin.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -20,6 +22,8 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/salle/:slug" element={<VenueDetail />} />
             <Route path="/recherche" element={<SearchResults />} />
+            <Route path="/blog" element={<Blog />} />
+            <Route path="/admin" element={<Admin />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </EstablishmentReferralModalProvider>

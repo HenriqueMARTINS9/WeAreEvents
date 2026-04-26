@@ -12,7 +12,8 @@ import {
   BadgeCheck,
   Zap,
 } from "lucide-react";
-import { getVenueLocationSuggestions, mockVenues } from "@/data/venues";
+import { useQuery } from "@tanstack/react-query";
+import { fetchBlogPosts, fetchVenues, getVenueLocationSuggestionsFromVenues } from "@/lib/supabase-data";
 import { EVENT_TYPES } from "@/types/venue";
 import { useNavigate } from "react-router-dom";
 import DesktopNav from "./DesktopNav";
@@ -53,8 +54,10 @@ const DesktopHome = () => {
   const [searchEventType, setSearchEventType] = useState("");
   const [searchGuests, setSearchGuests] = useState("");
   const [activeHeroIndex, setActiveHeroIndex] = useState(0);
-  const featured = mockVenues.filter((v) => v.featured && v.active);
-  const locationOptions = getVenueLocationSuggestions();
+  const { data: venues = [] } = useQuery({ queryKey: ["venues"], queryFn: fetchVenues });
+  const { data: posts = [] } = useQuery({ queryKey: ["blog-posts"], queryFn: fetchBlogPosts });
+  const featured = venues.filter((v) => v.featured && v.active);
+  const locationOptions = getVenueLocationSuggestionsFromVenues(venues);
   const activeHero = HERO_MOMENTS[activeHeroIndex];
 
   useEffect(() => {
@@ -77,7 +80,7 @@ const DesktopHome = () => {
     <div className="min-h-screen bg-background text-foreground">
       <DesktopNav />
 
-      <section className="relative h-[78vh] min-h-[620px] max-h-[760px] overflow-hidden bg-foreground">
+      <section data-header-theme="light" className="relative h-[78vh] min-h-[620px] max-h-[760px] overflow-hidden bg-foreground">
         <video
           autoPlay
           muted
@@ -197,7 +200,7 @@ const DesktopHome = () => {
         </div>
       </section>
 
-      <section className="px-6 py-20 bg-foreground text-primary-foreground">
+      <section data-header-theme="light" className="px-6 py-20 bg-foreground text-primary-foreground">
         <div className="max-w-7xl mx-auto xl:px-2">
           <div className="mb-10 flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
             <div>
@@ -230,6 +233,61 @@ const DesktopHome = () => {
               className="rounded-lg bg-primary-foreground px-6 py-3 text-foreground font-body font-semibold text-sm"
             >
               Voir toutes les salles
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section className="px-6 py-20">
+        <div className="max-w-7xl mx-auto xl:px-2">
+          <div className="mb-10 flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
+            <div>
+              <p className="font-body text-sm font-semibold text-primary mb-3">Blog</p>
+              <h2 className="font-heading text-4xl 2xl:text-5xl font-semibold mb-3 leading-[1.02]">
+                Bien préparer le choix de votre lieu.
+              </h2>
+              <p className="text-muted-foreground font-body max-w-2xl">
+                Guides pratiques, checklists et conseils pour trouver une salle adaptée à vos invités, votre ambiance et votre budget.
+              </p>
+            </div>
+            <button
+              onClick={() => navigate("/blog")}
+              className="hidden xl:flex items-center gap-2 rounded-lg border border-border px-4 py-2.5 font-body text-sm font-semibold transition-colors hover:border-primary/40 hover:text-primary"
+            >
+              Voir le blog
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+            {posts.map((post) => (
+              <article key={post.slug} className="overflow-hidden rounded-lg border border-border bg-card">
+                <img src={post.image} alt="" className="h-52 w-full object-cover image-grade-luxe" />
+                <div className="p-6">
+                  <div className="mb-4 flex items-center justify-between gap-3 text-xs font-body font-semibold text-muted-foreground">
+                    <span className="text-primary">{post.category}</span>
+                    <span>{post.readTime}</span>
+                  </div>
+                  <h3 className="font-heading text-2xl font-semibold leading-tight">{post.title}</h3>
+                  <p className="mt-3 text-sm font-body leading-relaxed text-muted-foreground">{post.excerpt}</p>
+                  <button
+                    onClick={() => navigate(`/blog#${post.slug}`)}
+                    className="mt-5 inline-flex items-center gap-2 text-sm font-body font-semibold text-foreground transition-colors hover:text-primary"
+                  >
+                    Lire l'article
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+
+          <div className="mt-8 text-center xl:hidden">
+            <button
+              onClick={() => navigate("/blog")}
+              className="rounded-lg border border-border px-6 py-3 font-body text-sm font-semibold transition-colors hover:border-primary/40 hover:text-primary"
+            >
+              Voir le blog
             </button>
           </div>
         </div>

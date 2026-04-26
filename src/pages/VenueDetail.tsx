@@ -1,5 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { getVenueBySlug, getReviewsByVenueId } from "@/data/venues";
+import { useQuery } from "@tanstack/react-query";
+import { getReviewsByVenueId } from "@/data/venues";
+import { fetchVenues } from "@/lib/supabase-data";
 import { Star, MapPin, Users, Tag, ShieldCheck, ArrowRight, Route, Info } from "lucide-react";
 import { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -12,8 +14,13 @@ const VenueDetail = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const venue = getVenueBySlug(slug || "");
+  const { data: venues = [], isLoading } = useQuery({ queryKey: ["venues"], queryFn: fetchVenues });
+  const venue = venues.find((item) => item.slug === slug);
   const [bookingOpen, setBookingOpen] = useState(false);
+
+  if (isLoading) {
+    return <div className="min-h-screen bg-background" />;
+  }
 
   if (!venue) {
     return (
@@ -46,7 +53,7 @@ const VenueDetail = () => {
 
       {/* Hero */}
       <div className="pt-16">
-        <div className="relative h-[58vh] min-h-[480px] bg-foreground">
+        <div data-header-theme="light" className="relative h-[58vh] min-h-[480px] bg-foreground">
           <img src={venue.coverImage} alt={venue.title} className="w-full h-full object-cover image-grade-luxe" />
           <div className="absolute inset-0 bg-gradient-dark" />
           <div className="absolute inset-0 bg-gradient-to-r from-foreground/70 via-foreground/25 to-transparent" />

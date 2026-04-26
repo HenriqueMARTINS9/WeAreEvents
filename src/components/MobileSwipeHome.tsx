@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { mockVenues } from "@/data/venues";
+import { fetchVenues } from "@/lib/supabase-data";
 import VenueCard from "./VenueCard";
 import MobileHeader from "./MobileHeader";
 import VenueCodeSearch from "./VenueCodeSearch";
@@ -16,7 +17,8 @@ const MobileSwipeHome = () => {
   const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null);
   const [bookingVenue, setBookingVenue] = useState<Venue | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const venues = mockVenues.filter((v) => v.active);
+  const { data: allVenues = [] } = useQuery({ queryKey: ["venues"], queryFn: fetchVenues });
+  const venues = allVenues.filter((v) => v.active);
   const entryPromptStorageKey = "wearevents-mobile-code-entry-seen";
 
   const handleScroll = useCallback(() => {

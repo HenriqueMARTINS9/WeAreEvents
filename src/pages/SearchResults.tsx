@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { MapPin, Users, SlidersHorizontal, Tag, ShieldCheck } from "lucide-react";
-import { searchVenues, getVenueByCode, getVenueLocationSuggestions } from "@/data/venues";
+import { fetchVenues, filterVenues, findVenueByCode, getVenueLocationSuggestionsFromVenues } from "@/lib/supabase-data";
 import { EVENT_TYPES } from "@/types/venue";
 import DesktopNav from "@/components/DesktopNav";
 import FilterSelect from "@/components/FilterSelect";
@@ -18,24 +19,26 @@ const SearchResults = () => {
   const [guests, setGuests] = useState(searchParams.get("guests") || "");
   const [visibleVenueIds, setVisibleVenueIds] = useState<string[] | null>(null);
   const codeParam = searchParams.get("code");
-  const locationOptions = getVenueLocationSuggestions();
+  const { data: venues = [] } = useQuery({ queryKey: ["venues"], queryFn: fetchVenues });
+  const locationOptions = getVenueLocationSuggestionsFromVenues(venues);
 
   useEffect(() => {
     if (codeParam) {
-      const v = getVenueByCode(codeParam);
-      if (v) {
-        navigate(`/salle/${v.slug}`, { replace: true });
-      }
+      findVenueByCode(codeParam).then((venue) => {
+        if (venue) {
+          navigate(`/salle/${venue.slug}`, { replace: true });
+        }
+      });
     }
   }, [codeParam, navigate]);
 
   const filteredResults = useMemo(() => {
-    return searchVenues({
+    return filterVenues(venues, {
       locationQuery: locationQuery || undefined,
       eventType: eventType || undefined,
       minGuests: guests ? parseInt(guests, 10) : undefined,
     });
-  }, [locationQuery, eventType, guests]);
+  }, [locationQuery, eventType, guests, venues]);
 
   useEffect(() => {
     setVisibleVenueIds(null);

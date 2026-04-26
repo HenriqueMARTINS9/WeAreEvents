@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { X, Search, ArrowRight } from "lucide-react";
-import { getVenueByCode, mockTikTokCodeMappings } from "@/data/venues";
+import { mockTikTokCodeMappings } from "@/data/venues";
+import { findVenueByCode } from "@/lib/supabase-data";
 import type { Venue } from "@/types/venue";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -34,9 +35,9 @@ const VenueCodeSearch = ({ onClose, onVenueFound, mode = "default" }: VenueCodeS
         buttonLabel: "",
       };
 
-  const handleSearch = () => {
+  const handleSearch = async () => {
     if (!code.trim()) return;
-    const venue = getVenueByCode(code.trim());
+    const venue = await findVenueByCode(code.trim());
     if (venue) {
       onVenueFound(venue);
     } else {

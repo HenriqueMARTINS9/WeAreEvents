@@ -15,6 +15,7 @@ const SiteFooter = () => {
           <h4 className="font-body font-semibold text-sm mb-3">Navigation</h4>
           <div className="space-y-2 text-primary-foreground/60 text-sm font-body">
             <Link to="/" className="hover:text-primary-foreground transition-colors">Accueil</Link>
+            <Link to="/blog" className="block hover:text-primary-foreground transition-colors">Blog</Link>
             <button type="button" onClick={openModal} className="block hover:text-primary-foreground transition-colors">
               Référencer mon établissement
             </button>
