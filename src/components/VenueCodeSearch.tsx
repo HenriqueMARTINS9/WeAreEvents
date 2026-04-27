@@ -46,7 +46,7 @@ const VenueCodeSearch = ({ onClose, onVenueFound, mode = "default" }: VenueCodeS
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center overflow-x-hidden sm:items-center">
+    <div className="fixed inset-0 z-[2000] flex items-end justify-center overflow-x-hidden sm:items-center">
       <div className="absolute inset-0 bg-foreground/70 backdrop-blur-md" onClick={onClose} />
       <div className="relative w-full overflow-x-hidden rounded-t-lg bg-background p-6 pb-8 animate-slide-up luxury-shadow sm:max-w-md sm:rounded-lg">
         <div className="flex items-center justify-between mb-6">

@@ -9,7 +9,7 @@ import {
 
 describe("venue code lookup", () => {
   it("maps primary TikTok codes to venue records", () => {
-    expect(getVenueByCode("WE-ROOF01")?.slug).toBe("le-rooftop-etoile");
+    expect(getVenueByCode("1001")?.slug).toBe("le-rooftop-etoile");
   });
 
   it("maps campaign alias codes to venue records", () => {

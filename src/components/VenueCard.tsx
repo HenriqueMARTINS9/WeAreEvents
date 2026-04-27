@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from "react";
-import { Heart, Share2, MessageCircle, Star, MapPin, Users, Tag, ShieldCheck } from "lucide-react";
+import { Share2, MessageCircle, Star, MapPin, Users, Tag, ShieldCheck } from "lucide-react";
 import type { Venue } from "@/types/venue";
 import { toast } from "sonner";
+import { buildVenueWhatsAppUrl } from "@/lib/whatsapp";
 
 interface VenueCardProps {
   venue: Venue;
@@ -12,9 +13,10 @@ interface VenueCardProps {
 
 const VenueCard = ({ venue, isActive, onOpenDetail, onBooking }: VenueCardProps) => {
   const [showVideo, setShowVideo] = useState(false);
-  const [liked, setLiked] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout>>();
+  const videoStart = venue.videoStartSeconds ?? 0;
+  const videoEnd = venue.videoEndSeconds;
 
   const handleShare = async () => {
     const shareUrl = typeof window !== "undefined"
@@ -56,7 +58,7 @@ const VenueCard = ({ venue, isActive, onOpenDetail, onBooking }: VenueCardProps)
       setShowVideo(false);
       if (videoRef.current) {
         videoRef.current.pause();
-        videoRef.current.currentTime = 0;
+        videoRef.current.currentTime = videoStart;
       }
     }
     return () => clearTimeout(timerRef.current);
@@ -64,9 +66,19 @@ const VenueCard = ({ venue, isActive, onOpenDetail, onBooking }: VenueCardProps)
 
   useEffect(() => {
     if (showVideo && videoRef.current) {
+      videoRef.current.currentTime = videoStart;
       videoRef.current.play().catch(() => {});
     }
-  }, [showVideo]);
+  }, [showVideo, videoStart]);
+
+  const handleVideoTimeUpdate = () => {
+    if (!videoRef.current || !videoEnd) return;
+
+    if (videoRef.current.currentTime >= videoEnd) {
+      videoRef.current.currentTime = videoStart;
+      videoRef.current.play().catch(() => {});
+    }
+  };
 
   return (
     <div className="snap-item h-screen w-full relative overflow-hidden bg-foreground">
@@ -88,6 +100,10 @@ const VenueCard = ({ venue, isActive, onOpenDetail, onBooking }: VenueCardProps)
           muted
           loop
           playsInline
+          onLoadedMetadata={() => {
+            if (videoRef.current) videoRef.current.currentTime = videoStart;
+          }}
+          onTimeUpdate={handleVideoTimeUpdate}
           className={`absolute inset-0 w-full h-full object-cover image-grade-luxe transition-opacity duration-700 ${
             showVideo ? "opacity-100" : "opacity-0"
           }`}
@@ -180,21 +196,18 @@ const VenueCard = ({ venue, isActive, onOpenDetail, onBooking }: VenueCardProps)
           <Tag className="w-5 h-5 text-primary-foreground" />
         </button>
 
-        <button
-          onClick={() => setLiked(!liked)}
+        <a
+          href={buildVenueWhatsAppUrl(venue)}
+          target="_blank"
+          rel="noreferrer"
           className="flex flex-col items-center gap-1 text-primary-foreground"
+          aria-label={`Contacter sur WhatsApp pour ${venue.title}`}
         >
-          <span className="p-2 rounded-lg glass-dark">
-            <Heart
-              className={`w-6 h-6 ${
-                liked ? "fill-accent text-accent" : "text-primary-foreground"
-              } transition-colors`}
-            />
+          <span className="p-2 rounded-lg bg-[#25D366] shadow-lg">
+            <MessageCircle className="w-6 h-6 text-white" />
           </span>
-          <span className="text-[10px] font-body">
-            {liked ? "Sauvé" : "Sauver"}
-          </span>
-        </button>
+          <span className="text-[10px] font-body">WhatsApp</span>
+        </a>
 
         <button className="flex flex-col items-center gap-1 text-primary-foreground">
           <span className="p-2 rounded-lg glass-dark">

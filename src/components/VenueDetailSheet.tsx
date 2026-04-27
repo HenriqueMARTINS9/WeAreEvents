@@ -25,12 +25,23 @@ const serviceIcons: Record<string, React.ReactNode> = {
 
 const VenueDetailSheet = ({ venue, onClose, onBooking }: VenueDetailSheetProps) => {
   const reviews = getReviewsByVenueId(venue.id);
+  const heroImages = [venue.coverImage, ...venue.gallery.filter((image) => image !== venue.coverImage)];
 
   return (
-    <div className="fixed inset-0 z-50 overflow-x-hidden overflow-y-auto bg-background animate-slide-up">
+    <div className="fixed inset-0 z-[2000] overflow-x-hidden overflow-y-auto bg-background animate-slide-up">
       {/* Hero */}
       <div className="relative h-72 sm:h-96">
-        <img src={venue.coverImage} alt={venue.title} className="w-full h-full object-cover image-grade-luxe" />
+        <div className="flex h-full snap-x snap-mandatory overflow-x-auto hide-scrollbar">
+          {heroImages.map((image, index) => (
+            <img
+              key={`${image}-${index}`}
+              src={image}
+              alt={`${venue.title} ${index + 1}`}
+              className="h-full w-full shrink-0 snap-center object-cover image-grade-luxe"
+              loading={index === 0 ? "eager" : "lazy"}
+            />
+          ))}
+        </div>
         <div className="absolute inset-0 bg-gradient-dark" />
         <div className="absolute inset-0 bg-gradient-dark-top" />
         <button
@@ -98,7 +109,12 @@ const VenueDetailSheet = ({ venue, onClose, onBooking }: VenueDetailSheetProps) 
         <div className="rounded-lg border border-border bg-card p-4 mb-6">
           <div className="flex items-start gap-3">
             <MapPin className="w-4 h-4 mt-0.5 text-primary" />
-            <p className="min-w-0 break-words text-sm font-body text-foreground/75">{venue.address}</p>
+            <div className="min-w-0">
+              <p className="break-words text-sm font-body text-foreground/75">{venue.address}</p>
+              {venue.metroAccess && (
+                <p className="mt-2 break-words text-sm font-body text-primary">Métro / accès : {venue.metroAccess}</p>
+              )}
+            </div>
           </div>
         </div>
 

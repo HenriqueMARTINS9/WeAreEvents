@@ -20,8 +20,15 @@ export type VenueInsert = {
   cover_image: string;
   gallery: string[];
   video_url?: string | null;
+  video_start_seconds?: number;
+  video_end_seconds?: number | null;
   tiktok_url?: string | null;
   google_review_url: string;
+  price_tier: "€" | "€€" | "€€€";
+  closing_time: string;
+  ambiance_types: string[];
+  external_options: string[];
+  metro_access?: string | null;
   featured: boolean;
   active: boolean;
   contact_email: string;

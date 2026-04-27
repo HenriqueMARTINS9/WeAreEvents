@@ -226,13 +226,13 @@ const BookingModal = ({ venue, onClose }: BookingModalProps) => {
     const { request, emails } = result;
 
     return (
-      <div className="fixed inset-0 z-50 flex items-end justify-center overflow-x-hidden sm:items-center">
+      <div className="fixed inset-0 z-[2000] flex items-end justify-center overflow-x-hidden sm:items-center">
         <div className="absolute inset-0 bg-foreground/75 backdrop-blur-md" onClick={onClose} style={mobileBackdropStyle} />
         <div
           className={`relative animate-scale-in bg-background ${
             isMobile
               ? "flex h-[100dvh] w-full flex-col overflow-hidden"
-              : "w-full max-w-lg rounded-t-lg p-7 sm:rounded-lg luxury-shadow"
+              : "w-full max-w-2xl rounded-t-lg p-7 sm:rounded-lg luxury-shadow"
           }`}
           style={mobileSheetStyle}
         >
@@ -317,13 +317,13 @@ const BookingModal = ({ venue, onClose }: BookingModalProps) => {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center overflow-x-hidden sm:items-center">
+    <div className="fixed inset-0 z-[2000] flex items-end justify-center overflow-x-hidden sm:items-center">
       <div className="absolute inset-0 bg-foreground/70 backdrop-blur-md" onClick={onClose} style={mobileBackdropStyle} />
       <div
         className={`relative w-full animate-slide-up bg-background ${
           isMobile
             ? "flex h-[100dvh] flex-col overflow-hidden"
-            : "max-h-[90vh] max-w-md overflow-y-auto rounded-t-lg sm:rounded-lg luxury-shadow"
+            : "max-h-[90vh] max-w-3xl overflow-y-auto rounded-t-lg sm:rounded-lg luxury-shadow"
         }`}
         style={mobileSheetStyle}
       >
@@ -354,7 +354,7 @@ const BookingModal = ({ venue, onClose }: BookingModalProps) => {
         </div>
 
         <form onSubmit={handleSubmit} className={`flex flex-1 flex-col ${isMobile ? "overflow-hidden" : ""}`} noValidate>
-          <div className={`space-y-4 ${isMobile ? "flex-1 overflow-x-hidden overflow-y-auto overscroll-contain px-5 py-4 pb-28" : "p-5"}`}>
+          <div className={`space-y-4 ${isMobile ? "flex-1 overflow-x-hidden overflow-y-auto overscroll-contain px-5 py-4 pb-28" : "p-6"}`}>
           <div className="rounded-lg border border-primary/20 bg-secondary p-3">
             <p className="font-body text-sm font-semibold text-foreground">100 % gratuit, sans engagement</p>
             <p className="mt-1 text-xs font-body text-muted-foreground">

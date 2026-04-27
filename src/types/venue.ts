@@ -31,8 +31,15 @@ export interface Venue {
   coverImage: string;
   gallery: string[];
   videoUrl?: string;
+  videoStartSeconds?: number;
+  videoEndSeconds?: number;
   tiktokUrl?: string;
   googleReviewUrl: string;
+  priceTier: "€" | "€€" | "€€€";
+  closingTime: string;
+  ambianceTypes: string[];
+  externalOptions: string[];
+  metroAccess?: string;
   featured: boolean;
   active: boolean;
   contactEmail: string;
@@ -116,4 +123,21 @@ export const SERVICES = [
   "Climatisation",
   "Projecteur",
   "Vestiaire",
+] as const;
+
+export const PRICE_TIERS = ["€", "€€", "€€€"] as const;
+
+export const AMBIANCE_TYPES = [
+  "Calme",
+  "Animé",
+  "Festif",
+  "Élégant",
+  "Corporate",
+  "Intimiste",
+] as const;
+
+export const EXTERNAL_OPTIONS = [
+  "Traiteur externe",
+  "Boissons externes",
+  "Gâteau externe",
 ] as const;

@@ -3,7 +3,7 @@ import type { Session } from "@supabase/supabase-js";
 import { Building2, FileText, FolderInput, Image, Loader2, LogOut, Save, Upload } from "lucide-react";
 import { blogPosts } from "@/data/blog";
 import { mockVenues } from "@/data/venues";
-import { EVENT_TYPES, SERVICES } from "@/types/venue";
+import { AMBIANCE_TYPES, EVENT_TYPES, EXTERNAL_OPTIONS, PRICE_TIERS, SERVICES } from "@/types/venue";
 import { isSupabaseConfigured, supabase, type BlogPostInsert, type VenueInsert } from "@/lib/supabase";
 
 const slugify = (value: string) =>
@@ -41,6 +41,10 @@ const Admin = () => {
   const [message, setMessage] = useState("");
   const [venueDriveFolderUrl, setVenueDriveFolderUrl] = useState("");
   const [blogDriveFolderUrl, setBlogDriveFolderUrl] = useState("");
+  const [adminVenues, setAdminVenues] = useState<any[]>([]);
+  const [adminBlogPosts, setAdminBlogPosts] = useState<any[]>([]);
+  const [editingVenueId, setEditingVenueId] = useState<string | null>(null);
+  const [editingBlogId, setEditingBlogId] = useState<string | null>(null);
 
   const [venueForm, setVenueForm] = useState({
     title: "",
@@ -63,8 +67,15 @@ const Admin = () => {
     coverImage: defaultVenue.coverImage,
     gallery: defaultVenue.gallery.join("\n"),
     videoUrl: "",
+    videoStartSeconds: "0",
+    videoEndSeconds: "",
     tiktokUrl: "",
     googleReviewUrl: "",
+    priceTier: "€€",
+    closingTime: "",
+    ambianceTypes: AMBIANCE_TYPES.slice(0, 2).join(", "),
+    externalOptions: EXTERNAL_OPTIONS.slice(0, 1).join(", "),
+    metroAccess: "",
     featured: true,
     active: true,
     contactEmail: "",
@@ -100,6 +111,22 @@ const Admin = () => {
 
     return () => data.subscription.unsubscribe();
   }, []);
+
+  const loadAdminRecords = async () => {
+    if (!supabase || !session) return;
+
+    const [venuesResult, blogResult] = await Promise.all([
+      supabase.from("venues").select("*").order("created_at", { ascending: false }),
+      supabase.from("blog_posts").select("*").order("created_at", { ascending: false }),
+    ]);
+
+    if (!venuesResult.error) setAdminVenues(venuesResult.data ?? []);
+    if (!blogResult.error) setAdminBlogPosts(blogResult.data ?? []);
+  };
+
+  useEffect(() => {
+    loadAdminRecords();
+  }, [session]);
 
   const canSubmit = useMemo(() => Boolean(supabase && session), [session]);
 
@@ -275,7 +302,7 @@ const Admin = () => {
       city: venueForm.city,
       address: venueForm.address,
       location: { lat: toNumber(venueForm.lat), lng: toNumber(venueForm.lng) },
-      venue_code: venueForm.venueCode,
+      venue_code: venueForm.venueCode.replace(/\D/g, "").slice(0, 4),
       min_capacity: toNumber(venueForm.minCapacity),
       max_capacity: toNumber(venueForm.maxCapacity),
       event_categories: toList(venueForm.eventCategories),
@@ -287,8 +314,15 @@ const Admin = () => {
       cover_image: venueForm.coverImage,
       gallery: toList(venueForm.gallery),
       video_url: venueForm.videoUrl || null,
+      video_start_seconds: toNumber(venueForm.videoStartSeconds),
+      video_end_seconds: venueForm.videoEndSeconds ? toNumber(venueForm.videoEndSeconds) : null,
       tiktok_url: venueForm.tiktokUrl || null,
       google_review_url: venueForm.googleReviewUrl,
+      price_tier: venueForm.priceTier as "€" | "€€" | "€€€",
+      closing_time: venueForm.closingTime,
+      ambiance_types: toList(venueForm.ambianceTypes),
+      external_options: toList(venueForm.externalOptions),
+      metro_access: venueForm.metroAccess || null,
       featured: venueForm.featured,
       active: venueForm.active,
       contact_email: venueForm.contactEmail,
@@ -296,9 +330,15 @@ const Admin = () => {
       review_count: toNumber(venueForm.reviewCount),
     };
 
-    const { error } = await supabase.from("venues").insert(payload);
+    const { error } = editingVenueId
+      ? await supabase.from("venues").update(payload).eq("id", editingVenueId)
+      : await supabase.from("venues").insert(payload);
     setSaving(false);
-    setMessage(error ? error.message : "Salle ajoutée dans Supabase.");
+    setMessage(error ? error.message : editingVenueId ? "Salle mise à jour dans Supabase." : "Salle ajoutée dans Supabase.");
+    if (!error) {
+      setEditingVenueId(null);
+      loadAdminRecords();
+    }
   };
 
   const handleBlogSubmit = async (event: FormEvent) => {
@@ -320,9 +360,87 @@ const Admin = () => {
       published_at: blogForm.published ? new Date().toISOString() : null,
     };
 
-    const { error } = await supabase.from("blog_posts").insert(payload);
+    const { error } = editingBlogId
+      ? await supabase.from("blog_posts").update(payload).eq("id", editingBlogId)
+      : await supabase.from("blog_posts").insert(payload);
     setSaving(false);
-    setMessage(error ? error.message : "Article ajouté dans Supabase.");
+    setMessage(error ? error.message : editingBlogId ? "Article mis à jour dans Supabase." : "Article ajouté dans Supabase.");
+    if (!error) {
+      setEditingBlogId(null);
+      loadAdminRecords();
+    }
+  };
+
+  const editVenue = (venue: any) => {
+    setActiveTab("venue");
+    setEditingVenueId(venue.id);
+    setVenueForm({
+      title: venue.title ?? "",
+      slug: venue.slug ?? "",
+      tagline: venue.tagline ?? "",
+      description: venue.description ?? "",
+      city: venue.city ?? "",
+      address: venue.address ?? "",
+      lat: String(venue.location?.lat ?? ""),
+      lng: String(venue.location?.lng ?? ""),
+      venueCode: venue.venue_code ?? "",
+      minCapacity: String(venue.min_capacity ?? ""),
+      maxCapacity: String(venue.max_capacity ?? ""),
+      eventCategories: (venue.event_categories ?? []).join(", "),
+      services: (venue.services ?? []).join(", "),
+      spaces: (venue.spaces ?? []).map((space: any) => `${space.name} | ${space.capacity} | ${space.description}`).join("\n"),
+      accessDetails: (venue.access_details ?? []).join("\n"),
+      usefulInformation: (venue.useful_information ?? []).join("\n"),
+      pricingText: venue.pricing_text ?? "",
+      coverImage: venue.cover_image ?? "",
+      gallery: (venue.gallery ?? []).join("\n"),
+      videoUrl: venue.video_url ?? "",
+      videoStartSeconds: String(venue.video_start_seconds ?? 0),
+      videoEndSeconds: venue.video_end_seconds ? String(venue.video_end_seconds) : "",
+      tiktokUrl: venue.tiktok_url ?? "",
+      googleReviewUrl: venue.google_review_url ?? "",
+      priceTier: venue.price_tier ?? "€€",
+      closingTime: venue.closing_time ?? "",
+      ambianceTypes: (venue.ambiance_types ?? []).join(", "),
+      externalOptions: (venue.external_options ?? []).join(", "),
+      metroAccess: venue.metro_access ?? "",
+      featured: Boolean(venue.featured),
+      active: Boolean(venue.active),
+      contactEmail: venue.contact_email ?? "",
+      rating: String(venue.rating ?? 0),
+      reviewCount: String(venue.review_count ?? 0),
+    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const editBlogPost = (post: any) => {
+    setActiveTab("blog");
+    setEditingBlogId(post.id);
+    setBlogForm({
+      title: post.title ?? "",
+      slug: post.slug ?? "",
+      category: post.category ?? "",
+      excerpt: post.excerpt ?? "",
+      content: post.content ?? "",
+      readTime: post.read_time ?? "",
+      image: post.image ?? "",
+      published: Boolean(post.published),
+    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const deleteVenue = async (venueId: string) => {
+    if (!supabase || !window.confirm("Supprimer cette salle ?")) return;
+    const { error } = await supabase.from("venues").delete().eq("id", venueId);
+    setMessage(error ? error.message : "Salle supprimée.");
+    if (!error) loadAdminRecords();
+  };
+
+  const deleteBlogPost = async (postId: string) => {
+    if (!supabase || !window.confirm("Supprimer cet article ?")) return;
+    const { error } = await supabase.from("blog_posts").delete().eq("id", postId);
+    setMessage(error ? error.message : "Article supprimé.");
+    if (!error) loadAdminRecords();
   };
 
   return (
@@ -417,10 +535,19 @@ const Admin = () => {
             </div>
 
             {activeTab === "venue" ? (
+              <>
+              {editingVenueId && (
+                <div className="mb-6 rounded-lg border border-primary/25 bg-secondary p-4 text-sm font-body">
+                  Modification d'une salle existante.
+                  <button type="button" onClick={() => setEditingVenueId(null)} className="ml-3 font-semibold text-primary">
+                    Revenir à la création
+                  </button>
+                </div>
+              )}
               <form onSubmit={handleVenueSubmit} className="grid grid-cols-1 gap-6 xl:grid-cols-2">
                 <AdminInput label="Nom de la salle" value={venueForm.title} onChange={(value) => setVenueForm({ ...venueForm, title: value, slug: venueForm.slug || slugify(value) })} required />
                 <AdminInput label="Slug" value={venueForm.slug} onChange={(value) => setVenueForm({ ...venueForm, slug: value })} required />
-                <AdminInput label="Code lieu" value={venueForm.venueCode} onChange={(value) => setVenueForm({ ...venueForm, venueCode: value })} required />
+                <AdminInput label="Code lieu (4 chiffres)" value={venueForm.venueCode} onChange={(value) => setVenueForm({ ...venueForm, venueCode: value.replace(/\D/g, "").slice(0, 4) })} required />
                 <AdminInput label="Email contact" value={venueForm.contactEmail} onChange={(value) => setVenueForm({ ...venueForm, contactEmail: value })} required />
                 <AdminInput label="Ville" value={venueForm.city} onChange={(value) => setVenueForm({ ...venueForm, city: value })} required />
                 <AdminInput label="Adresse" value={venueForm.address} onChange={(value) => setVenueForm({ ...venueForm, address: value })} required />
@@ -429,6 +556,9 @@ const Admin = () => {
                 <AdminInput label="Capacité minimum" value={venueForm.minCapacity} onChange={(value) => setVenueForm({ ...venueForm, minCapacity: value })} />
                 <AdminInput label="Capacité maximum" value={venueForm.maxCapacity} onChange={(value) => setVenueForm({ ...venueForm, maxCapacity: value })} />
                 <AdminInput label="Prix indicatif" value={venueForm.pricingText} onChange={(value) => setVenueForm({ ...venueForm, pricingText: value })} />
+                <AdminSelect label="Symbole prix" value={venueForm.priceTier} onChange={(value) => setVenueForm({ ...venueForm, priceTier: value })} options={PRICE_TIERS} />
+                <AdminInput label="Heure de fermeture" value={venueForm.closingTime} onChange={(value) => setVenueForm({ ...venueForm, closingTime: value })} placeholder="Ex: 02:00" />
+                <AdminInput label="Accès métro" value={venueForm.metroAccess} onChange={(value) => setVenueForm({ ...venueForm, metroAccess: value })} placeholder="Ex: George V, ligne 1" />
                 <AdminImageTools
                   title="Images de la salle"
                   description="Upload direct ou dossier Google Drive public. La première image devient l'image principale, les autres alimentent la galerie."
@@ -443,20 +573,42 @@ const Admin = () => {
                 <AdminTextarea label="Description" value={venueForm.description} onChange={(value) => setVenueForm({ ...venueForm, description: value })} />
                 <AdminTextarea label="Catégories d'événements" hint="Sépare par virgule ou ligne." value={venueForm.eventCategories} onChange={(value) => setVenueForm({ ...venueForm, eventCategories: value })} />
                 <AdminTextarea label="Services" hint="Sépare par virgule ou ligne." value={venueForm.services} onChange={(value) => setVenueForm({ ...venueForm, services: value })} />
+                <AdminTextarea label="Types d'ambiance" hint={`Ex: ${AMBIANCE_TYPES.join(", ")}`} value={venueForm.ambianceTypes} onChange={(value) => setVenueForm({ ...venueForm, ambianceTypes: value })} />
+                <AdminTextarea label="Personnalisation externe" hint={`Ex: ${EXTERNAL_OPTIONS.join(", ")}`} value={venueForm.externalOptions} onChange={(value) => setVenueForm({ ...venueForm, externalOptions: value })} />
                 <AdminTextarea label="Espaces" hint="Une ligne par espace : Nom | Capacité | Description" value={venueForm.spaces} onChange={(value) => setVenueForm({ ...venueForm, spaces: value })} />
                 <AdminTextarea label="Galerie" hint="Une URL par ligne." value={venueForm.gallery} onChange={(value) => setVenueForm({ ...venueForm, gallery: value })} />
                 <AdminTextarea label="Accès" value={venueForm.accessDetails} onChange={(value) => setVenueForm({ ...venueForm, accessDetails: value })} />
                 <AdminTextarea label="Informations utiles" value={venueForm.usefulInformation} onChange={(value) => setVenueForm({ ...venueForm, usefulInformation: value })} />
                 <AdminInput label="URL vidéo" value={venueForm.videoUrl} onChange={(value) => setVenueForm({ ...venueForm, videoUrl: value })} />
+                <AdminInput label="Début vidéo en secondes" value={venueForm.videoStartSeconds} onChange={(value) => setVenueForm({ ...venueForm, videoStartSeconds: value })} />
+                <AdminInput label="Fin vidéo en secondes" value={venueForm.videoEndSeconds} onChange={(value) => setVenueForm({ ...venueForm, videoEndSeconds: value })} />
                 <AdminInput label="URL TikTok" value={venueForm.tiktokUrl} onChange={(value) => setVenueForm({ ...venueForm, tiktokUrl: value })} />
                 <AdminInput label="URL avis Google" value={venueForm.googleReviewUrl} onChange={(value) => setVenueForm({ ...venueForm, googleReviewUrl: value })} />
                 <div className="flex items-center gap-6 rounded-lg border border-border bg-card p-4">
                   <AdminCheckbox label="Mise en avant" checked={venueForm.featured} onChange={(value) => setVenueForm({ ...venueForm, featured: value })} />
                   <AdminCheckbox label="Active" checked={venueForm.active} onChange={(value) => setVenueForm({ ...venueForm, active: value })} />
                 </div>
-                <SubmitBar saving={saving} label="Enregistrer la salle" />
+                <SubmitBar saving={saving} label={editingVenueId ? "Mettre à jour la salle" : "Enregistrer la salle"} />
               </form>
+              <AdminRecordsList
+                title="Salles enregistrées"
+                items={adminVenues}
+                getTitle={(item) => item.title}
+                getSubtitle={(item) => `${item.venue_code} · ${item.city} · ${item.active ? "active" : "inactive"}`}
+                onEdit={editVenue}
+                onDelete={(item) => deleteVenue(item.id)}
+              />
+              </>
             ) : (
+              <>
+              {editingBlogId && (
+                <div className="mb-6 rounded-lg border border-primary/25 bg-secondary p-4 text-sm font-body">
+                  Modification d'un article existant.
+                  <button type="button" onClick={() => setEditingBlogId(null)} className="ml-3 font-semibold text-primary">
+                    Revenir à la création
+                  </button>
+                </div>
+              )}
               <form onSubmit={handleBlogSubmit} className="grid grid-cols-1 gap-6 xl:grid-cols-2">
                 <AdminInput label="Titre" value={blogForm.title} onChange={(value) => setBlogForm({ ...blogForm, title: value, slug: blogForm.slug || slugify(value) })} required />
                 <AdminInput label="Slug" value={blogForm.slug} onChange={(value) => setBlogForm({ ...blogForm, slug: value })} required />
@@ -479,8 +631,17 @@ const Admin = () => {
                 <div className="flex items-center rounded-lg border border-border bg-card p-4">
                   <AdminCheckbox label="Publié" checked={blogForm.published} onChange={(value) => setBlogForm({ ...blogForm, published: value })} />
                 </div>
-                <SubmitBar saving={saving} label="Publier l'article" />
+                <SubmitBar saving={saving} label={editingBlogId ? "Mettre à jour l'article" : "Publier l'article"} />
               </form>
+              <AdminRecordsList
+                title="Articles enregistrés"
+                items={adminBlogPosts}
+                getTitle={(item) => item.title}
+                getSubtitle={(item) => `${item.category} · ${item.published ? "publié" : "brouillon"}`}
+                onEdit={editBlogPost}
+                onDelete={(item) => deleteBlogPost(item.id)}
+              />
+              </>
             )}
           </>
         )}
@@ -502,6 +663,7 @@ type FieldProps = {
   hint?: string;
   required?: boolean;
   rows?: number;
+  placeholder?: string;
 };
 
 const getGoogleDriveFolderId = (url: string) => {
@@ -578,15 +740,43 @@ const AdminImageTools = ({
   </section>
 );
 
-const AdminInput = ({ label, value, onChange, required }: FieldProps) => (
+const AdminInput = ({ label, value, onChange, required, placeholder }: FieldProps) => (
   <label className="block rounded-lg border border-border bg-card p-4">
     <span className="mb-2 block text-sm font-body font-semibold">{label}</span>
     <input
       value={value}
       onChange={(event) => onChange(event.target.value)}
       required={required}
+      placeholder={placeholder}
       className="h-11 w-full rounded-lg border border-border bg-background px-3 text-sm font-body outline-none focus:border-primary"
     />
+  </label>
+);
+
+const AdminSelect = ({
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: readonly string[];
+}) => (
+  <label className="block rounded-lg border border-border bg-card p-4">
+    <span className="mb-2 block text-sm font-body font-semibold">{label}</span>
+    <select
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+      className="h-11 w-full rounded-lg border border-border bg-background px-3 text-sm font-body outline-none focus:border-primary"
+    >
+      {options.map((option) => (
+        <option key={option} value={option}>
+          {option}
+        </option>
+      ))}
+    </select>
   </label>
 );
 
@@ -608,6 +798,61 @@ const AdminCheckbox = ({ label, checked, onChange }: { label: string; checked: b
     <input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} className="h-4 w-4 accent-primary" />
     {label}
   </label>
+);
+
+const AdminRecordsList = ({
+  title,
+  items,
+  getTitle,
+  getSubtitle,
+  onEdit,
+  onDelete,
+}: {
+  title: string;
+  items: any[];
+  getTitle: (item: any) => string;
+  getSubtitle: (item: any) => string;
+  onEdit: (item: any) => void;
+  onDelete: (item: any) => void;
+}) => (
+  <section className="mt-10 rounded-lg border border-border bg-card p-4">
+    <div className="mb-4 flex items-center justify-between">
+      <h2 className="font-heading text-2xl font-semibold">{title}</h2>
+      <span className="rounded-lg bg-secondary px-3 py-1 text-xs font-body font-semibold text-secondary-foreground">
+        {items.length}
+      </span>
+    </div>
+    <div className="divide-y divide-border">
+      {items.length === 0 ? (
+        <p className="py-6 text-sm font-body text-muted-foreground">Aucun élément pour le moment.</p>
+      ) : (
+        items.map((item) => (
+          <div key={item.id} className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              <p className="truncate font-body text-sm font-semibold">{getTitle(item)}</p>
+              <p className="mt-1 text-xs font-body text-muted-foreground">{getSubtitle(item)}</p>
+            </div>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => onEdit(item)}
+                className="rounded-lg border border-border px-3 py-2 text-xs font-body font-semibold transition-colors hover:border-primary/40"
+              >
+                Modifier
+              </button>
+              <button
+                type="button"
+                onClick={() => onDelete(item)}
+                className="rounded-lg border border-destructive/30 px-3 py-2 text-xs font-body font-semibold text-destructive transition-colors hover:bg-destructive hover:text-destructive-foreground"
+              >
+                Supprimer
+              </button>
+            </div>
+          </div>
+        ))
+      )}
+    </div>
+  </section>
 );
 
 const SubmitBar = ({ saving, label }: { saving: boolean; label: string }) => (

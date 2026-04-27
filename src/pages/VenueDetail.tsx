@@ -114,6 +114,11 @@ const VenueDetail = () => {
                   <MapPin className="w-4 h-4 mt-0.5 text-primary" />
                   <div>
                     <p className="font-body font-semibold text-sm">{venue.address}</p>
+                    {venue.metroAccess && (
+                      <p className="mt-2 text-sm font-body text-primary">
+                        Métro / accès : {venue.metroAccess}
+                      </p>
+                    )}
                     <p className="mt-2 text-sm font-body text-foreground/70 leading-relaxed">
                       Adresse communiquée aux invités et aux prestataires dès confirmation de la réservation.
                     </p>

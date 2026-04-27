@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { MapPin, Users, SlidersHorizontal, Tag, ShieldCheck } from "lucide-react";
+import { Clock3, Euro, MapPin, Music2, SlidersHorizontal, Tag, UtensilsCrossed, Users, ShieldCheck } from "lucide-react";
 import { fetchVenues, filterVenues, findVenueByCode, getVenueLocationSuggestionsFromVenues } from "@/lib/supabase-data";
-import { EVENT_TYPES } from "@/types/venue";
+import { AMBIANCE_TYPES, EVENT_TYPES, EXTERNAL_OPTIONS, PRICE_TIERS } from "@/types/venue";
 import DesktopNav from "@/components/DesktopNav";
 import FilterSelect from "@/components/FilterSelect";
 import LocationAutocomplete from "@/components/LocationAutocomplete";
@@ -17,6 +17,10 @@ const SearchResults = () => {
   const [locationQuery, setLocationQuery] = useState(searchParams.get("location") || searchParams.get("city") || "");
   const [eventType, setEventType] = useState(searchParams.get("type") || "");
   const [guests, setGuests] = useState(searchParams.get("guests") || "");
+  const [priceTier, setPriceTier] = useState(searchParams.get("price") || "");
+  const [closingFilter, setClosingFilter] = useState(searchParams.get("closing") || "");
+  const [ambianceType, setAmbianceType] = useState(searchParams.get("ambiance") || "");
+  const [externalOption, setExternalOption] = useState(searchParams.get("external") || "");
   const [visibleVenueIds, setVisibleVenueIds] = useState<string[] | null>(null);
   const codeParam = searchParams.get("code");
   const { data: venues = [] } = useQuery({ queryKey: ["venues"], queryFn: fetchVenues });
@@ -37,8 +41,12 @@ const SearchResults = () => {
       locationQuery: locationQuery || undefined,
       eventType: eventType || undefined,
       minGuests: guests ? parseInt(guests, 10) : undefined,
+      priceTier: priceTier || undefined,
+      closesAfterTwo: closingFilter === "Après 2h",
+      ambianceType: ambianceType || undefined,
+      externalOption: externalOption || undefined,
     });
-  }, [locationQuery, eventType, guests, venues]);
+  }, [locationQuery, eventType, guests, priceTier, closingFilter, ambianceType, externalOption, venues]);
 
   useEffect(() => {
     setVisibleVenueIds(null);
@@ -83,7 +91,7 @@ const SearchResults = () => {
           </div>
 
           {/* Filters */}
-          <div className="mb-8 grid grid-cols-1 gap-3 rounded-lg border border-border bg-card p-3 luxury-shadow lg:grid-cols-[minmax(0,1.18fr)_minmax(0,1fr)_minmax(0,1fr)] lg:items-stretch">
+          <div className="mb-8 grid grid-cols-1 gap-3 rounded-lg border border-border bg-card p-3 luxury-shadow lg:grid-cols-3 xl:grid-cols-[minmax(0,1.25fr)_repeat(6,minmax(0,0.86fr))] lg:items-stretch">
             <LocationAutocomplete
               value={locationQuery}
               onChange={setLocationQuery}
@@ -111,6 +119,42 @@ const SearchResults = () => {
                 className="min-w-0 flex-1 bg-transparent text-sm font-body focus:outline-none"
               />
             </div>
+            <FilterSelect
+              value={priceTier}
+              onChange={setPriceTier}
+              placeholder="Prix"
+              emptyLabel="Tous les prix"
+              options={PRICE_TIERS}
+              icon={<Euro className="w-4 h-4" />}
+              className="h-12 bg-muted"
+            />
+            <FilterSelect
+              value={closingFilter}
+              onChange={setClosingFilter}
+              placeholder="Fermeture"
+              emptyLabel="Toute fermeture"
+              options={["Après 2h"]}
+              icon={<Clock3 className="w-4 h-4" />}
+              className="h-12 bg-muted"
+            />
+            <FilterSelect
+              value={ambianceType}
+              onChange={setAmbianceType}
+              placeholder="Ambiance"
+              emptyLabel="Toutes ambiances"
+              options={AMBIANCE_TYPES}
+              icon={<Music2 className="w-4 h-4" />}
+              className="h-12 bg-muted"
+            />
+            <FilterSelect
+              value={externalOption}
+              onChange={setExternalOption}
+              placeholder="Options externes"
+              emptyLabel="Toutes options"
+              options={EXTERNAL_OPTIONS}
+              icon={<UtensilsCrossed className="w-4 h-4" />}
+              className="h-12 bg-muted"
+            />
           </div>
 
           <div className="grid grid-cols-1 gap-8 xl:h-[calc(100vh-22rem)] xl:min-h-[620px] xl:grid-cols-[minmax(0,1.05fr)_minmax(420px,0.95fr)] xl:items-stretch">

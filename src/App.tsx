@@ -3,6 +3,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import EstablishmentReferralModalProvider from "@/components/EstablishmentReferralModalProvider";
+import FloatingWhatsAppButton from "@/components/FloatingWhatsAppButton";
 import Index from "./pages/Index.tsx";
 import VenueDetail from "./pages/VenueDetail.tsx";
 import SearchResults from "./pages/SearchResults.tsx";
@@ -26,6 +27,7 @@ const App = () => (
             <Route path="/admin" element={<Admin />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
+          <FloatingWhatsAppButton />
         </EstablishmentReferralModalProvider>
       </BrowserRouter>
     </TooltipProvider>

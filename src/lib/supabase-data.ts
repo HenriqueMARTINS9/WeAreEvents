@@ -33,8 +33,15 @@ const mapVenue = (row: any): Venue => ({
   coverImage: row.cover_image ?? "",
   gallery: row.gallery ?? [],
   videoUrl: row.video_url ?? undefined,
+  videoStartSeconds: row.video_start_seconds ?? 0,
+  videoEndSeconds: row.video_end_seconds ?? undefined,
   tiktokUrl: row.tiktok_url ?? undefined,
   googleReviewUrl: row.google_review_url ?? "",
+  priceTier: row.price_tier ?? "€€",
+  closingTime: row.closing_time ?? "",
+  ambianceTypes: row.ambiance_types ?? [],
+  externalOptions: row.external_options ?? [],
+  metroAccess: row.metro_access ?? undefined,
   featured: row.featured ?? false,
   active: row.active ?? true,
   contactEmail: row.contact_email ?? "",
@@ -53,7 +60,15 @@ const mapBlogPost = (row: any): BlogPost => ({
 
 export const filterVenues = (
   venues: Venue[],
-  filters: { locationQuery?: string; eventType?: string; minGuests?: number },
+  filters: {
+    locationQuery?: string;
+    eventType?: string;
+    minGuests?: number;
+    priceTier?: string;
+    closesAfterTwo?: boolean;
+    ambianceType?: string;
+    externalOption?: string;
+  },
 ) =>
   venues.filter((venue) => {
     if (!venue.active) return false;
@@ -69,6 +84,10 @@ export const filterVenues = (
     }
     if (filters.eventType && !venue.eventCategories.includes(filters.eventType)) return false;
     if (filters.minGuests && venue.maxCapacity < filters.minGuests) return false;
+    if (filters.priceTier && venue.priceTier !== filters.priceTier) return false;
+    if (filters.closesAfterTwo && venue.closingTime && venue.closingTime < "02:00") return false;
+    if (filters.ambianceType && !venue.ambianceTypes.includes(filters.ambianceType)) return false;
+    if (filters.externalOption && !venue.externalOptions.includes(filters.externalOption)) return false;
     return true;
   });
 
