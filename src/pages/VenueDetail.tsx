@@ -49,6 +49,14 @@ const VenueDetail = () => {
   const galleryImages = [venue.coverImage, ...venue.gallery.filter((image) => image !== venue.coverImage)];
   const primarySpaces = venue.spaces.slice(0, 3);
   const averageCapacity = `${venue.minCapacity}–${venue.maxCapacity} pers.`;
+  const scrollToSection = (sectionId: string) => {
+    const section = document.getElementById(sectionId);
+    if (!section) return;
+
+    const headerOffset = 112;
+    const top = section.getBoundingClientRect().top + window.scrollY - headerOffset;
+    window.scrollTo({ top, behavior: "smooth" });
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -108,7 +116,16 @@ const VenueDetail = () => {
                 ["#acces", "Accès"],
                 ["#avis", `Avis (${reviews.length})`],
               ].map(([href, label]) => (
-                <a key={href} href={href} className="rounded-lg px-3 py-2 transition-colors hover:bg-card hover:text-foreground">
+                <a
+                  key={href}
+                  href={href}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    scrollToSection(href.replace("#", ""));
+                    window.history.replaceState(null, "", href);
+                  }}
+                  className="rounded-lg px-3 py-2 transition-colors hover:bg-card hover:text-foreground"
+                >
                   {label}
                 </a>
               ))}
