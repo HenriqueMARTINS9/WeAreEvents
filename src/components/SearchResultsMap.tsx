@@ -10,6 +10,7 @@ import "leaflet/dist/leaflet.css";
 interface SearchResultsMapProps {
   venues: Venue[];
   onVisibleVenuesChange: (venueIds: string[]) => void;
+  className?: string;
 }
 
 const FRANCE_CENTER: [number, number] = [46.603354, 1.888334];
@@ -61,14 +62,14 @@ const MapViewport = ({
   return null;
 };
 
-const SearchResultsMap = ({ venues, onVisibleVenuesChange }: SearchResultsMapProps) => {
+const SearchResultsMap = ({ venues, onVisibleVenuesChange, className = "" }: SearchResultsMapProps) => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const mapKey = useMemo(() => venues.map((venue) => venue.id).join("-") || "empty", [venues]);
   const [mapInstance, setMapInstance] = useState<LeafletMap | null>(null);
 
   return (
-    <div className="overflow-hidden rounded-lg border border-border bg-card luxury-shadow">
+    <div className={`flex overflow-hidden rounded-lg border border-border bg-card luxury-shadow xl:h-full xl:flex-col ${className}`}>
       <div className="flex items-center justify-between border-b border-border px-4 py-3">
         <div>
           <p className="text-xs font-body font-semibold text-primary">Carte des lieux</p>
@@ -88,7 +89,7 @@ const SearchResultsMap = ({ venues, onVisibleVenuesChange }: SearchResultsMapPro
         </p>
       </div>
 
-      <div className="relative h-[360px] md:h-[420px] xl:h-[calc(100vh-15rem)] xl:min-h-[560px]">
+      <div className="relative h-[360px] md:h-[420px] xl:min-h-0 xl:flex-1">
         <MapContainer
           key={mapKey}
           center={FRANCE_CENTER}

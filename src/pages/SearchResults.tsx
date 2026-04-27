@@ -113,38 +113,48 @@ const SearchResults = () => {
             </div>
           </div>
 
-          <div className="mb-6 flex items-center gap-2 text-sm font-body text-muted-foreground">
-            <SlidersHorizontal className="w-4 h-4 text-primary" />
-            {isMapZoneFilteringActive
-              ? "Résultats ajustés à la zone actuellement visible sur la carte"
-              : "Sélection affinée en temps réel"}
-          </div>
+          <div className="grid grid-cols-1 gap-8 xl:h-[calc(100vh-22rem)] xl:min-h-[620px] xl:grid-cols-[minmax(0,1.05fr)_minmax(420px,0.95fr)] xl:items-stretch">
+            <div className="order-2 flex min-h-0 flex-col overflow-hidden rounded-lg border border-border bg-card luxury-shadow xl:order-1 xl:h-full">
+              <div className="flex items-center gap-2 border-b border-border px-4 py-3 text-sm font-body text-muted-foreground">
+                <SlidersHorizontal className="w-4 h-4 shrink-0 text-primary" />
+                <span>
+                  {isMapZoneFilteringActive
+                    ? "Résultats ajustés à la zone actuellement visible sur la carte"
+                    : "Sélection affinée en temps réel"}
+                </span>
+              </div>
 
-          <div className="grid grid-cols-1 gap-8 xl:grid-cols-[minmax(0,1.08fr)_minmax(360px,0.92fr)]">
-            <div className="order-2 xl:order-1 xl:max-h-[calc(100vh-15rem)] xl:overflow-y-auto xl:pr-3">
-              {results.length > 0 ? (
-                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                  {results.map((venue) => (
-                    <VenueGridCard key={venue.id} venue={venue} />
-                  ))}
-                </div>
-              ) : filteredResults.length > 0 ? (
-                <div className="rounded-lg border border-border bg-card py-20 text-center">
-                  <p className="mb-2 font-heading text-2xl font-semibold">Aucune salle dans la zone affichée</p>
-                  <p className="text-sm font-body text-muted-foreground">
-                    Déplacez la carte ou cliquez sur “Recentrer” pour revoir l'ensemble des lieux correspondant à vos filtres.
-                  </p>
-                </div>
-              ) : (
-                <div className="rounded-lg border border-border bg-card py-20 text-center">
-                  <p className="mb-2 font-heading text-2xl font-semibold">Aucune salle trouvée</p>
-                  <p className="text-sm font-body text-muted-foreground">Essayez une autre ville, un autre format ou un volume d'invités différent.</p>
-                </div>
-              )}
+              <div className="min-h-0 flex-1 overflow-y-auto p-4 xl:p-5">
+                {results.length > 0 ? (
+                  <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                    {results.map((venue) => (
+                      <VenueGridCard key={venue.id} venue={venue} />
+                    ))}
+                  </div>
+                ) : filteredResults.length > 0 ? (
+                  <div className="rounded-lg border border-border bg-background py-20 text-center">
+                    <p className="mb-2 font-heading text-2xl font-semibold">Aucune salle dans la zone affichée</p>
+                    <p className="mx-auto max-w-md text-sm font-body text-muted-foreground">
+                      Déplacez la carte ou cliquez sur “Recentrer” pour revoir l'ensemble des lieux correspondant à vos filtres.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="rounded-lg border border-border bg-background py-20 text-center">
+                    <p className="mb-2 font-heading text-2xl font-semibold">Aucune salle trouvée</p>
+                    <p className="mx-auto max-w-md text-sm font-body text-muted-foreground">
+                      Essayez une autre ville, un autre format ou un volume d'invités différent.
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
 
-            <aside className="order-1 xl:order-2 xl:sticky xl:top-24 xl:self-start">
-              <SearchResultsMap venues={filteredResults} onVisibleVenuesChange={setVisibleVenueIds} />
+            <aside className="order-1 min-h-0 xl:order-2 xl:h-full">
+              <SearchResultsMap
+                venues={filteredResults}
+                onVisibleVenuesChange={setVisibleVenueIds}
+                className="xl:h-full"
+              />
             </aside>
           </div>
         </div>
