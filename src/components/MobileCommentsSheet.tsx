@@ -97,7 +97,7 @@ const MobileCommentsSheet = ({ venue, onClose, onCommentsChange }: MobileComment
           <input
             value={author}
             onChange={(event) => setAuthor(event.target.value)}
-            placeholder="Votre prénom"
+            placeholder="Votre nom ou pseudo"
             className="mb-2 h-10 w-full rounded-lg border border-border bg-card px-3 text-sm font-body outline-none focus:border-primary"
           />
           <div className="flex gap-2">
