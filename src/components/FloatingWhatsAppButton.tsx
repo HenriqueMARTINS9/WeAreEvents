@@ -1,11 +1,13 @@
 import { MessageCircle } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const FloatingWhatsAppButton = () => {
   const location = useLocation();
+  const isMobile = useIsMobile();
 
-  if (location.pathname.startsWith("/admin")) {
+  if (location.pathname.startsWith("/admin") || (isMobile && location.pathname === "/")) {
     return null;
   }
 
