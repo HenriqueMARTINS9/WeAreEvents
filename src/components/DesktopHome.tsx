@@ -56,7 +56,10 @@ const DesktopHome = () => {
   const [activeHeroIndex, setActiveHeroIndex] = useState(0);
   const { data: venues = [] } = useQuery({ queryKey: ["venues"], queryFn: fetchVenues });
   const { data: posts = [] } = useQuery({ queryKey: ["blog-posts"], queryFn: fetchBlogPosts });
-  const featured = venues.filter((v) => v.featured && v.active);
+  const featured = [
+    ...venues.filter((v) => v.featured && v.active),
+    ...venues.filter((v) => !v.featured && v.active),
+  ].slice(0, 6);
   const locationOptions = getVenueLocationSuggestionsFromVenues(venues);
   const activeHero = HERO_MOMENTS[activeHeroIndex];
 
@@ -221,7 +224,7 @@ const DesktopHome = () => {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 2xl:grid-cols-4">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 2xl:grid-cols-3">
             {featured.map((venue) => (
               <VenueGridCard key={venue.id} venue={venue} />
             ))}

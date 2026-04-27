@@ -2,7 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getReviewsByVenueId } from "@/data/venues";
 import { fetchVenues } from "@/lib/supabase-data";
-import { Star, MapPin, Users, Tag, ShieldCheck, ArrowRight, Route, Info } from "lucide-react";
+import { ArrowRight, Cake, Clock3, Euro, ExternalLink, MapPin, Music2, Route, ShieldCheck, Star, Tag, UtensilsCrossed, Users } from "lucide-react";
 import { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import DesktopNav from "@/components/DesktopNav";
@@ -46,188 +46,273 @@ const VenueDetail = () => {
   }
 
   const reviews = getReviewsByVenueId(venue.id);
+  const galleryImages = [venue.coverImage, ...venue.gallery.filter((image) => image !== venue.coverImage)];
+  const primarySpaces = venue.spaces.slice(0, 3);
+  const averageCapacity = `${venue.minCapacity}–${venue.maxCapacity} pers.`;
 
   return (
     <div className="min-h-screen bg-background">
       <DesktopNav />
 
-      {/* Hero */}
-      <div className="pt-16">
-        <div data-header-theme="light" className="relative h-[58vh] min-h-[480px] bg-foreground">
-          <img src={venue.coverImage} alt={venue.title} className="w-full h-full object-cover image-grade-luxe" />
-          <div className="absolute inset-0 bg-gradient-dark" />
-          <div className="absolute inset-0 bg-gradient-to-r from-foreground/70 via-foreground/25 to-transparent" />
-          <div className="absolute bottom-10 left-0 right-0 z-10">
-            <div className="max-w-6xl mx-auto px-6">
-              <h1 className="font-heading text-5xl md:text-7xl text-primary-foreground font-semibold leading-none mb-5">{venue.title}</h1>
-              <div className="flex flex-wrap items-center gap-4 text-primary-foreground/80 font-body text-sm">
-                <span className="flex items-center gap-1"><MapPin className="w-4 h-4" />{venue.city}</span>
-                <span className="flex items-center gap-1"><Users className="w-4 h-4" />{venue.minCapacity}–{venue.maxCapacity} pers.</span>
-                <span className="flex items-center gap-1"><Star className="w-4 h-4 fill-accent text-accent" />{venue.rating} ({venue.reviewCount} avis)</span>
-                <span className="flex items-center gap-1"><ShieldCheck className="w-4 h-4 text-luxe-gold" />Lieu vérifié</span>
-              </div>
+      <main className="pt-24">
+        <section className="px-6 pb-8">
+          <div className="mx-auto max-w-7xl xl:px-2">
+            <div className="mb-5 flex flex-wrap items-center gap-2 text-sm font-body text-muted-foreground">
+              <button type="button" onClick={() => navigate("/")} className="hover:text-foreground">Accueil</button>
+              <span>/</span>
+              <button type="button" onClick={() => navigate("/recherche")} className="hover:text-foreground">Salles</button>
+              <span>/</span>
+              <span className="text-foreground">{venue.title}</span>
             </div>
-          </div>
-        </div>
-      </div>
 
-      {/* Content */}
-      <div className="max-w-6xl mx-auto px-6 py-12 grid grid-cols-1 lg:grid-cols-3 gap-12">
-        <div className="lg:col-span-2 space-y-8">
-          <div className="border-b border-border pb-8">
-            <p className="font-heading text-2xl md:text-3xl italic text-primary mb-5">"{venue.tagline}"</p>
-            <p className="font-body text-foreground/80 leading-relaxed text-lg">{venue.description}</p>
-          </div>
-
-          {/* Gallery */}
-          <div className="flex gap-3 overflow-x-auto hide-scrollbar">
-            {venue.gallery.map((img, i) => (
-              <img key={i} src={img} alt="" className="h-52 w-72 rounded-lg object-cover shrink-0 image-grade-luxe" loading="lazy" />
-            ))}
-          </div>
-
-          {/* Event types */}
-          <div>
-            <h3 className="font-heading text-xl font-semibold mb-3">Espaces disponibles</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {venue.spaces.map((space) => (
-                <div key={space.id} className="rounded-lg border border-border bg-card p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <h4 className="font-body font-semibold text-sm">{space.name}</h4>
-                      <p className="mt-2 text-sm font-body text-foreground/70 leading-relaxed">{space.description}</p>
-                    </div>
-                    <span className="shrink-0 rounded-lg bg-secondary px-2 py-1 text-xs font-body font-semibold text-secondary-foreground">
-                      Jusqu'à {space.capacity}
+            <div className="mb-6 grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-end">
+              <div>
+                <div className="mb-3 flex flex-wrap gap-2">
+                  {[venue.priceTier, ...venue.ambianceTypes.slice(0, 2)].filter(Boolean).map((tag) => (
+                    <span key={tag} className="rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-body font-semibold text-foreground">
+                      {tag}
                     </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <h3 className="font-heading text-xl font-semibold mb-3">Lieu exact</h3>
-              <div className="rounded-lg border border-border bg-card p-4">
-                <div className="flex items-start gap-3">
-                  <MapPin className="w-4 h-4 mt-0.5 text-primary" />
-                  <div>
-                    <p className="font-body font-semibold text-sm">{venue.address}</p>
-                    {venue.metroAccess && (
-                      <p className="mt-2 text-sm font-body text-primary">
-                        Métro / accès : {venue.metroAccess}
-                      </p>
-                    )}
-                    <p className="mt-2 text-sm font-body text-foreground/70 leading-relaxed">
-                      Adresse communiquée aux invités et aux prestataires dès confirmation de la réservation.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div>
-              <h3 className="font-heading text-xl font-semibold mb-3">Comment y accéder</h3>
-              <div className="rounded-lg border border-border bg-card p-4">
-                <div className="space-y-3">
-                  {venue.accessDetails.map((detail) => (
-                    <div key={detail} className="flex items-start gap-3">
-                      <Route className="w-4 h-4 mt-0.5 text-primary" />
-                      <p className="text-sm font-body text-foreground/75">{detail}</p>
-                    </div>
                   ))}
                 </div>
+                <h1 className="font-heading text-5xl font-semibold leading-none xl:text-6xl">{venue.title}</h1>
+                <div className="mt-4 flex flex-wrap items-center gap-4 text-sm font-body text-muted-foreground">
+                  <span className="flex items-center gap-1.5"><MapPin className="h-4 w-4 text-primary" />{venue.address}</span>
+                  {venue.metroAccess && <span className="flex items-center gap-1.5"><Route className="h-4 w-4 text-primary" />{venue.metroAccess}</span>}
+                  <span className="flex items-center gap-1.5"><Star className="h-4 w-4 fill-accent text-accent" />{venue.rating}/5 ({venue.reviewCount} avis)</span>
+                </div>
               </div>
+              <button
+                onClick={() => setBookingOpen(true)}
+                className="brand-primary-button inline-flex items-center justify-center gap-2 rounded-lg px-5 py-3 text-sm font-body font-semibold text-primary-foreground transition-all hover:brightness-95"
+              >
+                Demander une disponibilité
+                <ArrowRight className="h-4 w-4" />
+              </button>
             </div>
-          </div>
 
-          <div>
-            <h3 className="font-heading text-xl font-semibold mb-3">Informations utiles</h3>
-            <div className="rounded-lg border border-border bg-card p-4">
-              <div className="space-y-3">
-                {venue.usefulInformation.map((detail) => (
-                  <div key={detail} className="flex items-start gap-3">
-                    <Info className="w-4 h-4 mt-0.5 text-primary" />
-                    <p className="text-sm font-body text-foreground/75">{detail}</p>
-                  </div>
+            <div data-header-theme="light" className="grid h-[460px] grid-cols-[1.35fr_0.85fr] gap-3 overflow-hidden rounded-lg bg-foreground">
+              <img src={galleryImages[0]} alt={venue.title} className="h-full w-full object-cover image-grade-luxe" />
+              <div className="grid grid-cols-2 gap-3">
+                {galleryImages.slice(1, 5).map((image, index) => (
+                  <img key={`${image}-${index}`} src={image} alt="" className="h-full w-full object-cover image-grade-luxe" />
                 ))}
               </div>
             </div>
-          </div>
 
-          <div>
-            <h3 className="font-heading text-xl font-semibold mb-3">Types d'événements</h3>
-            <div className="flex flex-wrap gap-2">
-              {venue.eventCategories.map((cat) => (
-                <span key={cat} className="px-3 py-1.5 rounded-lg bg-secondary text-secondary-foreground text-sm font-body">{cat}</span>
+            <nav className="mt-6 flex flex-wrap gap-2 border-b border-border pb-4 text-sm font-body font-semibold text-muted-foreground">
+              {[
+                ["#presentation", "Présentation"],
+                ["#options", "Options"],
+                ["#ambiance", "Ambiance"],
+                ["#infos", "Informations utiles"],
+                ["#acces", "Accès"],
+                ["#avis", `Avis (${reviews.length})`],
+              ].map(([href, label]) => (
+                <a key={href} href={href} className="rounded-lg px-3 py-2 transition-colors hover:bg-card hover:text-foreground">
+                  {label}
+                </a>
               ))}
-            </div>
+            </nav>
           </div>
+        </section>
 
-          {/* Services */}
-          <div>
-            <h3 className="font-heading text-xl font-semibold mb-3">Services & équipements</h3>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-              {venue.services.map((svc) => (
-                <div key={svc} className="flex items-center gap-2 p-3 rounded-lg border border-border bg-card text-sm font-body">
-                  <Tag className="w-4 h-4 text-primary" />
-                  {svc}
+        <section className="px-6 pb-16">
+          <div className="mx-auto grid max-w-7xl grid-cols-1 gap-10 xl:grid-cols-[minmax(0,1fr)_360px] xl:px-2">
+            <div className="space-y-10">
+              <section id="presentation" className="scroll-mt-28">
+                <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+                  {[
+                    { icon: <Users className="h-4 w-4" />, label: "Capacité max", value: averageCapacity },
+                    { icon: <Clock3 className="h-4 w-4" />, label: "Jusqu'à", value: venue.closingTime || "Sur demande" },
+                    { icon: <Euro className="h-4 w-4" />, label: "Gamme de prix", value: venue.priceTier },
+                    { icon: <ShieldCheck className="h-4 w-4" />, label: "Statut", value: "Lieu vérifié" },
+                  ].map((item) => (
+                    <div key={item.label} className="rounded-lg border border-border bg-card p-4">
+                      <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-secondary text-primary">{item.icon}</div>
+                      <p className="text-xs font-body text-muted-foreground">{item.label}</p>
+                      <p className="mt-1 font-heading text-xl font-semibold">{item.value}</p>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </div>
 
-          {/* Reviews */}
-          <div>
-            <h3 className="font-heading text-xl font-semibold mb-4">Avis ({reviews.length})</h3>
-            <div className="space-y-3">
-              {reviews.map((r) => (
-                <div key={r.id} className="p-5 rounded-lg border border-border bg-card">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-body font-semibold text-sm">{r.authorName}</span>
-                    <div className="flex gap-0.5">
-                      {Array.from({ length: 5 }).map((_, i) => (
-                        <Star key={i} className={`w-3.5 h-3.5 ${i < r.rating ? "fill-accent text-accent" : "text-border"}`} />
-                      ))}
+                <div className="mt-8 border-b border-border pb-8">
+                  <p className="font-heading text-3xl italic text-primary">"{venue.tagline}"</p>
+                  <p className="mt-5 max-w-3xl font-body text-lg leading-relaxed text-foreground/80">{venue.description}</p>
+                </div>
+              </section>
+
+              <section id="options" className="scroll-mt-28">
+                <h2 className="font-heading text-3xl font-semibold">Sélectionnez une option de réservation</h2>
+                <p className="mt-2 text-sm font-body text-muted-foreground">Chaque espace peut être demandé selon votre format, votre date et votre volume d'invités.</p>
+                <div className="mt-5 grid grid-cols-1 gap-4">
+                  {primarySpaces.map((space) => (
+                    <button
+                      key={space.id}
+                      type="button"
+                      onClick={() => setBookingOpen(true)}
+                      className="group rounded-lg border border-border bg-card p-5 text-left transition-colors hover:border-primary/50"
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <h3 className="font-heading text-2xl font-semibold">{space.name}</h3>
+                          <p className="mt-2 text-sm font-body leading-relaxed text-muted-foreground">{space.description}</p>
+                          <div className="mt-4 flex flex-wrap gap-2">
+                            <span className="rounded-lg bg-secondary px-3 py-1.5 text-xs font-body font-semibold text-secondary-foreground">{space.capacity} pers.</span>
+                            <span className="rounded-lg bg-secondary px-3 py-1.5 text-xs font-body font-semibold text-secondary-foreground">Disponibilité sur demande</span>
+                          </div>
+                        </div>
+                        <ArrowRight className="mt-1 h-5 w-5 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-primary" />
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </section>
+
+              <section id="ambiance" className="scroll-mt-28">
+                <h2 className="font-heading text-3xl font-semibold">Ambiance & activités</h2>
+                <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <InfoBlock icon={<Music2 className="h-4 w-4" />} title="Ambiance" items={venue.ambianceTypes} />
+                  <InfoBlock icon={<Cake className="h-4 w-4" />} title="Ce que vous pouvez apporter" items={venue.externalOptions} />
+                </div>
+              </section>
+
+              <section id="infos" className="scroll-mt-28">
+                <h2 className="font-heading text-3xl font-semibold">Informations utiles</h2>
+                <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <InfoBlock icon={<Tag className="h-4 w-4" />} title="Équipements & services" items={venue.services} />
+                  <InfoBlock icon={<UtensilsCrossed className="h-4 w-4" />} title="Parfait pour" items={venue.eventCategories} />
+                </div>
+                <div className="mt-4 rounded-lg border border-border bg-card p-5">
+                  <h3 className="font-body text-sm font-semibold text-primary">À savoir</h3>
+                  <div className="mt-4 space-y-3">
+                    {venue.usefulInformation.map((detail) => (
+                      <p key={detail} className="text-sm font-body leading-relaxed text-foreground/75">{detail}</p>
+                    ))}
+                  </div>
+                </div>
+              </section>
+
+              <section id="acces" className="scroll-mt-28">
+                <h2 className="font-heading text-3xl font-semibold">Se rendre au {venue.title}</h2>
+                <div className="mt-5 rounded-lg border border-border bg-card p-5">
+                  <div className="flex items-start gap-3">
+                    <MapPin className="mt-0.5 h-5 w-5 text-primary" />
+                    <div>
+                      <p className="font-body font-semibold">{venue.address}</p>
+                      {venue.metroAccess && <p className="mt-2 text-sm font-body text-primary">{venue.metroAccess}</p>}
                     </div>
                   </div>
-                  <p className="text-sm font-body text-foreground/70">{r.comment}</p>
+                  <div className="mt-5 space-y-3 border-t border-border pt-5">
+                    {venue.accessDetails.map((detail) => (
+                      <p key={detail} className="text-sm font-body leading-relaxed text-foreground/75">{detail}</p>
+                    ))}
+                  </div>
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(venue.address)}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-5 inline-flex items-center gap-2 text-sm font-body font-semibold text-primary"
+                  >
+                    Voir sur la carte
+                    <ExternalLink className="h-4 w-4" />
+                  </a>
                 </div>
-              ))}
-            </div>
-          </div>
-        </div>
+              </section>
 
-        {/* Sidebar */}
-        <div>
-          <div className="sticky top-24 space-y-4">
-            <div className="p-6 rounded-lg bg-foreground text-primary-foreground luxury-shadow">
-              <p className="text-xs text-primary-foreground/60 font-body mb-1">Tarif indicatif</p>
-              <p className="font-heading text-3xl font-semibold text-luxe-gold mb-3">{venue.pricingText}</p>
-              <p className="font-body text-sm text-primary-foreground/70 leading-relaxed mb-6">
-                Recevez un retour qualifié sur la disponibilité, les options et la cohérence du lieu avec votre brief.
-              </p>
-              <button
-                onClick={() => setBookingOpen(true)}
-                className="flex w-full items-center justify-center gap-2 py-3.5 rounded-lg bg-primary text-primary-foreground font-body font-semibold text-sm shadow-lg hover:bg-primary-foreground hover:text-foreground transition-colors"
-              >
-                Demander une disponibilité
-                <ArrowRight className="w-4 h-4" />
-              </button>
+              <section id="avis" className="scroll-mt-28">
+                <div className="mb-5 flex items-end justify-between gap-4">
+                  <div>
+                    <h2 className="font-heading text-3xl font-semibold">Avis</h2>
+                    <p className="mt-2 text-sm font-body text-muted-foreground">Tous les retours affichés proviennent des demandes enregistrées.</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-heading text-4xl font-semibold text-primary">{venue.rating}/5</p>
+                    <p className="text-xs font-body text-muted-foreground">{venue.reviewCount} avis</p>
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  {reviews.map((review) => (
+                    <div key={review.id} className="rounded-lg border border-border bg-card p-5">
+                      <div className="mb-2 flex items-center justify-between">
+                        <span className="font-body text-sm font-semibold">{review.authorName}</span>
+                        <div className="flex gap-0.5">
+                          {Array.from({ length: 5 }).map((_, index) => (
+                            <Star key={index} className={`h-3.5 w-3.5 ${index < review.rating ? "fill-accent text-accent" : "text-border"}`} />
+                          ))}
+                        </div>
+                      </div>
+                      <p className="text-sm font-body leading-relaxed text-foreground/70">{review.comment}</p>
+                    </div>
+                  ))}
+                  {reviews.length === 0 && (
+                    <div className="rounded-lg border border-border bg-card p-6 text-sm font-body text-muted-foreground">Aucun avis pour le moment.</div>
+                  )}
+                </div>
+              </section>
             </div>
-            <div className="p-4 rounded-lg bg-card border border-border">
-              <p className="text-xs text-muted-foreground font-body mb-1">Adresse</p>
-              <p className="font-body text-sm font-semibold">{venue.address}</p>
-              <p className="mt-2 text-xs font-body text-muted-foreground">Accès détaillé communiqué avec la confirmation.</p>
-            </div>
+
+            <aside className="xl:sticky xl:top-28 xl:self-start">
+              <div className="rounded-lg border border-border bg-card p-5 luxury-shadow">
+                <p className="text-xs font-body font-semibold text-primary">Réservation</p>
+                <h2 className="mt-2 font-heading text-3xl font-semibold">{venue.pricingText}</h2>
+                <p className="mt-2 text-sm font-body text-muted-foreground">Recevez un retour qualifié sur la disponibilité, les options et la cohérence avec votre événement.</p>
+                <div className="mt-5 grid grid-cols-2 gap-3">
+                  <div className="rounded-lg bg-secondary p-3">
+                    <p className="text-xs font-body text-muted-foreground">Capacité</p>
+                    <p className="font-body text-sm font-semibold">{averageCapacity}</p>
+                  </div>
+                  <div className="rounded-lg bg-secondary p-3">
+                    <p className="text-xs font-body text-muted-foreground">Fermeture</p>
+                    <p className="font-body text-sm font-semibold">{venue.closingTime || "Sur demande"}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setBookingOpen(true)}
+                  className="mt-5 flex w-full items-center justify-center gap-2 rounded-lg bg-primary py-3.5 text-sm font-body font-semibold text-primary-foreground shadow-lg transition-colors hover:bg-foreground"
+                >
+                  Demander une disponibilité
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+                <div className="mt-5 space-y-3 border-t border-border pt-5">
+                  <div className="flex items-start gap-3">
+                    <ShieldCheck className="mt-0.5 h-4 w-4 text-primary" />
+                    <p className="text-sm font-body text-muted-foreground">Demande gratuite et sans engagement.</p>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Clock3 className="mt-0.5 h-4 w-4 text-primary" />
+                    <p className="text-sm font-body text-muted-foreground">Réponse qualifiée sous 24h ouvrées.</p>
+                  </div>
+                </div>
+              </div>
+            </aside>
           </div>
-        </div>
-      </div>
+        </section>
+      </main>
 
       {bookingOpen && <BookingModal venue={venue} onClose={() => setBookingOpen(false)} />}
       <SiteFooter />
     </div>
   );
 };
+
+const InfoBlock = ({ icon, title, items }: { icon: React.ReactNode; title: string; items: string[] }) => (
+  <div className="rounded-lg border border-border bg-card p-5">
+    <div className="mb-4 flex items-center gap-2">
+      <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-secondary text-primary">{icon}</span>
+      <h3 className="font-heading text-xl font-semibold">{title}</h3>
+    </div>
+    <div className="flex flex-wrap gap-2">
+      {items.length > 0 ? (
+        items.map((item) => (
+          <span key={item} className="rounded-lg bg-secondary px-3 py-1.5 text-xs font-body font-semibold text-secondary-foreground">
+            {item}
+          </span>
+        ))
+      ) : (
+        <p className="text-sm font-body text-muted-foreground">Sur demande</p>
+      )}
+    </div>
+  </div>
+);
 
 export default VenueDetail;
