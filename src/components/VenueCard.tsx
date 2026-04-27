@@ -3,20 +3,24 @@ import { Share2, MessageCircle, Star, MapPin, Users, Tag, ShieldCheck } from "lu
 import type { Venue } from "@/types/venue";
 import { toast } from "sonner";
 import { buildVenueWhatsAppUrl } from "@/lib/whatsapp";
+import { countMobileComments } from "@/lib/mobile-comments";
 
 interface VenueCardProps {
   venue: Venue;
   isActive: boolean;
   onOpenDetail: () => void;
   onBooking: () => void;
+  onComments: () => void;
+  commentsCount?: number;
 }
 
-const VenueCard = ({ venue, isActive, onOpenDetail, onBooking }: VenueCardProps) => {
+const VenueCard = ({ venue, isActive, onOpenDetail, onBooking, onComments, commentsCount }: VenueCardProps) => {
   const [showVideo, setShowVideo] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout>>();
   const videoStart = venue.videoStartSeconds ?? 0;
   const videoEnd = venue.videoEndSeconds;
+  const visibleCommentsCount = commentsCount ?? countMobileComments(venue.id);
 
   const handleShare = async () => {
     const shareUrl = typeof window !== "undefined"
@@ -209,11 +213,16 @@ const VenueCard = ({ venue, isActive, onOpenDetail, onBooking }: VenueCardProps)
           <span className="text-[10px] font-body">WhatsApp</span>
         </a>
 
-        <button className="flex flex-col items-center gap-1 text-primary-foreground">
+        <button
+          type="button"
+          onClick={onComments}
+          className="flex flex-col items-center gap-1 text-primary-foreground"
+          aria-label={`Voir les commentaires de ${venue.title}`}
+        >
           <span className="p-2 rounded-lg glass-dark">
             <MessageCircle className="w-6 h-6" />
           </span>
-          <span className="text-[10px] font-body">{venue.reviewCount}</span>
+          <span className="text-[10px] font-body">{visibleCommentsCount}</span>
         </button>
 
         <button

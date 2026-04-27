@@ -7,7 +7,9 @@ import MobileHeader from "./MobileHeader";
 import VenueCodeSearch from "./VenueCodeSearch";
 import VenueDetailSheet from "./VenueDetailSheet";
 import BookingModal from "./BookingModal";
+import MobileCommentsSheet from "./MobileCommentsSheet";
 import type { Venue } from "@/types/venue";
+import { countMobileComments } from "@/lib/mobile-comments";
 
 const MobileSwipeHome = () => {
   const navigate = useNavigate();
@@ -16,6 +18,8 @@ const MobileSwipeHome = () => {
   const [showEntryPrompt, setShowEntryPrompt] = useState(false);
   const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null);
   const [bookingVenue, setBookingVenue] = useState<Venue | null>(null);
+  const [commentsVenue, setCommentsVenue] = useState<Venue | null>(null);
+  const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
   const containerRef = useRef<HTMLDivElement>(null);
   const { data: allVenues = [] } = useQuery({ queryKey: ["venues"], queryFn: fetchVenues });
   const venues = allVenues.filter((v) => v.active);
@@ -38,6 +42,12 @@ const MobileSwipeHome = () => {
 
     return () => window.clearTimeout(timeout);
   }, []);
+
+  useEffect(() => {
+    setCommentCounts(
+      Object.fromEntries(venues.map((venue) => [venue.id, countMobileComments(venue.id)])),
+    );
+  }, [venues]);
 
   const dismissEntryPrompt = () => {
     if (typeof window !== "undefined") {
@@ -65,6 +75,8 @@ const MobileSwipeHome = () => {
             isActive={index === currentIndex}
             onOpenDetail={() => setSelectedVenue(venue)}
             onBooking={() => setBookingVenue(venue)}
+            onComments={() => setCommentsVenue(venue)}
+            commentsCount={commentCounts[venue.id] ?? 0}
           />
         ))}
       </div>
@@ -117,6 +129,14 @@ const MobileSwipeHome = () => {
         <BookingModal
           venue={bookingVenue}
           onClose={() => setBookingVenue(null)}
+        />
+      )}
+
+      {commentsVenue && (
+        <MobileCommentsSheet
+          venue={commentsVenue}
+          onClose={() => setCommentsVenue(null)}
+          onCommentsChange={(count) => setCommentCounts((current) => ({ ...current, [commentsVenue.id]: count }))}
         />
       )}
     </div>

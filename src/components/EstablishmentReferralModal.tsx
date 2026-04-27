@@ -53,9 +53,9 @@ const EstablishmentReferralModal = ({ isOpen, onClose }: EstablishmentReferralMo
   };
 
   return (
-    <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 sm:p-6">
+    <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 sm:p-6 animate-fade-in">
       <div className="absolute inset-0 bg-foreground/75 backdrop-blur-md" onClick={onClose} />
-      <div className="relative max-h-[90vh] w-full max-w-5xl overflow-y-auto rounded-lg bg-background luxury-shadow">
+      <div className="relative max-h-[90vh] w-full max-w-5xl overflow-y-auto rounded-lg bg-background luxury-shadow animate-scale-in">
         <button
           type="button"
           onClick={onClose}
