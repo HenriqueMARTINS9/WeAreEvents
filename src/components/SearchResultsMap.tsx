@@ -69,7 +69,7 @@ const SearchResultsMap = ({ venues, onVisibleVenuesChange, className = "" }: Sea
   const [mapInstance, setMapInstance] = useState<LeafletMap | null>(null);
 
   return (
-    <div className={`flex overflow-hidden rounded-lg border border-border bg-card luxury-shadow xl:h-full xl:flex-col ${className}`}>
+    <div className={`isolate flex overflow-hidden rounded-lg border border-border bg-card luxury-shadow xl:h-full xl:flex-col ${className}`}>
       <div className="flex items-center justify-between border-b border-border px-4 py-3">
         <div>
           <p className="text-xs font-body font-semibold text-primary">Carte des lieux</p>
@@ -89,7 +89,7 @@ const SearchResultsMap = ({ venues, onVisibleVenuesChange, className = "" }: Sea
         </p>
       </div>
 
-      <div className="relative h-[360px] md:h-[420px] xl:min-h-0 xl:flex-1">
+      <div className="relative z-0 h-[360px] md:h-[420px] xl:min-h-0 xl:flex-1">
         <MapContainer
           key={mapKey}
           center={FRANCE_CENTER}
@@ -100,7 +100,7 @@ const SearchResultsMap = ({ venues, onVisibleVenuesChange, className = "" }: Sea
           doubleClickZoom={!isMobile}
           boxZoom={false}
           keyboard={false}
-          className="h-full w-full"
+          className="z-0 h-full w-full"
           whenCreated={setMapInstance}
         >
           <TileLayer

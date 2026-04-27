@@ -47,7 +47,7 @@ const DesktopNav = () => {
     <>
       <nav
         ref={navRef}
-        className={`fixed top-0 left-0 right-0 z-50 backdrop-blur-xl transition-colors duration-300 ${
+        className={`fixed top-0 left-0 right-0 z-[1000] backdrop-blur-xl transition-colors duration-300 ${
           useLightChrome ? "bg-foreground/10" : "bg-background/20"
         }`}
       >
