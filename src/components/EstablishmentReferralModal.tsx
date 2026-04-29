@@ -105,15 +105,18 @@ const EstablishmentReferralModal = ({ isOpen, onClose }: EstablishmentReferralMo
                 Vous souhaitez référencer votre établissement ?
               </h2>
               <p className="mt-5 text-sm font-body leading-relaxed text-primary-foreground/76 sm:text-base">
-                Gagnez de nombreux clients parmi les visiteurs qui cherchent chaque mois un lieu fiable, lisible et rapide à réserver.
+                Recevez des demandes qualifiées de clients à la recherche d'un lieu fiable, attractif et simple à privatiser.
               </p>
               <p className="mt-4 text-sm font-body leading-relaxed text-primary-foreground/76 sm:text-base">
-                Pas de commissions et sans engagement, vous payez un montant fixe sans risque de voir déraper la facture.
+                Une commission uniquement en cas de réservation confirmée.
+              </p>
+              <p className="mt-4 text-sm font-body leading-relaxed text-primary-foreground/76 sm:text-base">
+                Sans coût fixe, sans engagement et avec un modèle transparent, aligné sur vos résultats.
               </p>
               <div className="mt-8 space-y-3 text-sm font-body text-primary-foreground/82">
                 <p>Visibilité premium auprès d'organisateurs qualifiés.</p>
                 <p>Demandes centralisées, triées et accompagnées par notre équipe.</p>
-                <p>Modèle simple, 100 % lisible et sans surprise.</p>
+                <p>Modèle simple, clair et sans surprise.</p>
               </div>
             </div>
 

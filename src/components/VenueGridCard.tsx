@@ -4,17 +4,19 @@ import type { Venue } from "@/types/venue";
 
 interface VenueGridCardProps {
   venue: Venue;
+  size?: "default" | "large";
 }
 
-const VenueGridCard = ({ venue }: VenueGridCardProps) => {
+const VenueGridCard = ({ venue, size = "default" }: VenueGridCardProps) => {
   const navigate = useNavigate();
+  const isLarge = size === "large";
 
   return (
     <div
       onClick={() => navigate(`/salle/${venue.slug}`)}
       className="group flex h-full cursor-pointer flex-col overflow-hidden rounded-lg border border-border bg-card luxury-shadow transition-all duration-300 hover:-translate-y-1 hover:border-primary/40"
     >
-      <div className="relative h-64 overflow-hidden bg-foreground">
+      <div className={`relative overflow-hidden bg-foreground ${isLarge ? "h-72" : "h-64"}`}>
         <img
           src={venue.coverImage}
           alt={venue.title}
@@ -30,13 +32,13 @@ const VenueGridCard = ({ venue }: VenueGridCardProps) => {
         </div>
         <div className="absolute bottom-4 left-4 right-4">
           <p className="mb-1 text-xs font-body text-primary-foreground/75">{venue.city}</p>
-          <h3 className="font-heading text-2xl font-semibold leading-tight text-primary-foreground">
+          <h3 className={`font-heading font-semibold leading-tight text-primary-foreground ${isLarge ? "text-3xl" : "text-2xl"}`}>
             {venue.title}
           </h3>
         </div>
       </div>
 
-      <div className="flex flex-1 flex-col p-5">
+      <div className={`flex flex-1 flex-col ${isLarge ? "p-6" : "p-5"}`}>
         <p className="text-muted-foreground text-sm font-body leading-relaxed mb-4 line-clamp-2">
           {venue.tagline}
         </p>

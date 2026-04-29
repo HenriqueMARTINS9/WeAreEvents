@@ -18,13 +18,13 @@ const Blog = () => {
           <div className="mx-auto max-w-7xl xl:px-2">
             <div className="grid grid-cols-1 gap-10 xl:grid-cols-[minmax(0,0.9fr)_minmax(420px,1.1fr)] xl:items-end">
               <div>
-                <p className="mb-3 font-body text-sm font-semibold text-primary">Blog WeAreEvents</p>
+                <p className="mb-3 font-body text-sm font-semibold text-primary">Blog wearevents</p>
                 <h1 className="font-heading text-5xl font-semibold leading-[0.98] xl:text-6xl">
-                  Conseils, inspirations et réflexes pour vos événements.
+                  Guides pratiques pour trouver le bon lieu pour vos événements.
                 </h1>
               </div>
               <p className="max-w-2xl font-body text-lg leading-relaxed text-muted-foreground xl:justify-self-end">
-                Des guides concrets pour choisir un lieu, préparer une visite et valoriser un établissement auprès des bons organisateurs.
+                Conseils, checklists et idées pour choisir une salle, organiser un mariage, un anniversaire, un séminaire ou réussir la privatisation d'un lieu.
               </p>
             </div>
 

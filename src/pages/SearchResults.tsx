@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { Clock3, Euro, MapPin, Music2, SlidersHorizontal, Tag, UtensilsCrossed, Users, ShieldCheck } from "lucide-react";
+import { CalendarDays, Clock3, Euro, MapPin, Music2, SlidersHorizontal, Tag, UtensilsCrossed, Users, ShieldCheck, X } from "lucide-react";
 import { fetchVenues, filterVenues, findVenueByCode, getVenueLocationSuggestionsFromVenues } from "@/lib/supabase-data";
-import { AMBIANCE_TYPES, EVENT_TYPES, EXTERNAL_OPTIONS, PRICE_TIERS } from "@/types/venue";
+import { EVENT_TYPES } from "@/types/venue";
 import DesktopNav from "@/components/DesktopNav";
 import FilterSelect from "@/components/FilterSelect";
 import LocationAutocomplete from "@/components/LocationAutocomplete";
@@ -11,16 +11,46 @@ import SiteFooter from "@/components/SiteFooter";
 import SearchResultsMap from "@/components/SearchResultsMap";
 import VenueGridCard from "@/components/VenueGridCard";
 
+const SEARCH_BACKGROUND_VIDEO = "https://videos.pexels.com/video-files/3571264/3571264-uhd_2560_1440_30fps.mp4";
+const PRICE_FILTERS = ["€", "€€", "€€€", "€€€€"] as const;
+const VENUE_TYPE_FILTERS = ["Bar", "Restaurant", "Salle"] as const;
+const AMBIANCE_FILTERS = ["Calme", "Animée", "Festive"] as const;
+const PRIVATIZATION_FILTERS = ["Quelques tables", "Espace clos"] as const;
+const OFFER_FILTERS = ["Promotions exclusives", "Happy Hours"] as const;
+const HOUR_FILTERS = ["Ouvert après minuit", "Ouvert après 2h"] as const;
+const OPTION_FILTERS = ["Mettre ma musique", "Possibilité de danser", "Apporter mon gâteau", "Matériel de projection", "Jeux (baby-foot, ping-pong, ...)"] as const;
+const EQUIPMENT_FILTERS = ["Matériel de karaoké", "Terrasse"] as const;
+const FOOD_FILTERS = ["Planches et tapas"] as const;
+
+type FilterGroupProps = {
+  title: string;
+  options: readonly string[];
+  value?: string;
+  values?: string[];
+  onSelect?: (value: string) => void;
+  onToggle?: (value: string) => void;
+};
+
+const toggleValue = (values: string[], value: string) =>
+  values.includes(value) ? values.filter((item) => item !== value) : [...values, value];
+
 const SearchResults = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [locationQuery, setLocationQuery] = useState(searchParams.get("location") || searchParams.get("city") || "");
   const [eventType, setEventType] = useState(searchParams.get("type") || "");
+  const [eventDate, setEventDate] = useState(searchParams.get("date") || "");
   const [guests, setGuests] = useState(searchParams.get("guests") || "");
   const [priceTier, setPriceTier] = useState(searchParams.get("price") || "");
   const [closingFilter, setClosingFilter] = useState(searchParams.get("closing") || "");
   const [ambianceType, setAmbianceType] = useState(searchParams.get("ambiance") || "");
-  const [externalOption, setExternalOption] = useState(searchParams.get("external") || "");
+  const [venueType, setVenueType] = useState("");
+  const [privatizationType, setPrivatizationType] = useState("");
+  const [offerType, setOfferType] = useState("");
+  const [optionFilters, setOptionFilters] = useState<string[]>([]);
+  const [equipmentFilters, setEquipmentFilters] = useState<string[]>([]);
+  const [foodFilter, setFoodFilter] = useState("");
+  const [showAllFilters, setShowAllFilters] = useState(false);
   const [visibleVenueIds, setVisibleVenueIds] = useState<string[] | null>(null);
   const codeParam = searchParams.get("code");
   const { data: venues = [] } = useQuery({ queryKey: ["venues"], queryFn: fetchVenues });
@@ -43,10 +73,16 @@ const SearchResults = () => {
       minGuests: guests ? parseInt(guests, 10) : undefined,
       priceTier: priceTier || undefined,
       closesAfterTwo: closingFilter === "Après 2h",
+      closesAfterMidnight: closingFilter === "Après minuit",
       ambianceType: ambianceType || undefined,
-      externalOption: externalOption || undefined,
+      venueType: venueType || undefined,
+      privatizationType: privatizationType || undefined,
+      offerType: offerType || undefined,
+      optionFilters,
+      equipmentFilters,
+      foodFilter: foodFilter || undefined,
     });
-  }, [locationQuery, eventType, guests, priceTier, closingFilter, ambianceType, externalOption, venues]);
+  }, [locationQuery, eventType, guests, priceTier, closingFilter, ambianceType, venueType, privatizationType, offerType, optionFilters, equipmentFilters, foodFilter, venues]);
 
   useEffect(() => {
     setVisibleVenueIds(null);
@@ -61,103 +97,199 @@ const SearchResults = () => {
 
   const isMapZoneFilteringActive =
     visibleVenueIds !== null && results.length !== filteredResults.length;
+  const activeAdvancedFilterCount = [
+    venueType,
+    priceTier,
+    ambianceType,
+    privatizationType,
+    offerType,
+    closingFilter,
+    foodFilter,
+    ...optionFilters,
+    ...equipmentFilters,
+  ].filter(Boolean).length;
+  const resetAdvancedFilters = () => {
+    setVenueType("");
+    setPriceTier("");
+    setAmbianceType("");
+    setPrivatizationType("");
+    setOfferType("");
+    setClosingFilter("");
+    setOptionFilters([]);
+    setEquipmentFilters([]);
+    setFoodFilter("");
+  };
+  const toggleOptionFilter = (value: string) => {
+    setOptionFilters((current) => toggleValue(current, value));
+  };
+  const toggleEquipmentFilter = (value: string) => {
+    setEquipmentFilters((current) => toggleValue(current, value));
+  };
+
+  const FilterGroup = ({ title, options, value, values, onSelect, onToggle }: FilterGroupProps) => (
+    <div>
+      <h3 className="mb-3 font-body text-sm font-semibold text-foreground">{title}</h3>
+      <div className="flex flex-wrap gap-2">
+        {options.map((option) => {
+          const selected = values ? values.includes(option) : value === option;
+
+          return (
+            <button
+              key={option}
+              type="button"
+              onClick={() => {
+                if (onToggle) {
+                  onToggle(option);
+                  return;
+                }
+
+                onSelect?.(selected ? "" : option);
+              }}
+              className={`rounded-lg border px-3 py-2 text-sm font-body font-semibold transition-colors ${
+                selected
+                  ? "border-foreground bg-foreground text-primary-foreground"
+                  : "border-border bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground"
+              }`}
+            >
+              {option}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-background">
       <DesktopNav />
 
-      <div className="pt-32 pb-16 px-6">
-        <div className="max-w-7xl mx-auto">
+      <section data-header-theme="light" className="relative overflow-hidden bg-foreground px-6 pb-10 pt-32 text-primary-foreground xl:pb-12">
+        <video
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          className="absolute inset-0 h-full w-full object-cover image-grade-luxe hero-video-active"
+        >
+          <source src={SEARCH_BACKGROUND_VIDEO} type="video/mp4" />
+        </video>
+        <div className="absolute inset-0 bg-gradient-to-r from-foreground/92 via-foreground/62 to-foreground/36" />
+        <div className="absolute inset-0 bg-gradient-to-t from-foreground/92 via-foreground/30 to-foreground/48" />
+
+        <div className="relative z-10 mx-auto max-w-7xl">
           <div className="mb-10 grid grid-cols-1 gap-6 md:grid-cols-[1fr_auto] md:items-end">
             <div>
-              <p className="mb-3 inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-body font-semibold text-primary">
+              <p className="mb-3 inline-flex items-center gap-2 rounded-lg border border-primary-foreground/20 bg-primary-foreground/10 px-3 py-1.5 text-xs font-body font-semibold text-primary backdrop-blur-md">
                 <ShieldCheck className="w-3.5 h-3.5" />
                 Lieux vérifiés
               </p>
               <h1 className="font-heading text-4xl md:text-6xl font-semibold leading-none mb-4">
-                Trouvez votre prochaine adresse.
+                Trouvez le lieu idéal pour votre événement.
               </h1>
-              <p className="max-w-2xl text-muted-foreground font-body leading-relaxed">
-                Filtrez les lieux par ville ou code postal, capacité et format d'événement, puis envoyez une demande qualifiée.
+              <p className="max-w-2xl font-body leading-relaxed text-primary-foreground/78">
+                Recherchez par ville ou code postal, capacité et type d'événement, puis envoyez votre demande en quelques clics.
               </p>
             </div>
-            <div className="rounded-lg border border-border bg-card px-4 py-3 text-sm font-body text-muted-foreground">
-              <span className="font-semibold text-foreground">{results.length}</span>{" "}
+            <div className="rounded-lg border border-primary-foreground/20 bg-primary-foreground/10 px-4 py-3 text-sm font-body text-primary-foreground/78 backdrop-blur-md">
+              <span className="font-semibold text-primary-foreground">{results.length}</span>{" "}
               salle{results.length !== 1 ? "s" : ""} {isMapZoneFilteringActive ? "dans la zone" : "trouvée"}{results.length !== 1 ? "s" : ""}
               {isMapZoneFilteringActive && (
-                <span className="ml-1 text-muted-foreground/80">sur {filteredResults.length}</span>
+                <span className="ml-1 text-primary-foreground/68">sur {filteredResults.length}</span>
               )}
             </div>
           </div>
 
-          {/* Filters */}
-          <div className="mb-8 grid grid-cols-1 gap-3 rounded-lg border border-border bg-card p-3 luxury-shadow lg:grid-cols-3 xl:grid-cols-[minmax(0,1.25fr)_repeat(6,minmax(0,0.86fr))] lg:items-stretch">
-            <LocationAutocomplete
-              value={locationQuery}
-              onChange={setLocationQuery}
-              options={locationOptions}
-              placeholder="Ville ou code postal"
-              className="h-12 bg-muted"
-              icon={<MapPin className="w-4 h-4" />}
-            />
-            <FilterSelect
-              value={eventType}
-              onChange={setEventType}
-              placeholder="Type d'événement"
-              emptyLabel="Tous les types"
-              options={EVENT_TYPES}
-              icon={<Tag className="w-4 h-4" />}
-              className="h-12 bg-muted"
-            />
-            <div className="flex h-12 items-center gap-2 rounded-lg border border-border bg-muted px-3">
-              <Users className="w-4 h-4 text-muted-foreground" />
-              <input
-                type="number"
-                value={guests}
-                onChange={(e) => setGuests(e.target.value)}
-                placeholder="Nombre d'invités"
-                className="min-w-0 flex-1 bg-transparent text-sm font-body focus:outline-none"
-              />
+          <div className="rounded-lg border border-primary-foreground/18 bg-background/92 p-3 text-foreground shadow-2xl backdrop-blur-xl">
+            <div className="grid grid-cols-1 overflow-hidden rounded-lg border border-border bg-background lg:grid-cols-3">
+              <div className="border-b border-border lg:border-b-0 lg:border-r">
+                <LocationAutocomplete
+                  value={locationQuery}
+                  onChange={setLocationQuery}
+                  options={locationOptions}
+                  placeholder="Ajouter une localisation"
+                  className="h-16 border-0 bg-background text-base"
+                  icon={<MapPin className="w-5 h-5" />}
+                />
+              </div>
+              <label className="flex h-16 items-center gap-3 border-b border-border bg-background px-4 lg:border-b-0 lg:border-r">
+                <CalendarDays className="h-5 w-5 shrink-0 text-muted-foreground" />
+                <input
+                  type="date"
+                  value={eventDate}
+                  onChange={(event) => setEventDate(event.target.value)}
+                  className="min-w-0 flex-1 bg-transparent text-base font-body font-semibold text-foreground [color-scheme:light] focus:outline-none"
+                  aria-label="Ajouter une date"
+                />
+              </label>
+              <div className="flex h-16 items-center gap-3 bg-background px-4">
+                <Users className="w-5 h-5 shrink-0 text-muted-foreground" />
+                <input
+                  type="number"
+                  value={guests}
+                  onChange={(e) => setGuests(e.target.value)}
+                  placeholder="Ajouter des participants"
+                  className="min-w-0 flex-1 bg-transparent text-base font-body font-semibold focus:outline-none"
+                />
+              </div>
             </div>
-            <FilterSelect
-              value={priceTier}
-              onChange={setPriceTier}
-              placeholder="Prix"
-              emptyLabel="Tous les prix"
-              options={PRICE_TIERS}
-              icon={<Euro className="w-4 h-4" />}
-              className="h-12 bg-muted"
-            />
-            <FilterSelect
-              value={closingFilter}
-              onChange={setClosingFilter}
-              placeholder="Fermeture"
-              emptyLabel="Toute fermeture"
-              options={["Après 2h"]}
-              icon={<Clock3 className="w-4 h-4" />}
-              className="h-12 bg-muted"
-            />
-            <FilterSelect
-              value={ambianceType}
-              onChange={setAmbianceType}
-              placeholder="Ambiance"
-              emptyLabel="Toutes ambiances"
-              options={AMBIANCE_TYPES}
-              icon={<Music2 className="w-4 h-4" />}
-              className="h-12 bg-muted"
-            />
-            <FilterSelect
-              value={externalOption}
-              onChange={setExternalOption}
-              placeholder="Options externes"
-              emptyLabel="Toutes options"
-              options={EXTERNAL_OPTIONS}
-              icon={<UtensilsCrossed className="w-4 h-4" />}
-              className="h-12 bg-muted"
-            />
-          </div>
 
-          <div className="grid grid-cols-1 gap-8 xl:h-[calc(100vh-22rem)] xl:min-h-[620px] xl:grid-cols-[minmax(0,1.05fr)_minmax(420px,0.95fr)] xl:items-stretch">
+            <div className="mt-4 flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={() => setShowAllFilters(true)}
+                className="inline-flex h-12 items-center gap-2 rounded-lg border border-foreground/70 bg-background px-4 text-sm font-body font-semibold text-foreground transition-colors hover:bg-foreground hover:text-primary-foreground"
+              >
+                <SlidersHorizontal className="h-4 w-4" />
+                Tous les filtres{activeAdvancedFilterCount ? ` (${activeAdvancedFilterCount})` : ""}
+              </button>
+              <div className="w-[8.5rem]">
+                <FilterSelect value={priceTier} onChange={setPriceTier} placeholder="Prix" emptyLabel="Tous les prix" options={PRICE_FILTERS} icon={<Euro className="w-4 h-4" />} className="h-12" />
+              </div>
+              <div className="w-40">
+                <FilterSelect value={offerType} onChange={setOfferType} placeholder="Offres" emptyLabel="Toutes offres" options={OFFER_FILTERS} icon={<Tag className="w-4 h-4" />} className="h-12" />
+              </div>
+              <div className="w-52">
+                <FilterSelect value={ambianceType} onChange={setAmbianceType} placeholder="Ambiance" emptyLabel="Toutes ambiances" options={AMBIANCE_FILTERS} icon={<Music2 className="w-4 h-4" />} className="h-12" />
+              </div>
+              <div className="w-[21rem] max-w-full">
+                <FilterSelect value={privatizationType} onChange={setPrivatizationType} placeholder="Type de privatisation" emptyLabel="Toute privatisation" options={PRIVATIZATION_FILTERS} icon={<UtensilsCrossed className="w-4 h-4" />} className="h-12" />
+              </div>
+              <button
+                type="button"
+                onClick={() => toggleOptionFilter("Possibilité de danser")}
+                className={`h-12 rounded-lg border px-4 text-sm font-body font-semibold transition-colors ${
+                  optionFilters.includes("Possibilité de danser") ? "border-foreground bg-foreground text-primary-foreground" : "border-foreground/70 bg-background text-foreground hover:bg-muted"
+                }`}
+              >
+                Possibilité de danser
+              </button>
+              <button
+                type="button"
+                onClick={() => setClosingFilter(closingFilter === "Après 2h" ? "" : "Après 2h")}
+                className={`h-12 rounded-lg border px-4 text-sm font-body font-semibold transition-colors ${
+                  closingFilter === "Après 2h" ? "border-foreground bg-foreground text-primary-foreground" : "border-foreground/70 bg-background text-foreground hover:bg-muted"
+                }`}
+              >
+                Ouvert après 2h
+              </button>
+              <button
+                type="button"
+                onClick={() => toggleEquipmentFilter("Terrasse")}
+                className={`h-12 rounded-lg border px-4 text-sm font-body font-semibold transition-colors ${
+                  equipmentFilters.includes("Terrasse") ? "border-foreground bg-foreground text-primary-foreground" : "border-foreground/70 bg-background text-foreground hover:bg-muted"
+                }`}
+              >
+                Terrasse
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div className="px-6 py-10 xl:py-12">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 gap-8 xl:h-[calc(100vh-25rem)] xl:min-h-[640px] xl:grid-cols-[minmax(0,1.38fr)_minmax(340px,0.62fr)] xl:items-stretch 2xl:grid-cols-[minmax(0,1.45fr)_minmax(360px,0.55fr)]">
             <div className="order-2 flex min-h-0 flex-col overflow-hidden rounded-lg border border-border bg-card luxury-shadow xl:order-1 xl:h-full">
               <div className="flex items-center gap-2 border-b border-border px-4 py-3 text-sm font-body text-muted-foreground">
                 <SlidersHorizontal className="w-4 h-4 shrink-0 text-primary" />
@@ -170,9 +302,9 @@ const SearchResults = () => {
 
               <div className="min-h-0 flex-1 overflow-y-auto p-4 xl:p-5">
                 {results.length > 0 ? (
-                  <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                     {results.map((venue) => (
-                      <VenueGridCard key={venue.id} venue={venue} />
+                      <VenueGridCard key={venue.id} venue={venue} size="large" />
                     ))}
                   </div>
                 ) : filteredResults.length > 0 ? (
@@ -203,6 +335,56 @@ const SearchResults = () => {
           </div>
         </div>
       </div>
+
+      {showAllFilters && (
+        <div className="fixed inset-0 z-[2200] flex items-center justify-center bg-foreground/70 p-4 backdrop-blur-md">
+          <div className="flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-lg bg-background text-foreground luxury-shadow animate-scale-in">
+            <div className="flex items-center justify-between border-b border-border px-5 py-4">
+              <div>
+                <p className="text-xs font-body font-semibold text-primary">Recherche avancée</p>
+                <h2 className="font-heading text-3xl font-semibold">Tous les filtres</h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAllFilters(false)}
+                className="rounded-lg border border-border p-2 text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
+                aria-label="Fermer les filtres"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="grid flex-1 gap-8 overflow-y-auto p-5 md:grid-cols-2">
+              <FilterGroup title="Type de lieu" options={VENUE_TYPE_FILTERS} value={venueType} onSelect={setVenueType} />
+              <FilterGroup title="Prix" options={PRICE_FILTERS} value={priceTier} onSelect={setPriceTier} />
+              <FilterGroup title="Ambiance" options={AMBIANCE_FILTERS} value={ambianceType} onSelect={setAmbianceType} />
+              <FilterGroup title="Type de privatisation" options={PRIVATIZATION_FILTERS} value={privatizationType} onSelect={setPrivatizationType} />
+              <FilterGroup title="Offres" options={OFFER_FILTERS} value={offerType} onSelect={setOfferType} />
+              <FilterGroup title="Horaire" options={HOUR_FILTERS} value={closingFilter === "Après minuit" ? "Ouvert après minuit" : closingFilter === "Après 2h" ? "Ouvert après 2h" : ""} onSelect={(value) => setClosingFilter(value === "Ouvert après minuit" ? "Après minuit" : value === "Ouvert après 2h" ? "Après 2h" : "")} />
+              <FilterGroup title="Options" options={OPTION_FILTERS} values={optionFilters} onToggle={toggleOptionFilter} />
+              <FilterGroup title="Équipements" options={EQUIPMENT_FILTERS} values={equipmentFilters} onToggle={toggleEquipmentFilter} />
+              <FilterGroup title="Nourriture" options={FOOD_FILTERS} value={foodFilter} onSelect={setFoodFilter} />
+            </div>
+
+            <div className="flex flex-col gap-3 border-t border-border p-5 sm:flex-row sm:items-center sm:justify-between">
+              <button
+                type="button"
+                onClick={resetAdvancedFilters}
+                className="rounded-lg border border-border px-5 py-3 text-sm font-body font-semibold text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
+              >
+                Réinitialiser
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowAllFilters(false)}
+                className="rounded-lg bg-foreground px-5 py-3 text-sm font-body font-semibold text-primary-foreground transition-colors hover:bg-primary"
+              >
+                Voir {filteredResults.length} salle{filteredResults.length !== 1 ? "s" : ""}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <SiteFooter />
     </div>

@@ -8,40 +8,43 @@ const EstablishmentReferralSection = () => {
     <section className="bg-background px-6 py-20 text-foreground">
       <div className="mx-auto grid max-w-7xl grid-cols-1 gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:items-start xl:px-2">
         <div className="max-w-xl">
-          <p className="font-body text-sm font-semibold text-primary mb-3">Professionnels du secteur</p>
+          <p className="font-body text-sm font-semibold text-primary mb-3">Vous gérez un lieu événementiel ?</p>
           <h2 className="font-heading text-3xl md:text-5xl font-semibold leading-tight mb-5">
-            Vous souhaitez référencer votre établissement ?
+            Rejoignez WeAreEvents et recevez des demandes qualifiées.
           </h2>
           <p className="mb-5 font-body leading-relaxed text-muted-foreground">
-            Gagnez de nombreux clients parmi les visiteurs qui cherchent chaque mois un lieu fiable, lisible et rapide à réserver.
+            Gagnez en visibilité auprès d'organisateurs réellement en recherche d'un lieu sérieux, disponible et simple à privatiser.
           </p>
           <p className="mb-5 font-body leading-relaxed text-muted-foreground">
-            Pas de commissions et sans engagement, vous payez un montant fixe sans risque de voir déraper la facture.
+            Aucun coût fixe. Une commission uniquement en cas de réservation confirmée.
+          </p>
+          <p className="mb-5 font-body leading-relaxed text-muted-foreground">
+            Un modèle simple, transparent et aligné sur vos résultats.
           </p>
           <div className="space-y-3 text-sm font-body text-foreground/80">
-            <p>Visibilité premium auprès d'organisateurs qualifiés.</p>
-            <p>Demandes centralisées, triées et accompagnées par notre équipe.</p>
-            <p>Modèle simple, 100 % lisible et sans surprise.</p>
+            <p>Visibilité premium auprès de porteurs de projets qualifiés.</p>
+            <p>Demandes centralisées et accompagnées par notre équipe.</p>
+            <p>Vous payez uniquement sur les réservations réalisées.</p>
           </div>
         </div>
 
         <div className="rounded-lg border border-border bg-card p-6 text-foreground luxury-shadow">
           <div className="flex items-center gap-2 text-xs font-body font-semibold text-primary">
             <Building2 className="h-4 w-4" />
-            Référencement premium
+            Demandes qualifiées
           </div>
           <h3 className="mt-4 font-heading text-3xl font-semibold leading-tight">
-            Ouvrez votre dossier en quelques minutes.
+            Un référencement simple, transparent et sans coût fixe.
           </h3>
           <p className="mt-3 text-sm font-body leading-relaxed text-muted-foreground">
-            Le formulaire s'ouvre dans une fenêtre dédiée pour vous permettre de transmettre rapidement les informations essentielles sur votre lieu.
+            Présentez votre lieu à des organisateurs réellement en recherche d'un établissement fiable et simple à privatiser.
           </p>
 
           <div className="mt-6 space-y-3">
             {[
-              { icon: <BadgeCheck className="h-4 w-4" />, label: "Étude rapide du positionnement de votre établissement" },
-              { icon: <Gem className="h-4 w-4" />, label: "Présentation soignée de vos espaces et capacités" },
-              { icon: <Sparkles className="h-4 w-4" />, label: "Prise de contact directe avec notre équipe" },
+              { icon: <BadgeCheck className="h-4 w-4" />, label: "Visibilité premium auprès de porteurs de projets qualifiés" },
+              { icon: <Gem className="h-4 w-4" />, label: "Demandes centralisées et accompagnées par notre équipe" },
+              { icon: <Sparkles className="h-4 w-4" />, label: "Commission uniquement en cas de réservation confirmée" },
             ].map((item) => (
               <div key={item.label} className="flex items-start gap-3 rounded-lg border border-border bg-card px-4 py-3">
                 <span className="mt-0.5 text-primary">{item.icon}</span>

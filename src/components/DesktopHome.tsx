@@ -102,15 +102,15 @@ const DesktopHome = () => {
         <div className="relative z-10 flex h-full max-w-7xl mx-auto flex-col justify-center px-6 pb-14 pt-24 xl:px-8">
           <div className="max-w-4xl">
             <h1 className="font-heading text-5xl xl:text-6xl 2xl:text-7xl text-primary-foreground font-semibold leading-[0.92] mb-6">
-              Des lieux qui signent
+              Le lieu idéal
               <br />
-              votre{" "}
+              pour votre{" "}
               <span key={activeHero.label} className="hero-copy-enter text-primary">
                 {activeHero.noun}.
               </span>
             </h1>
             <p className="max-w-3xl text-lg font-body leading-relaxed text-primary-foreground/80 xl:text-xl">
-              Une sélection premium de lieux clairs, visuels et immédiatement réservables pour vos moments qui comptent.
+              Des lieux fiables, réactifs et adaptés à votre événement, avec une réservation simple et rapide.
             </p>
           </div>
 
@@ -172,21 +172,21 @@ const DesktopHome = () => {
         <div className="max-w-7xl mx-auto xl:px-2">
           <div className="grid grid-cols-1 gap-8 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)] xl:items-end xl:gap-12">
             <div className="max-w-3xl">
-              <p className="font-body text-sm font-semibold text-primary mb-3">Pourquoi WeAreEvents</p>
+              <p className="font-body text-sm font-semibold text-primary mb-3">Pourquoi choisir WeAreEvents</p>
               <h2 className="font-heading text-4xl 2xl:text-5xl font-semibold leading-[1.02]">
-                Une sélection premium, une réservation plus fluide.
+                Des lieux premium, sans perte de temps.
               </h2>
             </div>
             <p className="max-w-xl font-body text-muted-foreground leading-relaxed xl:justify-self-end">
-              Nous mettons en avant des lieux clairs, rapidement joignables et pensés pour des demandes sérieuses, sans friction inutile.
+              Nous sélectionnons des lieux fiables, réactifs et adaptés à votre événement, avec une réservation simple et rapide.
             </p>
           </div>
 
           <div className="mt-14 grid grid-cols-1 gap-8 xl:grid-cols-3">
             {[
-              { icon: <BadgeCheck className="w-6 h-6" />, title: "Lieux vérifiés", desc: "Adresses sélectionnées, informations utiles et capacités clairement indiquées." },
-              { icon: <Zap className="w-6 h-6" />, title: "Demande 100 % gratuite", desc: "Aucun frais pour envoyer une demande, comparer et affiner votre brief." },
-              { icon: <CheckCircle2 className="w-6 h-6" />, title: "Réponse rapide", desc: "Premiers retours qualifiés en moins de 24h ouvrées sur les demandes sérieuses." },
+              { icon: <BadgeCheck className="w-6 h-6" />, title: "Lieux vérifiés", desc: "Informations claires, capacités précises et lieux sélectionnés." },
+              { icon: <Zap className="w-6 h-6" />, title: "Demande 100 % gratuite", desc: "Comparez les options et avancez sans engagement." },
+              { icon: <CheckCircle2 className="w-6 h-6" />, title: "Réponse rapide", desc: "Premières propositions en moins de 24h ouvrées." },
             ].map((step, i) => (
               <div key={step.title} className="border-t border-border pt-6">
                 <div className="mb-5 flex items-center justify-between">
@@ -207,12 +207,12 @@ const DesktopHome = () => {
         <div className="max-w-7xl mx-auto xl:px-2">
           <div className="mb-10 flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
             <div>
-              <p className="font-body text-sm font-semibold text-primary mb-3">Sélection du moment</p>
+              <p className="font-body text-sm font-semibold text-primary mb-3">Nos adresses du moment</p>
               <h2 className="font-heading text-4xl 2xl:text-5xl font-semibold mb-3 leading-[1.02]">
-                Lieux à forte demande
+                Une sélection très recherchée
               </h2>
               <p className="text-primary-foreground/70 font-body max-w-2xl">
-                Des adresses visuelles, lisibles et prêtes à accueillir des moments qui comptent.
+                Des lieux remarquables, disponibles et pensés pour recevoir dans les meilleures conditions.
               </p>
             </div>
             <button
@@ -247,10 +247,10 @@ const DesktopHome = () => {
             <div>
               <p className="font-body text-sm font-semibold text-primary mb-3">Blog</p>
               <h2 className="font-heading text-4xl 2xl:text-5xl font-semibold mb-3 leading-[1.02]">
-                Bien préparer le choix de votre lieu.
+                Trouvez le bon lieu, mieux préparé.
               </h2>
               <p className="text-muted-foreground font-body max-w-2xl">
-                Guides pratiques, checklists et conseils pour trouver une salle adaptée à vos invités, votre ambiance et votre budget.
+                Guides pratiques, checklists et conseils concrets pour choisir un lieu adapté à vos invités, votre style et votre budget.
               </p>
             </div>
             <button

@@ -11,6 +11,23 @@ const normalizeSearchValue = (value: string) =>
     .toLowerCase()
     .trim();
 const getPostalCodeFromAddress = (address: string) => address.match(/\b\d{5}\b/)?.[0] ?? "";
+const parseClosingTime = (time: string) => {
+  const [hours = "0", minutes = "0"] = time.split(":");
+  const numericHours = Number(hours);
+  const numericMinutes = Number(minutes);
+
+  if (!Number.isFinite(numericHours) || !Number.isFinite(numericMinutes)) return null;
+
+  return (numericHours < 8 ? numericHours + 24 : numericHours) * 60 + numericMinutes;
+};
+const closesAtOrAfter = (time: string, threshold: string) => {
+  const venueTime = parseClosingTime(time);
+  const thresholdTime = parseClosingTime(threshold);
+
+  if (venueTime === null || thresholdTime === null) return false;
+
+  return venueTime >= thresholdTime;
+};
 
 const mapVenue = (row: any): Venue => ({
   id: row.id,
@@ -66,8 +83,15 @@ export const filterVenues = (
     minGuests?: number;
     priceTier?: string;
     closesAfterTwo?: boolean;
+    closesAfterMidnight?: boolean;
     ambianceType?: string;
     externalOption?: string;
+    venueType?: string;
+    privatizationType?: string;
+    offerType?: string;
+    optionFilters?: string[];
+    equipmentFilters?: string[];
+    foodFilter?: string;
   },
 ) =>
   venues.filter((venue) => {
@@ -85,9 +109,46 @@ export const filterVenues = (
     if (filters.eventType && !venue.eventCategories.includes(filters.eventType)) return false;
     if (filters.minGuests && venue.maxCapacity < filters.minGuests) return false;
     if (filters.priceTier && venue.priceTier !== filters.priceTier) return false;
-    if (filters.closesAfterTwo && venue.closingTime && venue.closingTime < "02:00") return false;
-    if (filters.ambianceType && !venue.ambianceTypes.includes(filters.ambianceType)) return false;
+    if (filters.closesAfterMidnight && (!venue.closingTime || !closesAtOrAfter(venue.closingTime, "00:00"))) return false;
+    if (filters.closesAfterTwo && (!venue.closingTime || !closesAtOrAfter(venue.closingTime, "02:00"))) return false;
+    if (
+      filters.ambianceType &&
+      !venue.ambianceTypes.some((ambiance) => normalizeSearchValue(ambiance) === normalizeSearchValue(filters.ambianceType ?? ""))
+    ) return false;
     if (filters.externalOption && !venue.externalOptions.includes(filters.externalOption)) return false;
+
+    const searchable = normalizeSearchValue(
+      [
+        venue.title,
+        venue.tagline,
+        venue.description,
+        venue.pricingText,
+        ...venue.eventCategories,
+        ...venue.services,
+        ...venue.ambianceTypes,
+        ...venue.externalOptions,
+        ...venue.spaces.map((space) => `${space.name} ${space.description}`),
+      ].join(" "),
+    );
+    const hasText = (value: string) => searchable.includes(normalizeSearchValue(value));
+
+    if (filters.venueType === "Bar" && !hasText("bar")) return false;
+    if (filters.venueType === "Restaurant" && !["restaurant", "traiteur", "cuisine", "tapas"].some(hasText)) return false;
+    if (filters.venueType === "Salle" && venue.maxCapacity < 40) return false;
+    if (filters.privatizationType === "Quelques tables" && venue.maxCapacity > 180) return false;
+    if (filters.privatizationType === "Espace clos" && !venue.spaces.length) return false;
+    if (filters.offerType === "Promotions exclusives" && !["promotion", "offre", "remise"].some(hasText)) return false;
+    if (filters.offerType === "Happy Hours" && !["happy hour", "bar", "cocktail"].some(hasText)) return false;
+
+    if (filters.optionFilters?.includes("Mettre ma musique") && !["dj", "musique"].some(hasText)) return false;
+    if (filters.optionFilters?.includes("Possibilité de danser") && !["festif", "anime", "animé", "dj", "musique"].some(hasText)) return false;
+    if (filters.optionFilters?.includes("Apporter mon gâteau") && !venue.externalOptions.includes("Gâteau externe")) return false;
+    if (filters.optionFilters?.includes("Matériel de projection") && !["projecteur", "projection"].some(hasText)) return false;
+    if (filters.optionFilters?.includes("Jeux (baby-foot, ping-pong, ...)") && !["jeu", "baby-foot", "ping-pong"].some(hasText)) return false;
+    if (filters.equipmentFilters?.includes("Matériel de karaoké") && !hasText("karaoké")) return false;
+    if (filters.equipmentFilters?.includes("Terrasse") && !hasText("terrasse")) return false;
+    if (filters.foodFilter === "Planches et tapas" && !["planches", "tapas", "traiteur", "cuisine"].some(hasText)) return false;
+
     return true;
   });
 
