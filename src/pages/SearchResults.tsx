@@ -42,6 +42,7 @@ const SearchResults = () => {
   const navigate = useNavigate();
   const [locationQuery, setLocationQuery] = useState(searchParams.get("location") || searchParams.get("city") || "");
   const [eventType, setEventType] = useState(searchParams.get("type") || "");
+  const [eventDate, setEventDate] = useState(searchParams.get("date") || "");
   const [guests, setGuests] = useState(searchParams.get("guests") || "");
   const [priceTier, setPriceTier] = useState(searchParams.get("price") || "");
   const [closingFilter, setClosingFilter] = useState(searchParams.get("closing") || "");
