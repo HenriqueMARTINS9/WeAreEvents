@@ -81,13 +81,13 @@ const VenueMediaLightbox = ({ items, activeIndex, onChange, onClose }: VenueMedi
               if (videoRef.current) videoRef.current.currentTime = activeItem.startSeconds ?? 0;
             }}
             onTimeUpdate={handleTimeUpdate}
-            className="max-h-full w-full max-w-6xl rounded-lg object-contain"
+            className="max-h-full w-full max-w-6xl rounded-2xl object-contain"
           />
         ) : (
           <img
             src={activeItem.src}
             alt={activeItem.label}
-            className="max-h-full w-full max-w-6xl rounded-lg object-contain"
+            className="max-h-full w-full max-w-6xl rounded-2xl object-contain"
           />
         )}
       </div>
@@ -120,7 +120,7 @@ const VenueMediaLightbox = ({ items, activeIndex, onChange, onClose }: VenueMedi
             key={`${item.type}-${item.src}-${index}`}
             type="button"
             onClick={() => onChange(index)}
-            className={`h-16 w-24 shrink-0 overflow-hidden rounded-lg border transition-colors ${
+            className={`h-16 w-24 shrink-0 overflow-hidden rounded-xl border transition-colors ${
               index === activeIndex ? "border-primary" : "border-primary-foreground/20 opacity-70"
             }`}
           >

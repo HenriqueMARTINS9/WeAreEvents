@@ -48,14 +48,14 @@ const VenueDetailSheet = ({ venue, onClose, onBooking }: VenueDetailSheetProps) 
   return (
     <div className="fixed inset-0 z-[2000] overflow-x-hidden overflow-y-auto bg-background animate-slide-up">
       {/* Hero */}
-      <div className="relative h-72 sm:h-96">
-        <div className="flex h-full snap-x snap-mandatory overflow-x-auto hide-scrollbar">
+      <div className="relative p-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
+        <div className="flex h-72 snap-x snap-mandatory overflow-x-auto rounded-2xl hide-scrollbar sm:h-96">
           {heroImages.map((image, index) => (
             <button
               key={`${image}-${index}`}
               type="button"
               onClick={() => setActiveMediaIndex(imageMediaOffset + index)}
-              className="h-full w-full shrink-0 snap-center"
+              className="h-full w-full shrink-0 snap-center overflow-hidden"
               aria-label={`Ouvrir la photo ${index + 1}`}
             >
               <img
@@ -67,15 +67,15 @@ const VenueDetailSheet = ({ venue, onClose, onBooking }: VenueDetailSheetProps) 
             </button>
           ))}
         </div>
-        <div className="absolute inset-0 bg-gradient-dark" />
-        <div className="absolute inset-0 bg-gradient-dark-top" />
+        <div className="pointer-events-none absolute inset-3 rounded-2xl bg-gradient-dark" />
+        <div className="pointer-events-none absolute inset-3 rounded-2xl bg-gradient-dark-top" />
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 z-10 p-2 rounded-lg glass"
+          className="absolute right-5 top-[max(1.25rem,env(safe-area-inset-top))] z-10 p-2 rounded-lg glass"
         >
           <X className="w-5 h-5 text-primary-foreground" />
         </button>
-        <div className="absolute bottom-5 left-5 right-5 z-10">
+        <div className="absolute bottom-6 left-6 right-6 z-10">
           <span className="px-2 py-1 rounded-lg border border-primary-foreground/20 bg-primary-foreground/10 text-primary-foreground text-xs font-body font-semibold backdrop-blur-md">
             Code TikTok · {venue.venueCode}
           </span>
@@ -205,7 +205,7 @@ const VenueDetailSheet = ({ venue, onClose, onBooking }: VenueDetailSheetProps) 
               key={i}
               type="button"
               onClick={() => setActiveMediaIndex(imageMediaOffset + heroImages.findIndex((image) => image === img))}
-              className="h-32 w-48 shrink-0 overflow-hidden rounded-lg"
+              className="h-32 w-48 shrink-0 overflow-hidden rounded-2xl"
               aria-label={`Ouvrir la photo ${i + 1}`}
             >
               <img

@@ -115,11 +115,11 @@ const VenueDetail = () => {
               </button>
             </div>
 
-            <div data-header-theme="light" className="relative grid h-[460px] grid-cols-[1.35fr_0.85fr] gap-3 overflow-hidden rounded-lg bg-foreground">
+            <div data-header-theme="light" className="relative grid h-[460px] grid-cols-[1.35fr_0.85fr] gap-3 overflow-hidden rounded-2xl bg-transparent">
               <button
                 type="button"
                 onClick={() => setActiveMediaIndex(imageMediaOffset)}
-                className="group relative overflow-hidden text-left"
+                className="group relative overflow-hidden rounded-2xl text-left"
                 aria-label="Ouvrir la photo principale"
               >
                 <img src={galleryImages[0]} alt={venue.title} className="h-full w-full object-cover image-grade-luxe transition-transform duration-700 group-hover:scale-105" />
@@ -130,7 +130,7 @@ const VenueDetail = () => {
                     key={`${image}-${index}`}
                     type="button"
                     onClick={() => setActiveMediaIndex(imageMediaOffset + index + 1)}
-                    className="group overflow-hidden"
+                    className="group overflow-hidden rounded-2xl"
                     aria-label={`Ouvrir la photo ${index + 2}`}
                   >
                     <img src={image} alt="" className="h-full w-full object-cover image-grade-luxe transition-transform duration-700 group-hover:scale-105" />
