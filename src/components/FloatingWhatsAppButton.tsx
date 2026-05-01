@@ -15,11 +15,10 @@ const FloatingWhatsAppButton = () => {
       href={buildWhatsAppUrl("Bonjour, je souhaite échanger avec WeAreEvents au sujet d'un événement.")}
       target="_blank"
       rel="noreferrer"
-      className="fixed bottom-5 right-5 z-[900] inline-flex h-12 w-12 items-center justify-center rounded-lg bg-[#25D366] text-white shadow-2xl transition-transform hover:scale-105 active:scale-[0.98] sm:h-auto sm:w-auto sm:gap-2 sm:px-4 sm:py-3"
+      className="fixed bottom-5 right-5 z-[900] inline-flex h-14 w-14 items-center justify-center rounded-full shadow-2xl transition-transform hover:scale-105 active:scale-[0.98]"
       aria-label="Contacter WeAreEvents sur WhatsApp"
     >
-      <img src="/3670051.png" alt="" className="h-6 w-6 object-contain" />
-      <span className="hidden text-sm font-body font-semibold sm:inline">WhatsApp</span>
+      <img src="/3670051.png" alt="" className="h-full w-full rounded-full object-contain" />
     </a>
   );
 };

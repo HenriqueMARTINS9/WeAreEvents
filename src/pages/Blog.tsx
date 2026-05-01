@@ -87,7 +87,7 @@ const Blog = () => {
         </section>
       </main>
 
-      <SiteFooter />
+      <SiteFooter variant="dark" />
     </div>
   );
 };

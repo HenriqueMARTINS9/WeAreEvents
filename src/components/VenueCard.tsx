@@ -207,10 +207,9 @@ const VenueCard = ({ venue, isActive, onOpenDetail, onBooking, onComments, comme
           className="flex flex-col items-center gap-1 text-primary-foreground"
           aria-label={`Contacter sur WhatsApp pour ${venue.title}`}
         >
-          <span className="p-2 rounded-lg bg-[#25D366] shadow-lg">
-            <img src="/3670051.png" alt="" className="h-6 w-6 object-contain" />
+          <span className="h-12 w-12 rounded-full shadow-lg">
+            <img src="/3670051.png" alt="" className="h-full w-full rounded-full object-contain" />
           </span>
-          <span className="text-[10px] font-body">WhatsApp</span>
         </a>
 
         <button
