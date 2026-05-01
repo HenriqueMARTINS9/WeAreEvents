@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { Clock3, Euro, MapPin, Music2, SlidersHorizontal, Sparkles, Tag, UtensilsCrossed, Users, ShieldCheck, X } from "lucide-react";
+import { CalendarDays, Clock3, Euro, MapPin, Music2, SlidersHorizontal, Sparkles, Tag, UtensilsCrossed, Users, ShieldCheck, X } from "lucide-react";
 import { fetchVenues, filterVenues, findVenueByCode, getVenueLocationSuggestionsFromVenues } from "@/lib/supabase-data";
 import { EVENT_TYPES } from "@/types/venue";
 import DesktopNav from "@/components/DesktopNav";
