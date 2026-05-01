@@ -1,6 +1,8 @@
-import { X, Star, MapPin, Users, Tag, Wifi, Car, UtensilsCrossed, Music, Camera, TreePine, Waves, ChefHat, Snowflake, Projector, ShirtIcon, ShieldCheck, Route, Info } from "lucide-react";
+import { X, Star, MapPin, Users, Tag, Wifi, Car, UtensilsCrossed, Music, Camera, TreePine, Waves, ChefHat, Snowflake, Projector, ShirtIcon, ShieldCheck, Route, Info, Play, Images } from "lucide-react";
+import { useState } from "react";
 import type { Venue } from "@/types/venue";
 import { getReviewsByVenueId } from "@/data/venues";
+import VenueMediaLightbox, { type VenueMediaItem } from "./VenueMediaLightbox";
 
 interface VenueDetailSheetProps {
   venue: Venue;
@@ -24,8 +26,24 @@ const serviceIcons: Record<string, React.ReactNode> = {
 };
 
 const VenueDetailSheet = ({ venue, onClose, onBooking }: VenueDetailSheetProps) => {
+  const [activeMediaIndex, setActiveMediaIndex] = useState<number | null>(null);
   const reviews = getReviewsByVenueId(venue.id);
   const heroImages = [venue.coverImage, ...venue.gallery.filter((image) => image !== venue.coverImage)];
+  const mediaItems: VenueMediaItem[] = [
+    ...(venue.videoUrl ? [{
+      type: "video" as const,
+      src: venue.videoUrl,
+      label: `Vidéo de ${venue.title}`,
+      startSeconds: venue.videoStartSeconds,
+      endSeconds: venue.videoEndSeconds,
+    }] : []),
+    ...heroImages.map((image, index) => ({
+      type: "image" as const,
+      src: image,
+      label: `${venue.title} - photo ${index + 1}`,
+    })),
+  ];
+  const imageMediaOffset = venue.videoUrl ? 1 : 0;
 
   return (
     <div className="fixed inset-0 z-[2000] overflow-x-hidden overflow-y-auto bg-background animate-slide-up">
@@ -33,13 +51,20 @@ const VenueDetailSheet = ({ venue, onClose, onBooking }: VenueDetailSheetProps) 
       <div className="relative h-72 sm:h-96">
         <div className="flex h-full snap-x snap-mandatory overflow-x-auto hide-scrollbar">
           {heroImages.map((image, index) => (
-            <img
+            <button
               key={`${image}-${index}`}
-              src={image}
-              alt={`${venue.title} ${index + 1}`}
-              className="h-full w-full shrink-0 snap-center object-cover image-grade-luxe"
-              loading={index === 0 ? "eager" : "lazy"}
-            />
+              type="button"
+              onClick={() => setActiveMediaIndex(imageMediaOffset + index)}
+              className="h-full w-full shrink-0 snap-center"
+              aria-label={`Ouvrir la photo ${index + 1}`}
+            >
+              <img
+                src={image}
+                alt={`${venue.title} ${index + 1}`}
+                className="h-full w-full object-cover image-grade-luxe"
+                loading={index === 0 ? "eager" : "lazy"}
+              />
+            </button>
           ))}
         </div>
         <div className="absolute inset-0 bg-gradient-dark" />
@@ -57,11 +82,45 @@ const VenueDetailSheet = ({ venue, onClose, onBooking }: VenueDetailSheetProps) 
           <h1 className="mt-3 font-heading text-3xl font-semibold leading-none text-primary-foreground">
             {venue.title}
           </h1>
+          <div className="mt-4 flex gap-2">
+            {venue.videoUrl && (
+              <button
+                type="button"
+                onClick={() => setActiveMediaIndex(0)}
+                className="inline-flex items-center gap-2 rounded-lg bg-primary-foreground px-3 py-2 text-xs font-body font-semibold text-foreground"
+              >
+                <Play className="h-3.5 w-3.5" />
+                Vidéo
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => setActiveMediaIndex(imageMediaOffset)}
+              className="inline-flex items-center gap-2 rounded-lg bg-primary-foreground/12 px-3 py-2 text-xs font-body font-semibold text-primary-foreground backdrop-blur-md"
+            >
+              <Images className="h-3.5 w-3.5" />
+              Photos
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Content */}
-      <div className="p-5 pb-32">
+      <div className="bg-muted/35 p-5 pb-32">
+        <div className="-mt-10 mb-5 grid grid-cols-3 gap-2 rounded-lg border border-border bg-background p-3 luxury-shadow">
+          {[
+            { label: "Espaces", value: venue.spaces.length },
+            { label: "Capacité", value: `${venue.minCapacity}-${venue.maxCapacity}` },
+            { label: "Prix", value: venue.priceTier },
+          ].map((item) => (
+            <div key={item.label} className="text-center">
+              <p className="font-heading text-xl font-semibold">{item.value}</p>
+              <p className="mt-1 text-[11px] font-body text-muted-foreground">{item.label}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="mb-4 rounded-lg border border-border bg-background p-4">
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-center gap-2 text-sm font-body text-primary">
             <ShieldCheck className="w-4 h-4" />
@@ -87,17 +146,18 @@ const VenueDetailSheet = ({ venue, onClose, onBooking }: VenueDetailSheetProps) 
         <p className="text-sm font-body text-foreground/80 leading-relaxed mb-7">
           {venue.description}
         </p>
+        </div>
 
         <h3 className="font-heading text-lg font-semibold mb-3">Espaces disponibles</h3>
         <div className="space-y-2 mb-6">
           {venue.spaces.map((space) => (
-            <div key={space.id} className="rounded-lg border border-border bg-card p-3">
+            <div key={space.id} className="rounded-lg border border-border bg-background p-3">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="text-sm font-body font-semibold">{space.name}</p>
                   <p className="mt-1 break-words text-sm font-body text-foreground/70">{space.description}</p>
                 </div>
-                <span className="shrink-0 rounded-lg bg-secondary px-2 py-1 text-[11px] font-body font-semibold text-secondary-foreground">
+                <span className="shrink-0 rounded-lg bg-foreground px-2 py-1 text-[11px] font-body font-semibold text-primary-foreground">
                   {space.capacity}
                 </span>
               </div>
@@ -106,7 +166,7 @@ const VenueDetailSheet = ({ venue, onClose, onBooking }: VenueDetailSheetProps) 
         </div>
 
         <h3 className="font-heading text-lg font-semibold mb-3">Lieu exact</h3>
-        <div className="rounded-lg border border-border bg-card p-4 mb-6">
+        <div className="rounded-lg border border-border bg-background p-4 mb-6">
           <div className="flex items-start gap-3">
             <MapPin className="w-4 h-4 mt-0.5 text-primary" />
             <div className="min-w-0">
@@ -119,7 +179,7 @@ const VenueDetailSheet = ({ venue, onClose, onBooking }: VenueDetailSheetProps) 
         </div>
 
         <h3 className="font-heading text-lg font-semibold mb-3">Comment y accéder</h3>
-        <div className="rounded-lg border border-border bg-card p-4 mb-6 space-y-3">
+        <div className="rounded-lg border border-border bg-background p-4 mb-6 space-y-3">
           {venue.accessDetails.map((detail) => (
             <div key={detail} className="flex items-start gap-3">
               <Route className="w-4 h-4 mt-0.5 text-primary" />
@@ -129,7 +189,7 @@ const VenueDetailSheet = ({ venue, onClose, onBooking }: VenueDetailSheetProps) 
         </div>
 
         <h3 className="font-heading text-lg font-semibold mb-3">Informations utiles</h3>
-        <div className="rounded-lg border border-border bg-card p-4 mb-6 space-y-3">
+        <div className="rounded-lg border border-border bg-background p-4 mb-6 space-y-3">
           {venue.usefulInformation.map((detail) => (
             <div key={detail} className="flex items-start gap-3">
               <Info className="w-4 h-4 mt-0.5 text-primary" />
@@ -141,13 +201,20 @@ const VenueDetailSheet = ({ venue, onClose, onBooking }: VenueDetailSheetProps) 
         {/* Gallery */}
         <div className="mb-6 flex gap-2 overflow-x-auto pb-1 hide-scrollbar">
           {venue.gallery.map((img, i) => (
-            <img
+            <button
               key={i}
-              src={img}
-              alt={`${venue.title} ${i + 1}`}
-              className="h-32 w-48 rounded-lg object-cover shrink-0 image-grade-luxe"
-              loading="lazy"
-            />
+              type="button"
+              onClick={() => setActiveMediaIndex(imageMediaOffset + heroImages.findIndex((image) => image === img))}
+              className="h-32 w-48 shrink-0 overflow-hidden rounded-lg"
+              aria-label={`Ouvrir la photo ${i + 1}`}
+            >
+              <img
+                src={img}
+                alt={`${venue.title} ${i + 1}`}
+                className="h-full w-full object-cover image-grade-luxe"
+                loading="lazy"
+              />
+            </button>
           ))}
         </div>
 
@@ -165,7 +232,7 @@ const VenueDetailSheet = ({ venue, onClose, onBooking }: VenueDetailSheetProps) 
         <h3 className="font-heading text-lg font-semibold mb-3">Services & équipements</h3>
         <div className="grid grid-cols-2 gap-2 mb-6">
           {venue.services.map((svc) => (
-            <div key={svc} className="flex min-w-0 items-center gap-2 rounded-lg border border-border bg-card p-2.5 text-sm font-body">
+            <div key={svc} className="flex min-w-0 items-center gap-2 rounded-lg border border-border bg-background p-2.5 text-sm font-body">
               {serviceIcons[svc] || <Tag className="w-4 h-4" />}
               <span className="truncate">{svc}</span>
             </div>
@@ -186,7 +253,7 @@ const VenueDetailSheet = ({ venue, onClose, onBooking }: VenueDetailSheetProps) 
         {reviews.length > 0 ? (
           <div className="space-y-3 mb-6">
             {reviews.map((review) => (
-              <div key={review.id} className="p-4 rounded-lg border border-border bg-card">
+              <div key={review.id} className="p-4 rounded-lg border border-border bg-background">
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-body font-semibold text-sm">{review.authorName}</span>
                   <div className="flex items-center gap-0.5">
@@ -219,6 +286,14 @@ const VenueDetailSheet = ({ venue, onClose, onBooking }: VenueDetailSheetProps) 
         </button>
         <p className="mt-2 text-center text-[11px] font-body text-muted-foreground">Réponse qualifiée sous 24h</p>
       </div>
+      {activeMediaIndex !== null && (
+        <VenueMediaLightbox
+          items={mediaItems}
+          activeIndex={activeMediaIndex}
+          onChange={setActiveMediaIndex}
+          onClose={() => setActiveMediaIndex(null)}
+        />
+      )}
     </div>
   );
 };

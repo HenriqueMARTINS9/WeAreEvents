@@ -93,6 +93,14 @@ const SearchResults = () => {
     setVisibleVenueIds(null);
   }, [filteredResults]);
 
+  useEffect(() => {
+    if (window.location.hash !== "#salles") return;
+
+    window.setTimeout(() => {
+      document.getElementById("salles")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 80);
+  }, []);
+
   const results = useMemo(() => {
     if (visibleVenueIds === null) return filteredResults;
 
@@ -172,7 +180,7 @@ const SearchResults = () => {
         <DesktopNav />
       )}
 
-      <section data-header-theme="light" className="relative overflow-hidden bg-foreground px-4 pb-6 pt-32 text-primary-foreground md:flex md:min-h-screen md:items-center md:px-6 md:pb-10 xl:pb-12">
+      <section data-header-theme="light" className="relative overflow-visible bg-foreground px-4 pb-6 pt-32 text-primary-foreground md:flex md:min-h-screen md:items-center md:px-6 md:pb-10 xl:pb-12">
         {!isMobile && (
           <>
             <video
@@ -191,7 +199,7 @@ const SearchResults = () => {
           </>
         )}
 
-        <div className="relative z-10 mx-auto max-w-7xl">
+        <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-col justify-center">
           <div className="mb-6 grid grid-cols-1 gap-4 md:mb-10 md:grid-cols-[1fr_auto] md:items-end">
             <div>
               <p className="mb-3 inline-flex items-center gap-2 rounded-lg border border-primary-foreground/20 bg-primary-foreground/10 px-3 py-1.5 text-xs font-body font-semibold text-primary backdrop-blur-md">
@@ -215,7 +223,7 @@ const SearchResults = () => {
           </div>
 
           <div className="rounded-lg border border-primary-foreground/18 bg-background p-3 text-foreground shadow-2xl backdrop-blur-xl md:bg-background/92">
-            <div className="grid grid-cols-1 overflow-hidden rounded-lg border border-border bg-background lg:grid-cols-3">
+            <div className="grid grid-cols-1 overflow-visible rounded-lg border border-border bg-background lg:grid-cols-3">
               <div className="border-b border-border lg:border-b-0 lg:border-r">
                 <LocationAutocomplete
                   value={locationQuery}
@@ -301,7 +309,7 @@ const SearchResults = () => {
         </div>
       </section>
 
-      <div className="px-4 py-6 md:px-6 md:py-10 xl:py-12">
+      <div id="salles" className="scroll-mt-24 px-4 py-6 md:px-6 md:py-10 xl:py-12">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 gap-8 md:h-[calc(100vh-22rem)] md:min-h-[620px] md:grid-cols-[minmax(0,1.05fr)_minmax(340px,0.95fr)] md:items-stretch lg:grid-cols-[minmax(0,1.05fr)_minmax(420px,0.95fr)]">
             <div className="order-1 flex min-h-0 flex-col overflow-hidden rounded-lg border border-border bg-card luxury-shadow md:h-full">

@@ -29,7 +29,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: "referencer-etablissement",
     category: "Propriétaires",
-    title: "Pourquoi référencer son établissement sur WeAreEvents",
+    title: "Pourquoi référencer son établissement sur wearevents",
     excerpt:
       "Visibilité qualifiée, demandes mieux cadrées et mise en avant premium pour vos espaces événementiels.",
     readTime: "3 min",

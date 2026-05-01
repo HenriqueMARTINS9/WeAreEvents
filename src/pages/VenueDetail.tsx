@@ -2,13 +2,14 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getReviewsByVenueId } from "@/data/venues";
 import { fetchVenues } from "@/lib/supabase-data";
-import { ArrowRight, Cake, Clock3, Euro, ExternalLink, MapPin, Music2, Route, ShieldCheck, Star, Tag, UtensilsCrossed, Users } from "lucide-react";
+import { ArrowRight, Cake, Clock3, Euro, ExternalLink, Images, MapPin, Music2, Play, Route, ShieldCheck, Star, Tag, UtensilsCrossed, Users } from "lucide-react";
 import { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import DesktopNav from "@/components/DesktopNav";
 import BookingModal from "@/components/BookingModal";
 import SiteFooter from "@/components/SiteFooter";
 import VenueDetailSheet from "@/components/VenueDetailSheet";
+import VenueMediaLightbox, { type VenueMediaItem } from "@/components/VenueMediaLightbox";
 
 const VenueDetail = () => {
   const { slug } = useParams();
@@ -17,6 +18,7 @@ const VenueDetail = () => {
   const { data: venues = [], isLoading } = useQuery({ queryKey: ["venues"], queryFn: fetchVenues });
   const venue = venues.find((item) => item.slug === slug);
   const [bookingOpen, setBookingOpen] = useState(false);
+  const [activeMediaIndex, setActiveMediaIndex] = useState<number | null>(null);
 
   if (isLoading) {
     return <div className="min-h-screen bg-background" />;
@@ -47,6 +49,21 @@ const VenueDetail = () => {
 
   const reviews = getReviewsByVenueId(venue.id);
   const galleryImages = [venue.coverImage, ...venue.gallery.filter((image) => image !== venue.coverImage)];
+  const mediaItems: VenueMediaItem[] = [
+    ...(venue.videoUrl ? [{
+      type: "video" as const,
+      src: venue.videoUrl,
+      label: `Vidéo de ${venue.title}`,
+      startSeconds: venue.videoStartSeconds,
+      endSeconds: venue.videoEndSeconds,
+    }] : []),
+    ...galleryImages.map((image, index) => ({
+      type: "image" as const,
+      src: image,
+      label: `${venue.title} - photo ${index + 1}`,
+    })),
+  ];
+  const imageMediaOffset = venue.videoUrl ? 1 : 0;
   const primarySpaces = venue.spaces.slice(0, 3);
   const averageCapacity = `${venue.minCapacity}–${venue.maxCapacity} pers.`;
   const scrollToSection = (sectionId: string) => {
@@ -59,11 +76,11 @@ const VenueDetail = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-muted/35">
       <DesktopNav />
 
       <main className="pt-24">
-        <section className="px-6 pb-8">
+        <section className="bg-background px-6 pb-8">
           <div className="mx-auto max-w-7xl xl:px-2">
             <div className="mb-5 flex flex-wrap items-center gap-2 text-sm font-body text-muted-foreground">
               <button type="button" onClick={() => navigate("/")} className="hover:text-foreground">Accueil</button>
@@ -98,12 +115,58 @@ const VenueDetail = () => {
               </button>
             </div>
 
-            <div data-header-theme="light" className="grid h-[460px] grid-cols-[1.35fr_0.85fr] gap-3 overflow-hidden rounded-lg bg-foreground">
-              <img src={galleryImages[0]} alt={venue.title} className="h-full w-full object-cover image-grade-luxe" />
+            <div data-header-theme="light" className="relative grid h-[460px] grid-cols-[1.35fr_0.85fr] gap-3 overflow-hidden rounded-lg bg-foreground">
+              <button
+                type="button"
+                onClick={() => setActiveMediaIndex(imageMediaOffset)}
+                className="group relative overflow-hidden text-left"
+                aria-label="Ouvrir la photo principale"
+              >
+                <img src={galleryImages[0]} alt={venue.title} className="h-full w-full object-cover image-grade-luxe transition-transform duration-700 group-hover:scale-105" />
+              </button>
               <div className="grid grid-cols-2 gap-3">
                 {galleryImages.slice(1, 5).map((image, index) => (
-                  <img key={`${image}-${index}`} src={image} alt="" className="h-full w-full object-cover image-grade-luxe" />
+                  <button
+                    key={`${image}-${index}`}
+                    type="button"
+                    onClick={() => setActiveMediaIndex(imageMediaOffset + index + 1)}
+                    className="group overflow-hidden"
+                    aria-label={`Ouvrir la photo ${index + 2}`}
+                  >
+                    <img src={image} alt="" className="h-full w-full object-cover image-grade-luxe transition-transform duration-700 group-hover:scale-105" />
+                  </button>
                 ))}
+              </div>
+              <div className="absolute bottom-4 left-4 flex flex-wrap gap-2 rounded-lg border border-primary-foreground/20 bg-foreground/75 p-2 text-primary-foreground backdrop-blur-xl">
+                {[
+                  `${venue.spaces.length} espace${venue.spaces.length > 1 ? "s" : ""}`,
+                  averageCapacity,
+                  venue.pricingText,
+                ].map((item) => (
+                  <span key={item} className="rounded-md bg-primary-foreground/10 px-3 py-1.5 text-xs font-body font-semibold">
+                    {item}
+                  </span>
+                ))}
+              </div>
+              <div className="absolute bottom-4 right-4 flex flex-wrap justify-end gap-2">
+                {venue.videoUrl && (
+                  <button
+                    type="button"
+                    onClick={() => setActiveMediaIndex(0)}
+                    className="inline-flex items-center gap-2 rounded-lg bg-primary-foreground px-3 py-2 text-xs font-body font-semibold text-foreground shadow-lg transition-colors hover:bg-primary hover:text-primary-foreground"
+                  >
+                    <Play className="h-3.5 w-3.5" />
+                    Voir la vidéo
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setActiveMediaIndex(imageMediaOffset)}
+                  className="inline-flex items-center gap-2 rounded-lg bg-primary-foreground px-3 py-2 text-xs font-body font-semibold text-foreground shadow-lg transition-colors hover:bg-primary hover:text-primary-foreground"
+                >
+                  <Images className="h-3.5 w-3.5" />
+                  Voir toutes les photos
+                </button>
               </div>
             </div>
 
@@ -133,11 +196,12 @@ const VenueDetail = () => {
           </div>
         </section>
 
-        <section className="px-6 pb-16">
+        <section className="px-6 py-14">
           <div className="mx-auto grid max-w-7xl grid-cols-1 gap-10 xl:grid-cols-[minmax(0,1fr)_360px] xl:px-2">
             <div className="space-y-10">
               <section id="presentation" className="scroll-mt-28">
-                <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+                <div className="rounded-lg border border-border bg-background p-5 luxury-shadow">
+                  <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
                   {[
                     { icon: <Users className="h-4 w-4" />, label: "Capacité max", value: averageCapacity },
                     { icon: <Clock3 className="h-4 w-4" />, label: "Jusqu'à", value: venue.closingTime || "Sur demande" },
@@ -150,15 +214,16 @@ const VenueDetail = () => {
                       <p className="mt-1 font-heading text-xl font-semibold">{item.value}</p>
                     </div>
                   ))}
+                  </div>
                 </div>
 
-                <div className="mt-8 border-b border-border pb-8">
+                <div className="mt-8 rounded-lg border border-border bg-background p-7">
                   <p className="font-heading text-3xl italic text-primary">"{venue.tagline}"</p>
                   <p className="mt-5 max-w-3xl font-body text-lg leading-relaxed text-foreground/80">{venue.description}</p>
                 </div>
               </section>
 
-              <section id="options" className="scroll-mt-28">
+              <section id="options" className="scroll-mt-28 rounded-lg border border-border bg-background p-6">
                 <h2 className="font-heading text-3xl font-semibold">Sélectionnez une option de réservation</h2>
                 <p className="mt-2 text-sm font-body text-muted-foreground">Chaque espace peut être demandé selon votre format, votre date et votre volume d'invités.</p>
                 <div className="mt-5 grid grid-cols-1 gap-4">
@@ -175,6 +240,7 @@ const VenueDetail = () => {
                           <p className="mt-2 text-sm font-body leading-relaxed text-muted-foreground">{space.description}</p>
                           <div className="mt-4 flex flex-wrap gap-2">
                             <span className="rounded-lg bg-secondary px-3 py-1.5 text-xs font-body font-semibold text-secondary-foreground">{space.capacity} pers.</span>
+                            <span className="rounded-lg bg-secondary px-3 py-1.5 text-xs font-body font-semibold text-secondary-foreground">{Math.max(20, Math.round(space.capacity * 1.8))} m² estimés</span>
                             <span className="rounded-lg bg-secondary px-3 py-1.5 text-xs font-body font-semibold text-secondary-foreground">Disponibilité sur demande</span>
                           </div>
                         </div>
@@ -185,7 +251,7 @@ const VenueDetail = () => {
                 </div>
               </section>
 
-              <section id="ambiance" className="scroll-mt-28">
+              <section id="ambiance" className="scroll-mt-28 rounded-lg border border-border bg-background p-6">
                 <h2 className="font-heading text-3xl font-semibold">Ambiance & activités</h2>
                 <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
                   <InfoBlock icon={<Music2 className="h-4 w-4" />} title="Ambiance" items={venue.ambianceTypes} />
@@ -193,7 +259,7 @@ const VenueDetail = () => {
                 </div>
               </section>
 
-              <section id="infos" className="scroll-mt-28">
+              <section id="infos" className="scroll-mt-28 rounded-lg border border-border bg-background p-6">
                 <h2 className="font-heading text-3xl font-semibold">Informations utiles</h2>
                 <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
                   <InfoBlock icon={<Tag className="h-4 w-4" />} title="Équipements & services" items={venue.services} />
@@ -209,7 +275,7 @@ const VenueDetail = () => {
                 </div>
               </section>
 
-              <section id="acces" className="scroll-mt-28">
+              <section id="acces" className="scroll-mt-28 rounded-lg border border-border bg-background p-6">
                 <h2 className="font-heading text-3xl font-semibold">Se rendre au {venue.title}</h2>
                 <div className="mt-5 rounded-lg border border-border bg-card p-5">
                   <div className="flex items-start gap-3">
@@ -236,7 +302,7 @@ const VenueDetail = () => {
                 </div>
               </section>
 
-              <section id="avis" className="scroll-mt-28">
+              <section id="avis" className="scroll-mt-28 rounded-lg border border-border bg-background p-6">
                 <div className="mb-5 flex items-end justify-between gap-4">
                   <div>
                     <h2 className="font-heading text-3xl font-semibold">Avis</h2>
@@ -307,6 +373,14 @@ const VenueDetail = () => {
       </main>
 
       {bookingOpen && <BookingModal venue={venue} onClose={() => setBookingOpen(false)} />}
+      {activeMediaIndex !== null && (
+        <VenueMediaLightbox
+          items={mediaItems}
+          activeIndex={activeMediaIndex}
+          onChange={setActiveMediaIndex}
+          onClose={() => setActiveMediaIndex(null)}
+        />
+      )}
       <SiteFooter variant="dark" />
     </div>
   );
