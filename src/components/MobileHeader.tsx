@@ -8,7 +8,7 @@ interface MobileHeaderProps {
 
 const MobileHeader = ({ onCodeSearch }: MobileHeaderProps) => {
   return (
-    <div className="fixed top-0 left-0 right-0 z-40 px-4 pt-4 pb-3 flex items-center justify-between">
+    <div className="fixed inset-x-0 top-0 z-[1000] flex items-center justify-between px-4 pb-3 pt-[max(1rem,env(safe-area-inset-top))]">
       <Link to="/" className="min-w-0" aria-label="Retour à l'accueil">
         <img src={logoWhite} alt="WeAreEvents" className="h-8 drop-shadow" />
       </Link>
