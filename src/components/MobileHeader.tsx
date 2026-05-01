@@ -78,21 +78,25 @@ const MobileHeader = ({ onCodeSearch }: MobileHeaderProps) => {
             </nav>
 
             <div className="mt-auto px-5 pb-6">
-              <div className="mb-3 rounded-lg bg-secondary p-4">
-                <p className="font-body text-xs font-semibold text-primary">Code lieu</p>
-                <p className="mt-1 text-sm font-body text-muted-foreground">Accédez directement à une salle vue sur mobile.</p>
-              </div>
-            <button
-              type="button"
-              onClick={() => {
-                setMenuOpen(false);
-                onCodeSearch();
-              }}
-                className="flex w-full items-center justify-center gap-2 rounded-lg bg-foreground px-4 py-3 text-sm font-body font-semibold text-primary-foreground transition-transform active:scale-[0.98]"
-            >
-              <Search className="h-4 w-4" />
-              Code lieu
-            </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setMenuOpen(false);
+                  onCodeSearch();
+                }}
+                className="group flex w-full items-center justify-between rounded-lg bg-foreground px-4 py-3 text-left text-primary-foreground transition-transform active:scale-[0.98]"
+              >
+                <span className="flex items-center gap-3">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-foreground/10 text-primary">
+                    <Search className="h-4 w-4" />
+                  </span>
+                  <span>
+                    <span className="block text-sm font-body font-semibold">Code lieu</span>
+                    <span className="mt-0.5 block text-xs font-body text-primary-foreground/60">Accéder à une salle vue sur mobile</span>
+                  </span>
+                </span>
+                <ArrowRight className="h-4 w-4 text-primary-foreground/50 transition-transform group-hover:translate-x-1" />
+              </button>
             </div>
           </div>
         </div>
