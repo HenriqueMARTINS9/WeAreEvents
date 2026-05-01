@@ -1,4 +1,5 @@
-import { Star, MapPin, Users, ArrowUpRight } from "lucide-react";
+import { useMemo, useState, type MouseEvent } from "react";
+import { Star, MapPin, Users, ArrowUpRight, ChevronLeft, ChevronRight, Images } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import type { Venue } from "@/types/venue";
 
@@ -10,6 +11,21 @@ interface VenueGridCardProps {
 const VenueGridCard = ({ venue, size = "default" }: VenueGridCardProps) => {
   const navigate = useNavigate();
   const isLarge = size === "large";
+  const images = useMemo(
+    () => [venue.coverImage, ...venue.gallery].filter((image, index, list) => image && list.indexOf(image) === index),
+    [venue.coverImage, venue.gallery],
+  );
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const activeImage = images[activeImageIndex] ?? venue.coverImage;
+  const hasMultipleImages = images.length > 1;
+  const showPreviousImage = (event: MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+    setActiveImageIndex((current) => (current - 1 + images.length) % images.length);
+  };
+  const showNextImage = (event: MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+    setActiveImageIndex((current) => (current + 1) % images.length);
+  };
 
   return (
     <div
@@ -18,12 +34,36 @@ const VenueGridCard = ({ venue, size = "default" }: VenueGridCardProps) => {
     >
       <div className={`relative overflow-hidden bg-foreground ${isLarge ? "h-72" : "h-64"}`}>
         <img
-          src={venue.coverImage}
+          src={activeImage}
           alt={venue.title}
           className="w-full h-full object-cover image-grade-luxe transition-transform duration-700 group-hover:scale-105"
           loading="lazy"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-foreground/80 via-transparent to-foreground/20" />
+        {hasMultipleImages && (
+          <>
+            <button
+              type="button"
+              onClick={showPreviousImage}
+              className="absolute left-3 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-foreground/55 text-primary-foreground opacity-100 shadow-lg backdrop-blur-md transition-all hover:bg-primary md:opacity-0 md:group-hover:opacity-100"
+              aria-label={`Photo précédente de ${venue.title}`}
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+            <button
+              type="button"
+              onClick={showNextImage}
+              className="absolute right-3 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-foreground/55 text-primary-foreground opacity-100 shadow-lg backdrop-blur-md transition-all hover:bg-primary md:opacity-0 md:group-hover:opacity-100"
+              aria-label={`Photo suivante de ${venue.title}`}
+            >
+              <ChevronRight className="h-5 w-5" />
+            </button>
+            <div className="absolute left-3 top-3 z-10 inline-flex items-center gap-1 rounded-lg bg-foreground/55 px-2 py-1 text-xs font-body font-semibold text-primary-foreground backdrop-blur-md">
+              <Images className="h-3.5 w-3.5" />
+              {activeImageIndex + 1}/{images.length}
+            </div>
+          </>
+        )}
         <div className="absolute top-3 right-3">
           <div className="flex items-center gap-1 px-2 py-1 rounded-lg glass-dark text-primary-foreground text-xs font-body">
             <Star className="w-3 h-3 fill-accent text-accent" />
