@@ -222,7 +222,7 @@ const SearchResults = () => {
             </div>
           </div>
 
-          <div className="rounded-lg border border-primary-foreground/18 bg-background p-3 text-foreground shadow-2xl backdrop-blur-xl md:bg-background/92">
+          <div className="rounded-lg border border-primary-foreground/20 bg-foreground/50 p-4 text-foreground shadow-2xl backdrop-blur-xl hairline-top">
             <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1.18fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)] lg:items-stretch">
               <LocationAutocomplete
                 value={locationQuery}
