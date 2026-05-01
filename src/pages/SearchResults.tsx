@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { CalendarDays, Clock3, Euro, MapPin, Music2, SlidersHorizontal, Tag, UtensilsCrossed, Users, ShieldCheck, X } from "lucide-react";
+import { Clock3, Euro, MapPin, Music2, SlidersHorizontal, Sparkles, Tag, UtensilsCrossed, Users, ShieldCheck, X } from "lucide-react";
 import { fetchVenues, filterVenues, findVenueByCode, getVenueLocationSuggestionsFromVenues } from "@/lib/supabase-data";
 import { EVENT_TYPES } from "@/types/venue";
 import DesktopNav from "@/components/DesktopNav";
@@ -42,7 +42,6 @@ const SearchResults = () => {
   const navigate = useNavigate();
   const [locationQuery, setLocationQuery] = useState(searchParams.get("location") || searchParams.get("city") || "");
   const [eventType, setEventType] = useState(searchParams.get("type") || "");
-  const [eventDate, setEventDate] = useState(searchParams.get("date") || "");
   const [guests, setGuests] = useState(searchParams.get("guests") || "");
   const [priceTier, setPriceTier] = useState(searchParams.get("price") || "");
   const [closingFilter, setClosingFilter] = useState(searchParams.get("closing") || "");
@@ -223,37 +222,44 @@ const SearchResults = () => {
           </div>
 
           <div className="rounded-lg border border-primary-foreground/18 bg-background p-3 text-foreground shadow-2xl backdrop-blur-xl md:bg-background/92">
-            <div className="grid grid-cols-1 overflow-visible rounded-lg border border-border bg-background lg:grid-cols-3">
-              <div className="border-b border-border lg:border-b-0 lg:border-r">
-                <LocationAutocomplete
-                  value={locationQuery}
-                  onChange={setLocationQuery}
-                  options={locationOptions}
-                  placeholder="Ajouter une localisation"
-                  className="h-16 border-0 bg-background text-base"
-                  icon={<MapPin className="w-5 h-5" />}
-                />
-              </div>
-              <label className="flex h-16 items-center gap-3 border-b border-border bg-background px-4 lg:border-b-0 lg:border-r">
-                <CalendarDays className="h-5 w-5 shrink-0 text-muted-foreground" />
-                <input
-                  type="date"
-                  value={eventDate}
-                  onChange={(event) => setEventDate(event.target.value)}
-                  className="min-w-0 flex-1 bg-transparent text-base font-body font-semibold text-foreground [color-scheme:light] focus:outline-none"
-                  aria-label="Ajouter une date"
-                />
-              </label>
-              <div className="flex h-16 items-center gap-3 bg-background px-4">
-                <Users className="w-5 h-5 shrink-0 text-muted-foreground" />
+            <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1.18fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)] lg:items-stretch">
+              <LocationAutocomplete
+                value={locationQuery}
+                onChange={setLocationQuery}
+                options={locationOptions}
+                placeholder="Ville ou code postal"
+                className="h-12 bg-background"
+                icon={<MapPin className="w-4 h-4" />}
+              />
+              <FilterSelect
+                value={eventType}
+                onChange={setEventType}
+                placeholder="Type d'événement"
+                emptyLabel="Tous les types"
+                options={EVENT_TYPES}
+                icon={<Sparkles className="w-4 h-4" />}
+                className="h-12"
+              />
+              <div className="flex h-12 items-center gap-2 rounded-lg border border-border bg-background px-3">
+                <Users className="w-4 h-4 text-primary shrink-0" />
                 <input
                   type="number"
                   value={guests}
                   onChange={(e) => setGuests(e.target.value)}
-                  placeholder="Ajouter des participants"
-                  className="min-w-0 flex-1 bg-transparent text-base font-body font-semibold focus:outline-none"
+                  placeholder="Nombre d'invités"
+                  className="min-w-0 flex-1 bg-transparent text-sm font-body focus:outline-none"
                 />
               </div>
+              <label className="flex h-12 items-center gap-2 rounded-lg border border-border bg-background px-3">
+                <CalendarDays className="h-4 w-4 shrink-0 text-primary" />
+                <input
+                  type="date"
+                  value={eventDate}
+                  onChange={(event) => setEventDate(event.target.value)}
+                  className="min-w-0 flex-1 bg-transparent text-sm font-body focus:outline-none [color-scheme:light]"
+                  aria-label="Date de l'événement"
+                />
+              </label>
             </div>
 
             <div className="mt-4 flex gap-3 overflow-x-auto pb-1 md:flex-wrap md:overflow-visible md:pb-0">
