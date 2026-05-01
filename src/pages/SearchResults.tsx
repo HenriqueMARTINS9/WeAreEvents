@@ -302,7 +302,7 @@ const SearchResults = () => {
 
       <div className="px-4 py-6 md:px-6 md:py-10 xl:py-12">
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 gap-8 xl:h-[calc(100vh-25rem)] xl:min-h-[640px] xl:grid-cols-[minmax(0,1.38fr)_minmax(340px,0.62fr)] xl:items-stretch 2xl:grid-cols-[minmax(0,1.45fr)_minmax(360px,0.55fr)]">
+          <div className="grid grid-cols-1 gap-8 xl:h-[calc(100vh-22rem)] xl:min-h-[620px] xl:grid-cols-[minmax(0,1.05fr)_minmax(420px,0.95fr)] xl:items-stretch">
             <div className="order-1 flex min-h-0 flex-col overflow-hidden rounded-lg border border-border bg-card luxury-shadow xl:h-full">
               <div className="flex items-center gap-2 border-b border-border px-4 py-3 text-sm font-body text-muted-foreground">
                 <SlidersHorizontal className="w-4 h-4 shrink-0 text-primary" />
@@ -315,9 +315,9 @@ const SearchResults = () => {
 
               <div className="min-h-0 flex-1 overflow-y-auto p-4 xl:p-5">
                 {results.length > 0 ? (
-                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                  <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                     {results.map((venue) => (
-                      <VenueGridCard key={venue.id} venue={venue} size={isMobile ? "default" : "large"} />
+                      <VenueGridCard key={venue.id} venue={venue} />
                     ))}
                   </div>
                 ) : filteredResults.length > 0 ? (
@@ -409,7 +409,7 @@ const SearchResults = () => {
         />
       )}
 
-      <SiteFooter />
+      {!isMobile && <SiteFooter />}
     </div>
   );
 };

@@ -9,9 +9,9 @@ interface MobileHeaderProps {
 const MobileHeader = ({ onCodeSearch }: MobileHeaderProps) => {
   return (
     <div className="fixed top-0 left-0 right-0 z-40 px-4 pt-4 pb-3 flex items-center justify-between">
-      <div className="min-w-0">
+      <Link to="/" className="min-w-0" aria-label="Retour à l'accueil">
         <img src={logoWhite} alt="WeAreEvents" className="h-8 drop-shadow" />
-      </div>
+      </Link>
 
       <div className="flex flex-col items-end gap-2">
         <button

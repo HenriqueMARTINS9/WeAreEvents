@@ -208,7 +208,7 @@ const VenueCard = ({ venue, isActive, onOpenDetail, onBooking, onComments, comme
           aria-label={`Contacter sur WhatsApp pour ${venue.title}`}
         >
           <span className="p-2 rounded-lg bg-[#25D366] shadow-lg">
-            <MessageCircle className="w-6 h-6 text-white" />
+            <img src="/3670051.png" alt="" className="h-6 w-6 object-contain" />
           </span>
           <span className="text-[10px] font-body">WhatsApp</span>
         </a>
