@@ -172,7 +172,7 @@ const SearchResults = () => {
         <DesktopNav />
       )}
 
-      <section data-header-theme="light" className="relative overflow-hidden bg-foreground px-4 pb-6 pt-32 text-primary-foreground md:px-6 md:pb-10 xl:pb-12">
+      <section data-header-theme="light" className="relative overflow-hidden bg-foreground px-4 pb-6 pt-32 text-primary-foreground md:flex md:min-h-screen md:items-center md:px-6 md:pb-10 xl:pb-12">
         {!isMobile && (
           <>
             <video
@@ -185,8 +185,9 @@ const SearchResults = () => {
             >
               <source src={SEARCH_BACKGROUND_VIDEO} type="video/mp4" />
             </video>
-            <div className="absolute inset-0 bg-gradient-to-r from-foreground/92 via-foreground/62 to-foreground/36" />
-            <div className="absolute inset-0 bg-gradient-to-t from-foreground/92 via-foreground/30 to-foreground/48" />
+            <div className="absolute inset-0 bg-gradient-to-r from-foreground/90 via-foreground/50 to-foreground/20" />
+            <div className="absolute inset-0 bg-gradient-to-t from-foreground/90 via-transparent to-foreground/40" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_22%,rgba(218,86,110,0.22),transparent_30%),radial-gradient(circle_at_78%_24%,rgba(216,180,96,0.2),transparent_24%)]" />
           </>
         )}
 
