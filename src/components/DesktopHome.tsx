@@ -83,7 +83,7 @@ const DesktopHome = () => {
     <div className="min-h-screen bg-background text-foreground">
       <DesktopNav />
 
-      <section data-header-theme="light" className="relative h-[78vh] min-h-[620px] max-h-[760px] overflow-hidden bg-foreground">
+      <section data-header-theme="light" className="relative h-screen min-h-[620px] overflow-hidden bg-foreground">
         <video
           autoPlay
           muted
