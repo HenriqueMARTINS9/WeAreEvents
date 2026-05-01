@@ -40,7 +40,7 @@ const FilterSelect = ({ value, onChange, placeholder, emptyLabel = placeholder, 
   }, [open]);
 
   return (
-    <div ref={selectRef} className="relative min-w-0">
+    <div ref={selectRef} className={`relative min-w-0 ${open ? "z-[2400]" : "z-0"}`}>
       <button
         type="button"
         onClick={() => setOpen((current) => !current)}
@@ -56,7 +56,7 @@ const FilterSelect = ({ value, onChange, placeholder, emptyLabel = placeholder, 
       </button>
 
       {open && (
-        <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-50 overflow-hidden rounded-lg border border-primary-foreground/15 bg-foreground p-1 text-primary-foreground shadow-2xl luxury-shadow">
+        <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-[2400] overflow-hidden rounded-lg border border-primary-foreground/15 bg-foreground p-1 text-primary-foreground shadow-2xl luxury-shadow">
           <div className="max-h-64 overflow-y-auto hide-scrollbar" role="listbox">
             {items.map((item) => {
               const selected = item.value === value;

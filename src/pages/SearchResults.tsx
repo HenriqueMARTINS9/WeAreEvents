@@ -172,7 +172,7 @@ const SearchResults = () => {
         <DesktopNav />
       )}
 
-      <section data-header-theme="light" className="relative overflow-hidden bg-foreground px-4 pb-6 pt-32 text-primary-foreground md:flex md:min-h-screen md:items-center md:px-6 md:pb-10 xl:pb-12">
+      <section data-header-theme="light" className="relative overflow-visible bg-foreground px-4 pb-6 pt-32 text-primary-foreground md:flex md:min-h-screen md:items-center md:px-6 md:pb-10 xl:pb-12">
         {!isMobile && (
           <>
             <video
@@ -215,7 +215,7 @@ const SearchResults = () => {
           </div>
 
           <div className="rounded-lg border border-primary-foreground/18 bg-background p-3 text-foreground shadow-2xl backdrop-blur-xl md:bg-background/92">
-            <div className="grid grid-cols-1 overflow-hidden rounded-lg border border-border bg-background lg:grid-cols-3">
+            <div className="grid grid-cols-1 overflow-visible rounded-lg border border-border bg-background lg:grid-cols-3">
               <div className="border-b border-border lg:border-b-0 lg:border-r">
                 <LocationAutocomplete
                   value={locationQuery}
