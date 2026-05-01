@@ -5,11 +5,14 @@ import { CalendarDays, Clock3, Euro, MapPin, Music2, SlidersHorizontal, Tag, Ute
 import { fetchVenues, filterVenues, findVenueByCode, getVenueLocationSuggestionsFromVenues } from "@/lib/supabase-data";
 import { EVENT_TYPES } from "@/types/venue";
 import DesktopNav from "@/components/DesktopNav";
+import MobileHeader from "@/components/MobileHeader";
 import FilterSelect from "@/components/FilterSelect";
 import LocationAutocomplete from "@/components/LocationAutocomplete";
 import SiteFooter from "@/components/SiteFooter";
 import SearchResultsMap from "@/components/SearchResultsMap";
 import VenueGridCard from "@/components/VenueGridCard";
+import VenueCodeSearch from "@/components/VenueCodeSearch";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const SEARCH_BACKGROUND_VIDEO = "https://videos.pexels.com/video-files/3571264/3571264-uhd_2560_1440_30fps.mp4";
 const PRICE_FILTERS = ["€", "€€", "€€€", "€€€€"] as const;
@@ -51,7 +54,9 @@ const SearchResults = () => {
   const [equipmentFilters, setEquipmentFilters] = useState<string[]>([]);
   const [foodFilter, setFoodFilter] = useState("");
   const [showAllFilters, setShowAllFilters] = useState(false);
+  const [showCodeSearch, setShowCodeSearch] = useState(false);
   const [visibleVenueIds, setVisibleVenueIds] = useState<string[] | null>(null);
+  const isMobile = useIsMobile();
   const codeParam = searchParams.get("code");
   const { data: venues = [] } = useQuery({ queryKey: ["venues"], queryFn: fetchVenues });
   const locationOptions = getVenueLocationSuggestionsFromVenues(venues);
@@ -161,37 +166,45 @@ const SearchResults = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <DesktopNav />
+      {isMobile ? (
+        <MobileHeader onCodeSearch={() => setShowCodeSearch(true)} />
+      ) : (
+        <DesktopNav />
+      )}
 
-      <section data-header-theme="light" className="relative overflow-hidden bg-foreground px-6 pb-10 pt-32 text-primary-foreground xl:pb-12">
-        <video
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="metadata"
-          className="absolute inset-0 h-full w-full object-cover image-grade-luxe hero-video-active"
-        >
-          <source src={SEARCH_BACKGROUND_VIDEO} type="video/mp4" />
-        </video>
-        <div className="absolute inset-0 bg-gradient-to-r from-foreground/92 via-foreground/62 to-foreground/36" />
-        <div className="absolute inset-0 bg-gradient-to-t from-foreground/92 via-foreground/30 to-foreground/48" />
+      <section data-header-theme="light" className="relative overflow-hidden bg-foreground px-4 pb-6 pt-32 text-primary-foreground md:px-6 md:pb-10 xl:pb-12">
+        {!isMobile && (
+          <>
+            <video
+              autoPlay
+              muted
+              loop
+              playsInline
+              preload="metadata"
+              className="absolute inset-0 h-full w-full object-cover image-grade-luxe hero-video-active"
+            >
+              <source src={SEARCH_BACKGROUND_VIDEO} type="video/mp4" />
+            </video>
+            <div className="absolute inset-0 bg-gradient-to-r from-foreground/92 via-foreground/62 to-foreground/36" />
+            <div className="absolute inset-0 bg-gradient-to-t from-foreground/92 via-foreground/30 to-foreground/48" />
+          </>
+        )}
 
         <div className="relative z-10 mx-auto max-w-7xl">
-          <div className="mb-10 grid grid-cols-1 gap-6 md:grid-cols-[1fr_auto] md:items-end">
+          <div className="mb-6 grid grid-cols-1 gap-4 md:mb-10 md:grid-cols-[1fr_auto] md:items-end">
             <div>
               <p className="mb-3 inline-flex items-center gap-2 rounded-lg border border-primary-foreground/20 bg-primary-foreground/10 px-3 py-1.5 text-xs font-body font-semibold text-primary backdrop-blur-md">
                 <ShieldCheck className="w-3.5 h-3.5" />
                 Lieux vérifiés
               </p>
-              <h1 className="font-heading text-4xl md:text-6xl font-semibold leading-none mb-4">
+              <h1 className="font-heading text-4xl md:text-6xl font-semibold leading-[0.98] mb-3 md:mb-4">
                 Trouvez le lieu idéal pour votre événement.
               </h1>
-              <p className="max-w-2xl font-body leading-relaxed text-primary-foreground/78">
+              <p className="max-w-2xl text-sm font-body leading-relaxed text-primary-foreground/76 md:text-base">
                 Recherchez par ville ou code postal, capacité et type d'événement, puis envoyez votre demande en quelques clics.
               </p>
             </div>
-            <div className="rounded-lg border border-primary-foreground/20 bg-primary-foreground/10 px-4 py-3 text-sm font-body text-primary-foreground/78 backdrop-blur-md">
+            <div className="w-fit rounded-lg border border-primary-foreground/20 bg-primary-foreground/10 px-4 py-3 text-sm font-body text-primary-foreground/78 backdrop-blur-md">
               <span className="font-semibold text-primary-foreground">{results.length}</span>{" "}
               salle{results.length !== 1 ? "s" : ""} {isMapZoneFilteringActive ? "dans la zone" : "trouvée"}{results.length !== 1 ? "s" : ""}
               {isMapZoneFilteringActive && (
@@ -200,7 +213,7 @@ const SearchResults = () => {
             </div>
           </div>
 
-          <div className="rounded-lg border border-primary-foreground/18 bg-background/92 p-3 text-foreground shadow-2xl backdrop-blur-xl">
+          <div className="rounded-lg border border-primary-foreground/18 bg-background p-3 text-foreground shadow-2xl backdrop-blur-xl md:bg-background/92">
             <div className="grid grid-cols-1 overflow-hidden rounded-lg border border-border bg-background lg:grid-cols-3">
               <div className="border-b border-border lg:border-b-0 lg:border-r">
                 <LocationAutocomplete
@@ -234,31 +247,31 @@ const SearchResults = () => {
               </div>
             </div>
 
-            <div className="mt-4 flex flex-wrap gap-3">
+            <div className="mt-4 flex gap-3 overflow-x-auto pb-1 md:flex-wrap md:overflow-visible md:pb-0">
               <button
                 type="button"
                 onClick={() => setShowAllFilters(true)}
-                className="inline-flex h-12 items-center gap-2 rounded-lg border border-foreground/70 bg-background px-4 text-sm font-body font-semibold text-foreground transition-colors hover:bg-foreground hover:text-primary-foreground"
+                className="inline-flex h-12 shrink-0 items-center gap-2 rounded-lg border border-foreground/70 bg-background px-4 text-sm font-body font-semibold text-foreground transition-colors hover:bg-foreground hover:text-primary-foreground"
               >
                 <SlidersHorizontal className="h-4 w-4" />
                 Tous les filtres{activeAdvancedFilterCount ? ` (${activeAdvancedFilterCount})` : ""}
               </button>
-              <div className="w-[8.5rem]">
+              <div className="w-[8.5rem] shrink-0">
                 <FilterSelect value={priceTier} onChange={setPriceTier} placeholder="Prix" emptyLabel="Tous les prix" options={PRICE_FILTERS} icon={<Euro className="w-4 h-4" />} className="h-12" />
               </div>
-              <div className="w-40">
+              <div className="w-40 shrink-0">
                 <FilterSelect value={offerType} onChange={setOfferType} placeholder="Offres" emptyLabel="Toutes offres" options={OFFER_FILTERS} icon={<Tag className="w-4 h-4" />} className="h-12" />
               </div>
-              <div className="w-52">
+              <div className="w-52 shrink-0">
                 <FilterSelect value={ambianceType} onChange={setAmbianceType} placeholder="Ambiance" emptyLabel="Toutes ambiances" options={AMBIANCE_FILTERS} icon={<Music2 className="w-4 h-4" />} className="h-12" />
               </div>
-              <div className="w-[21rem] max-w-full">
+              <div className="w-[21rem] max-w-full shrink-0">
                 <FilterSelect value={privatizationType} onChange={setPrivatizationType} placeholder="Type de privatisation" emptyLabel="Toute privatisation" options={PRIVATIZATION_FILTERS} icon={<UtensilsCrossed className="w-4 h-4" />} className="h-12" />
               </div>
               <button
                 type="button"
                 onClick={() => toggleOptionFilter("Possibilité de danser")}
-                className={`h-12 rounded-lg border px-4 text-sm font-body font-semibold transition-colors ${
+                className={`h-12 shrink-0 rounded-lg border px-4 text-sm font-body font-semibold transition-colors ${
                   optionFilters.includes("Possibilité de danser") ? "border-foreground bg-foreground text-primary-foreground" : "border-foreground/70 bg-background text-foreground hover:bg-muted"
                 }`}
               >
@@ -267,7 +280,7 @@ const SearchResults = () => {
               <button
                 type="button"
                 onClick={() => setClosingFilter(closingFilter === "Après 2h" ? "" : "Après 2h")}
-                className={`h-12 rounded-lg border px-4 text-sm font-body font-semibold transition-colors ${
+                className={`h-12 shrink-0 rounded-lg border px-4 text-sm font-body font-semibold transition-colors ${
                   closingFilter === "Après 2h" ? "border-foreground bg-foreground text-primary-foreground" : "border-foreground/70 bg-background text-foreground hover:bg-muted"
                 }`}
               >
@@ -276,7 +289,7 @@ const SearchResults = () => {
               <button
                 type="button"
                 onClick={() => toggleEquipmentFilter("Terrasse")}
-                className={`h-12 rounded-lg border px-4 text-sm font-body font-semibold transition-colors ${
+                className={`h-12 shrink-0 rounded-lg border px-4 text-sm font-body font-semibold transition-colors ${
                   equipmentFilters.includes("Terrasse") ? "border-foreground bg-foreground text-primary-foreground" : "border-foreground/70 bg-background text-foreground hover:bg-muted"
                 }`}
               >
@@ -287,10 +300,10 @@ const SearchResults = () => {
         </div>
       </section>
 
-      <div className="px-6 py-10 xl:py-12">
+      <div className="px-4 py-6 md:px-6 md:py-10 xl:py-12">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 gap-8 xl:h-[calc(100vh-25rem)] xl:min-h-[640px] xl:grid-cols-[minmax(0,1.38fr)_minmax(340px,0.62fr)] xl:items-stretch 2xl:grid-cols-[minmax(0,1.45fr)_minmax(360px,0.55fr)]">
-            <div className="order-2 flex min-h-0 flex-col overflow-hidden rounded-lg border border-border bg-card luxury-shadow xl:order-1 xl:h-full">
+            <div className="order-1 flex min-h-0 flex-col overflow-hidden rounded-lg border border-border bg-card luxury-shadow xl:h-full">
               <div className="flex items-center gap-2 border-b border-border px-4 py-3 text-sm font-body text-muted-foreground">
                 <SlidersHorizontal className="w-4 h-4 shrink-0 text-primary" />
                 <span>
@@ -304,7 +317,7 @@ const SearchResults = () => {
                 {results.length > 0 ? (
                   <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                     {results.map((venue) => (
-                      <VenueGridCard key={venue.id} venue={venue} size="large" />
+                      <VenueGridCard key={venue.id} venue={venue} size={isMobile ? "default" : "large"} />
                     ))}
                   </div>
                 ) : filteredResults.length > 0 ? (
@@ -325,7 +338,7 @@ const SearchResults = () => {
               </div>
             </div>
 
-            <aside className="order-1 min-h-0 xl:order-2 xl:h-full">
+            <aside className="hidden min-h-0 xl:block xl:h-full">
               <SearchResultsMap
                 venues={filteredResults}
                 onVisibleVenuesChange={setVisibleVenueIds}
@@ -337,8 +350,8 @@ const SearchResults = () => {
       </div>
 
       {showAllFilters && (
-        <div className="fixed inset-0 z-[2200] flex items-center justify-center bg-foreground/70 p-4 backdrop-blur-md">
-          <div className="flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-lg bg-background text-foreground luxury-shadow animate-scale-in">
+        <div className="fixed inset-0 z-[2200] flex items-end bg-foreground/70 p-0 backdrop-blur-md sm:items-center sm:justify-center sm:p-4">
+          <div className="flex max-h-[88vh] w-full max-w-4xl flex-col overflow-hidden rounded-t-lg bg-background text-foreground luxury-shadow animate-scale-in sm:max-h-[90vh] sm:rounded-lg">
             <div className="flex items-center justify-between border-b border-border px-5 py-4">
               <div>
                 <p className="text-xs font-body font-semibold text-primary">Recherche avancée</p>
@@ -384,6 +397,16 @@ const SearchResults = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {showCodeSearch && (
+        <VenueCodeSearch
+          onClose={() => setShowCodeSearch(false)}
+          onVenueFound={(venue) => {
+            setShowCodeSearch(false);
+            navigate(`/salle/${venue.slug}`);
+          }}
+        />
       )}
 
       <SiteFooter />
