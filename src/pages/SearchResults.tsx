@@ -102,14 +102,14 @@ const SearchResults = () => {
   }, []);
 
   const results = useMemo(() => {
-    if (visibleVenueIds === null) return filteredResults;
+    if (isMobile || visibleVenueIds === null) return filteredResults;
 
     const visibleSet = new Set(visibleVenueIds);
     return filteredResults.filter((venue) => visibleSet.has(venue.id));
-  }, [filteredResults, visibleVenueIds]);
+  }, [filteredResults, isMobile, visibleVenueIds]);
 
   const isMapZoneFilteringActive =
-    visibleVenueIds !== null && results.length !== filteredResults.length;
+    !isMobile && visibleVenueIds !== null && results.length !== filteredResults.length;
   const activeAdvancedFilterCount = [
     venueType,
     priceTier,
