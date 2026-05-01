@@ -74,7 +74,7 @@ const LocationAutocomplete = ({
   }, [open]);
 
   return (
-    <div ref={rootRef} className={`relative min-w-0 ${open ? "z-[2400]" : "z-0"}`}>
+    <div ref={rootRef} className="relative min-w-0">
       <div
         className={`flex h-11 w-full min-w-0 items-center gap-2 rounded-lg border border-border bg-background px-3 transition-colors hover:border-primary/40 focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/20 ${className}`}
       >
@@ -93,7 +93,7 @@ const LocationAutocomplete = ({
       </div>
 
       {open && (
-        <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-[2400] overflow-hidden rounded-lg border border-primary-foreground/15 bg-foreground p-1 text-primary-foreground shadow-2xl luxury-shadow">
+        <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-50 overflow-hidden rounded-lg border border-primary-foreground/15 bg-foreground p-1 text-primary-foreground shadow-2xl luxury-shadow">
           {filteredOptions.length > 0 ? (
             <div className="max-h-64 overflow-y-auto hide-scrollbar">
               {filteredOptions.map((option) => {
