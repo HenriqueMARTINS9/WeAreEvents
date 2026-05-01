@@ -307,7 +307,7 @@ const VenueDetail = () => {
       </main>
 
       {bookingOpen && <BookingModal venue={venue} onClose={() => setBookingOpen(false)} />}
-      <SiteFooter />
+      <SiteFooter variant="dark" />
     </div>
   );
 };
