@@ -76,7 +76,7 @@ const VenueDetail = () => {
   };
 
   return (
-    <div className="min-h-screen bg-muted/35">
+    <div className="min-h-screen">
       <DesktopNav />
 
       <main className="pt-24">
