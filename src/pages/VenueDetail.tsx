@@ -115,22 +115,22 @@ const VenueDetail = () => {
               </button>
             </div>
 
-            <div data-header-theme="light" className="relative grid min-h-[460px] grid-cols-[1.35fr_0.85fr] gap-3 rounded-2xl bg-transparent">
+            <div data-header-theme="light" className="relative grid h-[500px] grid-cols-[minmax(0,1fr)_500px] gap-3 rounded-2xl bg-transparent xl:h-[540px] xl:grid-cols-[minmax(0,1fr)_540px]">
               <button
                 type="button"
                 onClick={() => setActiveMediaIndex(imageMediaOffset)}
-                className="group relative min-h-[460px] overflow-hidden rounded-2xl text-left"
+                className="group relative h-full overflow-hidden rounded-2xl text-left"
                 aria-label="Ouvrir la photo principale"
               >
                 <img src={galleryImages[0]} alt={venue.title} className="h-full w-full object-cover image-grade-luxe transition-transform duration-700 group-hover:scale-105" />
               </button>
-              <div className="grid grid-cols-2 content-start gap-3">
+              <div className="grid h-full grid-cols-2 grid-rows-2 gap-3">
                 {galleryImages.slice(1, 5).map((image, index) => (
                   <button
                     key={`${image}-${index}`}
                     type="button"
                     onClick={() => setActiveMediaIndex(imageMediaOffset + index + 1)}
-                    className="group aspect-square overflow-hidden rounded-2xl"
+                    className="group h-full w-full overflow-hidden rounded-2xl"
                     aria-label={`Ouvrir la photo ${index + 2}`}
                   >
                     <img src={image} alt="" className="h-full w-full object-cover image-grade-luxe transition-transform duration-700 group-hover:scale-105" />
@@ -334,8 +334,8 @@ const VenueDetail = () => {
               </section>
             </div>
 
-            <aside className="lg:sticky lg:top-28 lg:self-start">
-              <div className="max-h-[calc(100dvh-8rem)] overflow-y-auto rounded-lg border border-border bg-card p-5 luxury-shadow">
+            <aside className="lg:self-start">
+              <div className="rounded-lg border border-border bg-card p-5 luxury-shadow lg:sticky lg:top-28 lg:max-h-[calc(100dvh-8rem)] lg:overflow-y-auto">
                 <p className="text-xs font-body font-semibold text-primary">Réservation</p>
                 <h2 className="mt-2 font-heading text-3xl font-semibold">{venue.pricingText}</h2>
                 <p className="mt-2 text-sm font-body text-muted-foreground">Recevez un retour qualifié sur la disponibilité, les options et la cohérence avec votre événement.</p>
