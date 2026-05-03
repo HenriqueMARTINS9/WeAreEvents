@@ -1,4 +1,4 @@
-import { X, Star, MapPin, Users, Tag, Wifi, Car, UtensilsCrossed, Music, Camera, TreePine, Waves, ChefHat, Snowflake, Projector, ShirtIcon, ShieldCheck, Route, Play, Images } from "lucide-react";
+import { X, Star, MapPin, Users, Tag, Wifi, Car, UtensilsCrossed, Music, Camera, TreePine, Waves, ChefHat, Snowflake, Projector, ShirtIcon, ShieldCheck, Route, Info, Play, Images } from "lucide-react";
 import { useState } from "react";
 import type { Venue } from "@/types/venue";
 import { getReviewsByVenueId } from "@/data/venues";
@@ -188,23 +188,13 @@ const VenueDetailSheet = ({ venue, onClose, onBooking }: VenueDetailSheetProps) 
           ))}
         </div>
 
-        {/* Gallery */}
-        <div className="mb-6 flex gap-2 overflow-x-auto pb-1 hide-scrollbar">
-          {venue.gallery.map((img, i) => (
-            <button
-              key={i}
-              type="button"
-              onClick={() => setActiveMediaIndex(imageMediaOffset + heroImages.findIndex((image) => image === img))}
-              className="h-32 w-32 shrink-0 overflow-hidden rounded-2xl"
-              aria-label={`Ouvrir la photo ${i + 1}`}
-            >
-              <img
-                src={img}
-                alt={`${venue.title} ${i + 1}`}
-                className="h-full w-full object-cover image-grade-luxe"
-                loading="lazy"
-              />
-            </button>
+        <h3 className="font-heading text-lg font-semibold mb-3">Informations utiles</h3>
+        <div className="rounded-lg border border-border bg-background p-4 mb-6 space-y-3">
+          {venue.usefulInformation.map((detail) => (
+            <div key={detail} className="flex items-start gap-3">
+              <Info className="w-4 h-4 mt-0.5 text-primary" />
+              <p className="min-w-0 break-words text-sm font-body text-foreground/75">{detail}</p>
+            </div>
           ))}
         </div>
 
