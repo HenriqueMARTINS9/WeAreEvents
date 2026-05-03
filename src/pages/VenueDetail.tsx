@@ -115,7 +115,7 @@ const VenueDetail = () => {
               </button>
             </div>
 
-            <div data-header-theme="light" className="relative grid h-[500px] grid-cols-[minmax(0,1fr)_500px] gap-3 rounded-2xl bg-transparent xl:h-[540px] xl:grid-cols-[minmax(0,1fr)_540px]">
+            <div data-header-theme="light" className="relative grid h-[468px] grid-cols-[minmax(0,1fr)_468px] gap-3 rounded-2xl bg-transparent">
               <button
                 type="button"
                 onClick={() => setActiveMediaIndex(imageMediaOffset)}
@@ -334,8 +334,8 @@ const VenueDetail = () => {
               </section>
             </div>
 
-            <aside className="lg:self-start">
-              <div className="rounded-lg border border-border bg-card p-5 luxury-shadow lg:sticky lg:top-28 lg:max-h-[calc(100dvh-8rem)] lg:overflow-y-auto">
+            <aside className="lg:sticky lg:top-28 lg:self-start">
+              <div className="rounded-lg border border-border bg-card p-5 luxury-shadow lg:max-h-[calc(100dvh-8rem)] lg:overflow-y-auto">
                 <p className="text-xs font-body font-semibold text-primary">Réservation</p>
                 <h2 className="mt-2 font-heading text-3xl font-semibold">{venue.pricingText}</h2>
                 <p className="mt-2 text-sm font-body text-muted-foreground">Recevez un retour qualifié sur la disponibilité, les options et la cohérence avec votre événement.</p>
