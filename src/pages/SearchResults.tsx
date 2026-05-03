@@ -182,7 +182,7 @@ const SearchResults = () => {
 
       <section data-header-theme="light" className="relative overflow-visible bg-foreground px-4 pb-6 pt-32 text-primary-foreground md:flex md:min-h-screen md:items-center md:px-6 md:pb-10 xl:pb-12">
         {!isMobile && (
-          <>
+          <div className="pointer-events-none absolute inset-0 overflow-hidden">
             <video
               autoPlay
               muted
@@ -196,7 +196,7 @@ const SearchResults = () => {
             <div className="absolute inset-0 bg-gradient-to-r from-foreground/90 via-foreground/50 to-foreground/20" />
             <div className="absolute inset-0 bg-gradient-to-t from-foreground/90 via-transparent to-foreground/40" />
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_22%,rgba(218,86,110,0.22),transparent_30%),radial-gradient(circle_at_78%_24%,rgba(216,180,96,0.2),transparent_24%)]" />
-          </>
+          </div>
         )}
 
         <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-col justify-center">
