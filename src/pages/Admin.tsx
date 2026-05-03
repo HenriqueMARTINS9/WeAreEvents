@@ -3,7 +3,6 @@ import type { Session } from "@supabase/supabase-js";
 import {
   Building2,
   FileText,
-  FolderInput,
   Image,
   LayoutDashboard,
   Loader2,
@@ -36,8 +35,8 @@ const toNumber = (value: string, fallback = 0) => {
 
 const defaultVenue = mockVenues[0];
 const defaultBlogPost = blogPosts[0];
-const googleDrivePublicApi = import.meta.env.VITE_GOOGLE_DRIVE_PUBLIC_API;
 const imageBucket = "wearevents-images";
+type UploadedMedia = { url: string; kind: "image" | "video" };
 
 const createEmptyVenueForm = () => ({
   title: "",
@@ -97,8 +96,6 @@ const Admin = () => {
   const [saving, setSaving] = useState(false);
   const [uploadingImages, setUploadingImages] = useState(false);
   const [message, setMessage] = useState("");
-  const [venueDriveFolderUrl, setVenueDriveFolderUrl] = useState("");
-  const [blogDriveFolderUrl, setBlogDriveFolderUrl] = useState("");
   const [adminVenues, setAdminVenues] = useState<any[]>([]);
   const [adminBlogPosts, setAdminBlogPosts] = useState<any[]>([]);
   const [editingVenueId, setEditingVenueId] = useState<string | null>(null);
@@ -145,29 +142,43 @@ const Admin = () => {
   const featuredVenues = adminVenues.filter((venue) => venue.featured).length;
   const publishedPosts = adminBlogPosts.filter((post) => post.published).length;
 
-  const uploadImages = async (files: FileList | File[], folder: string) => {
+  const uploadMediaFiles = async (files: FileList | File[], folder: string, acceptedKinds: Array<UploadedMedia["kind"]>) => {
     if (!supabase) return [];
-    const urls: string[] = [];
+    const uploads: UploadedMedia[] = [];
 
-    for (const file of Array.from(files).filter((item) => item.type.startsWith("image/"))) {
-      const extension = file.name.split(".").pop() || "jpg";
+    for (const [index, file] of Array.from(files).entries()) {
+      const kind: UploadedMedia["kind"] | null = file.type.startsWith("image/")
+        ? "image"
+        : file.type.startsWith("video/")
+          ? "video"
+          : null;
+
+      if (!kind || !acceptedKinds.includes(kind)) continue;
+
+      const extension = file.name.includes(".") ? file.name.split(".").pop() : kind === "video" ? "mp4" : "jpg";
       const safeName = slugify(file.name.replace(/\.[^.]+$/, "")) || "image";
-      const path = `${folder}/${Date.now()}-${safeName}.${extension}`;
+      const path = `${folder}/${Date.now()}-${index + 1}-${safeName}.${extension}`;
       const { error } = await supabase.storage.from(imageBucket).upload(path, file, { cacheControl: "31536000", upsert: false });
       if (error) throw error;
-      urls.push(supabase.storage.from(imageBucket).getPublicUrl(path).data.publicUrl);
+      uploads.push({ kind, url: supabase.storage.from(imageBucket).getPublicUrl(path).data.publicUrl });
     }
 
-    return urls;
+    return uploads;
   };
 
-  const applyVenueImageUrls = (urls: string[]) => {
-    if (!urls.length) return;
-    const [coverImage, ...galleryImages] = urls;
+  const applyVenueMediaUrls = (media: UploadedMedia[]) => {
+    if (!media.length) return;
+    const imageUrls = media.filter((item) => item.kind === "image").map((item) => item.url);
+    const videoUrl = media.find((item) => item.kind === "video")?.url;
     setVenueForm((current) => ({
       ...current,
-      coverImage,
-      gallery: [...galleryImages, ...toList(current.gallery)].join("\n"),
+      ...(imageUrls.length
+        ? {
+            coverImage: imageUrls[0],
+            gallery: [...imageUrls.slice(1), ...toList(current.gallery)].join("\n"),
+          }
+        : {}),
+      ...(videoUrl ? { videoUrl } : {}),
     }));
   };
 
@@ -176,17 +187,31 @@ const Admin = () => {
     setBlogForm((current) => ({ ...current, image: urls[0] }));
   };
 
-  const handleVenueImageUpload = async (files: FileList | null) => {
+  const getVenueMediaFolder = () => {
+    const folderName = slugify(venueForm.title) || venueForm.slug;
+    if (!folderName) throw new Error("Renseigne le nom de la salle avant d'importer ses médias.");
+    return `venues/${folderName}`;
+  };
+
+  const getBlogMediaFolder = () => {
+    const folderName = slugify(blogForm.title) || blogForm.slug;
+    if (!folderName) throw new Error("Renseigne le titre de l'article avant d'importer son image.");
+    return `blog/${folderName}`;
+  };
+
+  const handleVenueMediaUpload = async (files: FileList | null) => {
     if (!files?.length) return;
     setUploadingImages(true);
     setMessage("");
 
     try {
-      const folder = `venues/${venueForm.slug || slugify(venueForm.title) || "nouvelle-salle"}`;
-      applyVenueImageUrls(await uploadImages(files, folder));
-      setMessage("Images importées : première image en couverture, autres en galerie.");
+      const folder = getVenueMediaFolder();
+      const media = await uploadMediaFiles(files, folder, ["image", "video"]);
+      if (!media.length) throw new Error("Sélectionne au moins une image ou une vidéo.");
+      applyVenueMediaUrls(media);
+      setMessage(`Médias importés dans ${imageBucket}/${folder}. La première image devient la couverture, les autres vont en galerie, la vidéo remplit l'URL vidéo.`);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Impossible d'importer les images.");
+      setMessage(error instanceof Error ? error.message : "Impossible d'importer les médias.");
     } finally {
       setUploadingImages(false);
     }
@@ -198,57 +223,13 @@ const Admin = () => {
     setMessage("");
 
     try {
-      const folder = `blog/${blogForm.slug || slugify(blogForm.title) || "nouvel-article"}`;
-      applyBlogImageUrls(await uploadImages(files, folder));
+      const folder = getBlogMediaFolder();
+      const media = await uploadMediaFiles(files, folder, ["image"]);
+      if (!media.length) throw new Error("Sélectionne au moins une image.");
+      applyBlogImageUrls(media.map((item) => item.url));
       setMessage("Image de l'article importée.");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Impossible d'importer l'image.");
-    } finally {
-      setUploadingImages(false);
-    }
-  };
-
-  const importDriveFolder = async (folderUrl: string) => {
-    const folderId = getGoogleDriveFolderId(folderUrl);
-    if (!folderId) throw new Error("Lien Google Drive invalide.");
-    if (!googleDrivePublicApi) throw new Error("Ajoute VITE_GOOGLE_DRIVE_PUBLIC_API dans .env.local pour importer un dossier Google Drive.");
-
-    const params = new URLSearchParams({
-      q: `'${folderId}' in parents and mimeType contains 'image/' and trashed = false`,
-      fields: "files(id,name,mimeType)",
-      orderBy: "name",
-      key: googleDrivePublicApi,
-    });
-    const response = await fetch(`https://www.googleapis.com/drive/v3/files?${params.toString()}`);
-    const json = await response.json();
-    if (!response.ok) throw new Error(json.error?.message || "Impossible de lire ce dossier Google Drive.");
-
-    return (json.files ?? []).map((file: { id: string }) => `https://drive.google.com/uc?export=view&id=${file.id}`);
-  };
-
-  const handleVenueDriveImport = async () => {
-    setUploadingImages(true);
-    setMessage("");
-
-    try {
-      applyVenueImageUrls(await importDriveFolder(venueDriveFolderUrl));
-      setMessage("Images Google Drive importées.");
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Impossible d'importer le dossier Google Drive.");
-    } finally {
-      setUploadingImages(false);
-    }
-  };
-
-  const handleBlogDriveImport = async () => {
-    setUploadingImages(true);
-    setMessage("");
-
-    try {
-      applyBlogImageUrls(await importDriveFolder(blogDriveFolderUrl));
-      setMessage("Image Google Drive importée.");
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Impossible d'importer le dossier Google Drive.");
     } finally {
       setUploadingImages(false);
     }
@@ -268,8 +249,6 @@ const Admin = () => {
     setModal(null);
     setEditingVenueId(null);
     setEditingBlogId(null);
-    setVenueDriveFolderUrl("");
-    setBlogDriveFolderUrl("");
   };
 
   const openCreateVenue = () => {
@@ -516,11 +495,8 @@ const Admin = () => {
             setForm={setVenueForm}
             saving={saving}
             editing={Boolean(editingVenueId)}
-            venueDriveFolderUrl={venueDriveFolderUrl}
-            setVenueDriveFolderUrl={setVenueDriveFolderUrl}
             onSubmit={handleVenueSubmit}
-            onFilesSelected={handleVenueImageUpload}
-            onDriveImport={handleVenueDriveImport}
+            onFilesSelected={handleVenueMediaUpload}
             uploadingImages={uploadingImages}
           />
         </AdminModal>
@@ -532,11 +508,8 @@ const Admin = () => {
             setForm={setBlogForm}
             saving={saving}
             editing={Boolean(editingBlogId)}
-            blogDriveFolderUrl={blogDriveFolderUrl}
-            setBlogDriveFolderUrl={setBlogDriveFolderUrl}
             onSubmit={handleBlogSubmit}
             onFilesSelected={handleBlogImageUpload}
-            onDriveImport={handleBlogDriveImport}
             uploadingImages={uploadingImages}
           />
         </AdminModal>
@@ -736,7 +709,7 @@ const AdminModal = ({ title, onClose, children }: { title: string; onClose: () =
   </div>
 );
 
-const VenueForm = ({ form, setForm, saving, editing, venueDriveFolderUrl, setVenueDriveFolderUrl, onSubmit, onFilesSelected, onDriveImport, uploadingImages }: any) => (
+const VenueForm = ({ form, setForm, saving, editing, onSubmit, onFilesSelected, uploadingImages }: any) => (
   <form onSubmit={onSubmit} className="grid grid-cols-1 gap-5 xl:grid-cols-2">
     <AdminInput label="Nom de la salle" value={form.title} onChange={(value) => setForm({ ...form, title: value, slug: form.slug || slugify(value) })} required />
     <AdminInput label="Slug" value={form.slug} onChange={(value) => setForm({ ...form, slug: value })} required />
@@ -752,7 +725,13 @@ const VenueForm = ({ form, setForm, saving, editing, venueDriveFolderUrl, setVen
     <AdminSelect label="Symbole prix" value={form.priceTier} onChange={(value) => setForm({ ...form, priceTier: value })} options={PRICE_TIERS} />
     <AdminInput label="Heure de fermeture" value={form.closingTime} onChange={(value) => setForm({ ...form, closingTime: value })} placeholder="Ex: 02:00" />
     <AdminInput label="Accès métro" value={form.metroAccess} onChange={(value) => setForm({ ...form, metroAccess: value })} placeholder="Ex: George V, ligne 1" />
-    <AdminImageTools title="Images de la salle" description="Upload direct ou dossier Google Drive public. La première image devient la couverture." driveFolderUrl={venueDriveFolderUrl} onDriveFolderUrlChange={setVenueDriveFolderUrl} onDriveImport={onDriveImport} onFilesSelected={onFilesSelected} uploading={uploadingImages} />
+    <AdminImageTools
+      title="Médias de la salle"
+      description="Import manuel dans le bucket S3 : dossier venues/nom-de-la-salle/. La première image devient la couverture, les autres images vont en galerie, la première vidéo remplit l'URL vidéo."
+      accept="image/*,video/*"
+      onFilesSelected={onFilesSelected}
+      uploading={uploadingImages}
+    />
     <AdminInput label="Image principale" value={form.coverImage} onChange={(value) => setForm({ ...form, coverImage: value })} required />
     <AdminTextarea label="Accroche" value={form.tagline} onChange={(value) => setForm({ ...form, tagline: value })} />
     <AdminTextarea label="Description" value={form.description} onChange={(value) => setForm({ ...form, description: value })} />
@@ -777,13 +756,13 @@ const VenueForm = ({ form, setForm, saving, editing, venueDriveFolderUrl, setVen
   </form>
 );
 
-const BlogForm = ({ form, setForm, saving, editing, blogDriveFolderUrl, setBlogDriveFolderUrl, onSubmit, onFilesSelected, onDriveImport, uploadingImages }: any) => (
+const BlogForm = ({ form, setForm, saving, editing, onSubmit, onFilesSelected, uploadingImages }: any) => (
   <form onSubmit={onSubmit} className="grid grid-cols-1 gap-5 xl:grid-cols-2">
     <AdminInput label="Titre" value={form.title} onChange={(value) => setForm({ ...form, title: value, slug: form.slug || slugify(value) })} required />
     <AdminInput label="Slug" value={form.slug} onChange={(value) => setForm({ ...form, slug: value })} required />
     <AdminInput label="Catégorie" value={form.category} onChange={(value) => setForm({ ...form, category: value })} />
     <AdminInput label="Temps de lecture" value={form.readTime} onChange={(value) => setForm({ ...form, readTime: value })} />
-    <AdminImageTools title="Image de l'article" description="Upload direct ou dossier Google Drive public." driveFolderUrl={blogDriveFolderUrl} onDriveFolderUrlChange={setBlogDriveFolderUrl} onDriveImport={onDriveImport} onFilesSelected={onFilesSelected} uploading={uploadingImages} />
+    <AdminImageTools title="Image de l'article" description="Import manuel dans le bucket S3 : dossier blog/titre-de-l-article/." accept="image/*" onFilesSelected={onFilesSelected} uploading={uploadingImages} />
     <AdminInput label="Image" value={form.image} onChange={(value) => setForm({ ...form, image: value })} />
     <AdminTextarea label="Résumé" value={form.excerpt} onChange={(value) => setForm({ ...form, excerpt: value })} />
     <div className="xl:col-span-2"><AdminTextarea label="Contenu" value={form.content} onChange={(value) => setForm({ ...form, content: value })} rows={12} /></div>
@@ -804,12 +783,7 @@ type FieldProps = {
   placeholder?: string;
 };
 
-const getGoogleDriveFolderId = (url: string) => {
-  const trimmed = url.trim();
-  return trimmed.match(/\/folders\/([a-zA-Z0-9_-]+)/)?.[1] ?? trimmed.match(/[?&]id=([a-zA-Z0-9_-]+)/)?.[1] ?? "";
-};
-
-const AdminImageTools = ({ title, description, driveFolderUrl, onDriveFolderUrlChange, onDriveImport, onFilesSelected, uploading }: any) => (
+const AdminImageTools = ({ title, description, accept, onFilesSelected, uploading }: any) => (
   <section className="rounded-lg border border-border bg-card p-4">
     <div className="mb-4 flex items-start gap-3">
       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-secondary text-secondary-foreground"><Image className="h-5 w-5" /></div>
@@ -822,16 +796,19 @@ const AdminImageTools = ({ title, description, driveFolderUrl, onDriveFolderUrlC
       <label className="inline-flex h-11 cursor-pointer items-center justify-center gap-2 rounded-lg border border-border bg-background px-4 text-sm font-body font-semibold transition-colors hover:border-primary/40">
         {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
         Importer des fichiers
-        <input type="file" accept="image/*" multiple disabled={uploading} onChange={(event) => onFilesSelected(event.target.files)} className="sr-only" />
+        <input
+          type="file"
+          accept={accept}
+          multiple
+          disabled={uploading}
+          onChange={(event) => {
+            onFilesSelected(event.target.files);
+            event.currentTarget.value = "";
+          }}
+          className="sr-only"
+        />
       </label>
-      <div className="flex gap-2">
-        <input value={driveFolderUrl} onChange={(event) => onDriveFolderUrlChange(event.target.value)} placeholder="Lien dossier Google Drive public" className="h-11 min-w-0 flex-1 rounded-lg border border-border bg-background px-3 text-sm font-body outline-none focus:border-primary" />
-        <button type="button" onClick={onDriveImport} disabled={uploading || !driveFolderUrl.trim()} className="inline-flex h-11 shrink-0 items-center gap-2 rounded-lg border border-border px-4 text-sm font-body font-semibold transition-colors hover:border-primary/40 disabled:opacity-60">
-          {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <FolderInput className="h-4 w-4" />}
-          Importer
-        </button>
-      </div>
-      {!googleDrivePublicApi && <p className="text-xs font-body text-muted-foreground">Google Drive nécessite <span className="font-semibold text-foreground">VITE_GOOGLE_DRIVE_PUBLIC_API</span> dans .env.local.</p>}
+      <p className="text-xs font-body text-muted-foreground">Les dossiers Supabase Storage sont créés automatiquement au premier fichier uploadé.</p>
     </div>
   </section>
 );
