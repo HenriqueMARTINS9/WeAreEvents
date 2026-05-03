@@ -124,13 +124,13 @@ const VenueDetail = () => {
               >
                 <img src={galleryImages[0]} alt={venue.title} className="h-full w-full object-cover image-grade-luxe transition-transform duration-700 group-hover:scale-105" />
               </button>
-              <div className="grid h-full grid-cols-2 grid-rows-2 gap-3">
+              <div className="grid h-full grid-cols-2 content-start gap-3">
                 {galleryImages.slice(1, 5).map((image, index) => (
                   <button
                     key={`${image}-${index}`}
                     type="button"
                     onClick={() => setActiveMediaIndex(imageMediaOffset + index + 1)}
-                    className="group h-full w-full overflow-hidden rounded-2xl"
+                    className="group aspect-square w-full overflow-hidden rounded-2xl"
                     aria-label={`Ouvrir la photo ${index + 2}`}
                   >
                     <img src={image} alt="" className="h-full w-full object-cover image-grade-luxe transition-transform duration-700 group-hover:scale-105" />
