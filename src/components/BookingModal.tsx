@@ -190,9 +190,7 @@ const BookingModal = ({ venue, onClose }: BookingModalProps) => {
   const toggleSpace = (spaceId: string) => {
     setForm((prev) => ({
       ...prev,
-      requestedSpaces: prev.requestedSpaces.includes(spaceId)
-        ? prev.requestedSpaces.filter((id) => id !== spaceId)
-        : [...prev.requestedSpaces, spaceId],
+      requestedSpaces: [spaceId],
     }));
     setFieldErrors((prev) => {
       const next = { ...prev };
@@ -376,31 +374,56 @@ const BookingModal = ({ venue, onClose }: BookingModalProps) => {
 
           <div>
             <label className="text-xs font-body font-medium text-muted-foreground mb-2 block">
-              Espaces à réserver *
+              Espace à réserver *
             </label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2" role="radiogroup" aria-label="Espace à réserver">
               {venue.spaces.map((space) => {
                 const selected = form.requestedSpaces.includes(space.id);
                 return (
                   <button
                     key={space.id}
                     type="button"
+                    role="radio"
+                    aria-checked={selected}
                     onClick={() => toggleSpace(space.id)}
-                    className={`rounded-lg border p-3 text-left transition-colors ${
+                    className={`group relative overflow-hidden rounded-xl border p-4 text-left transition-all focus:outline-none focus:ring-2 focus:ring-primary/30 ${
                       selected
-                        ? "border-primary bg-secondary"
-                        : "border-border bg-card hover:border-primary/40"
+                        ? "border-primary bg-primary text-primary-foreground shadow-lg shadow-primary/15"
+                        : "border-border bg-card hover:-translate-y-0.5 hover:border-primary/45 hover:shadow-md"
                     }`}
                   >
+                    <div className={`absolute inset-x-0 top-0 h-1 ${selected ? "bg-primary-foreground/35" : "bg-transparent"}`} />
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="text-sm font-body font-semibold">{space.name}</p>
-                        <p className="mt-1 break-words text-xs font-body text-muted-foreground">{space.description}</p>
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${
+                              selected ? "border-primary-foreground/70 bg-primary-foreground text-primary" : "border-border bg-background text-transparent"
+                            }`}
+                          >
+                            <CheckCircle className="h-3.5 w-3.5" />
+                          </span>
+                          <p className="text-sm font-body font-semibold">{space.name}</p>
+                        </div>
+                        <p className={`mt-2 break-words text-xs font-body leading-relaxed ${selected ? "text-primary-foreground/75" : "text-muted-foreground"}`}>
+                          {space.description}
+                        </p>
                       </div>
-                      <span className="shrink-0 rounded-lg bg-background px-2 py-1 text-[11px] font-body font-semibold text-foreground">
+                      <span
+                        className={`shrink-0 rounded-lg border px-2 py-1 text-[11px] font-body font-semibold ${
+                          selected
+                            ? "border-primary-foreground/25 bg-primary-foreground/15 text-primary-foreground"
+                            : "border-border bg-secondary text-secondary-foreground"
+                        }`}
+                      >
                         {space.capacity}
                       </span>
                     </div>
+                    {selected && (
+                      <div className="mt-3 inline-flex rounded-lg bg-primary-foreground/12 px-2.5 py-1 text-[11px] font-body font-semibold text-primary-foreground">
+                        Espace sélectionné
+                      </div>
+                    )}
                   </button>
                 );
               })}
@@ -479,8 +502,8 @@ const BookingModal = ({ venue, onClose }: BookingModalProps) => {
             {renderError("phone")}
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
+          <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-3">
+            <div className="min-w-0">
               <label className="text-xs font-body font-medium text-muted-foreground mb-1 block">
                 Date souhaitée *
               </label>
@@ -490,39 +513,37 @@ const BookingModal = ({ venue, onClose }: BookingModalProps) => {
                   type="date"
                   value={form.desiredDate}
                   onChange={(e) => updateField("desiredDate", e.target.value)}
-                  className={`${fieldClass("desiredDate")} native-date-time-field`}
+                  className={`${fieldClass("desiredDate")} native-date-time-field pl-9`}
                   aria-invalid={Boolean(fieldErrors.desiredDate)}
                 />
               </div>
               {renderError("desiredDate")}
             </div>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <div>
-                <label className="text-xs font-body font-medium text-muted-foreground mb-1 block">
-                  Début *
-                </label>
-                <input
-                  type="time"
-                  value={form.startTime}
-                  onChange={(e) => updateField("startTime", e.target.value)}
-                  className={`${fieldClass("startTime")} native-date-time-field`}
-                  aria-invalid={Boolean(fieldErrors.startTime)}
-                />
-                {renderError("startTime")}
-              </div>
-              <div>
-                <label className="text-xs font-body font-medium text-muted-foreground mb-1 block">
-                  Fin *
-                </label>
-                <input
-                  type="time"
-                  value={form.endTime}
-                  onChange={(e) => updateField("endTime", e.target.value)}
-                  className={`${fieldClass("endTime")} native-date-time-field`}
-                  aria-invalid={Boolean(fieldErrors.endTime)}
-                />
-                {renderError("endTime")}
-              </div>
+            <div className="min-w-0">
+              <label className="text-xs font-body font-medium text-muted-foreground mb-1 block">
+                Début *
+              </label>
+              <input
+                type="time"
+                value={form.startTime}
+                onChange={(e) => updateField("startTime", e.target.value)}
+                className={`${fieldClass("startTime")} native-date-time-field`}
+                aria-invalid={Boolean(fieldErrors.startTime)}
+              />
+              {renderError("startTime")}
+            </div>
+            <div className="min-w-0">
+              <label className="text-xs font-body font-medium text-muted-foreground mb-1 block">
+                Fin *
+              </label>
+              <input
+                type="time"
+                value={form.endTime}
+                onChange={(e) => updateField("endTime", e.target.value)}
+                className={`${fieldClass("endTime")} native-date-time-field`}
+                aria-invalid={Boolean(fieldErrors.endTime)}
+              />
+              {renderError("endTime")}
             </div>
           </div>
 
