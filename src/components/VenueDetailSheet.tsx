@@ -205,7 +205,7 @@ const VenueDetailSheet = ({ venue, onClose, onBooking }: VenueDetailSheetProps) 
               key={i}
               type="button"
               onClick={() => setActiveMediaIndex(imageMediaOffset + heroImages.findIndex((image) => image === img))}
-              className="h-32 w-48 shrink-0 overflow-hidden rounded-2xl"
+              className="h-32 w-32 shrink-0 overflow-hidden rounded-2xl"
               aria-label={`Ouvrir la photo ${i + 1}`}
             >
               <img

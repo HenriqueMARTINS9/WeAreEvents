@@ -69,7 +69,7 @@ const VenueMediaLightbox = ({ items, activeIndex, onChange, onClose }: VenueMedi
         </button>
       </div>
 
-      <div className="flex h-full items-center justify-center px-4 py-20">
+      <div className="flex h-full items-center justify-center px-4 pb-36 pt-20 sm:pb-40">
         {activeItem.type === "video" ? (
           <video
             ref={videoRef}
@@ -81,13 +81,13 @@ const VenueMediaLightbox = ({ items, activeIndex, onChange, onClose }: VenueMedi
               if (videoRef.current) videoRef.current.currentTime = activeItem.startSeconds ?? 0;
             }}
             onTimeUpdate={handleTimeUpdate}
-            className="max-h-full w-full max-w-6xl rounded-2xl object-contain"
+            className="h-auto w-auto max-h-full max-w-full rounded-2xl object-contain"
           />
         ) : (
           <img
             src={activeItem.src}
             alt={activeItem.label}
-            className="max-h-full w-full max-w-6xl rounded-2xl object-contain"
+            className="h-auto w-auto max-h-full max-w-full rounded-2xl object-contain"
           />
         )}
       </div>
@@ -114,7 +114,7 @@ const VenueMediaLightbox = ({ items, activeIndex, onChange, onClose }: VenueMedi
         </button>
       )}
 
-      <div className="absolute inset-x-0 bottom-0 flex gap-2 overflow-x-auto px-4 py-4 sm:justify-center sm:px-6">
+      <div className="absolute inset-x-0 bottom-0 flex gap-2 overflow-x-auto px-4 py-5 sm:justify-center sm:px-6">
         {items.map((item, index) => (
           <button
             key={`${item.type}-${item.src}-${index}`}

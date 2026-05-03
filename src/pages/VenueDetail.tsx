@@ -124,13 +124,13 @@ const VenueDetail = () => {
               >
                 <img src={galleryImages[0]} alt={venue.title} className="h-full w-full object-cover image-grade-luxe transition-transform duration-700 group-hover:scale-105" />
               </button>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 content-start gap-3">
                 {galleryImages.slice(1, 5).map((image, index) => (
                   <button
                     key={`${image}-${index}`}
                     type="button"
                     onClick={() => setActiveMediaIndex(imageMediaOffset + index + 1)}
-                    className="group overflow-hidden rounded-2xl"
+                    className="group aspect-square overflow-hidden rounded-2xl"
                     aria-label={`Ouvrir la photo ${index + 2}`}
                   >
                     <img src={image} alt="" className="h-full w-full object-cover image-grade-luxe transition-transform duration-700 group-hover:scale-105" />
@@ -197,7 +197,7 @@ const VenueDetail = () => {
         </section>
 
         <section className="px-6 py-14">
-          <div className="mx-auto grid max-w-7xl grid-cols-1 gap-10 xl:grid-cols-[minmax(0,1fr)_360px] xl:px-2">
+          <div className="mx-auto grid max-w-7xl grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start xl:px-2">
             <div className="space-y-10">
               <section id="presentation" className="scroll-mt-28">
                 <div className="rounded-lg border border-border bg-background p-5 luxury-shadow">
@@ -334,8 +334,8 @@ const VenueDetail = () => {
               </section>
             </div>
 
-            <aside className="xl:sticky xl:top-28 xl:self-start">
-              <div className="rounded-lg border border-border bg-card p-5 luxury-shadow">
+            <aside className="lg:sticky lg:top-28 lg:self-start">
+              <div className="max-h-[calc(100dvh-8rem)] overflow-y-auto rounded-lg border border-border bg-card p-5 luxury-shadow">
                 <p className="text-xs font-body font-semibold text-primary">Réservation</p>
                 <h2 className="mt-2 font-heading text-3xl font-semibold">{venue.pricingText}</h2>
                 <p className="mt-2 text-sm font-body text-muted-foreground">Recevez un retour qualifié sur la disponibilité, les options et la cohérence avec votre événement.</p>
