@@ -114,7 +114,7 @@ const DesktopHome = () => {
             </p>
           </div>
 
-          <div className="mt-8 w-full max-w-6xl rounded-lg border border-primary-foreground/20 bg-foreground/50 p-4 shadow-2xl backdrop-blur-xl hairline-top">
+          <div className="relative z-30 mt-8 w-full max-w-6xl rounded-lg border border-primary-foreground/20 bg-foreground/50 p-4 shadow-2xl backdrop-blur-xl hairline-top">
             <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1.18fr)_minmax(0,1fr)_minmax(0,1fr)_auto] lg:items-stretch">
               <LocationAutocomplete
                 value={searchLocation}
@@ -153,7 +153,7 @@ const DesktopHome = () => {
             </div>
           </div>
 
-          <div className="mt-6 grid max-w-5xl grid-cols-1 gap-3 lg:grid-cols-3">
+          <div className="relative z-0 mt-6 grid max-w-5xl grid-cols-1 gap-3 lg:grid-cols-3">
             {[
               { icon: <ShieldCheck className="w-4 h-4" />, label: "Lieux vérifiés" },
               { icon: <Clock3 className="w-4 h-4" />, label: "Réponse sous 24h" },
