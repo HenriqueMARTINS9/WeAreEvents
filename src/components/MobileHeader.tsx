@@ -52,7 +52,7 @@ const MobileHeader = ({ onCodeSearch, withBackground = false }: MobileHeaderProp
       <div
         ref={headerRef}
         className={`fixed inset-x-0 top-0 z-[1000] flex items-center justify-between px-4 pb-3 pt-[max(1rem,env(safe-area-inset-top))] ${
-          withBackground ? "border-b border-border bg-background/95 shadow-sm backdrop-blur-xl" : ""
+          withBackground ? "bg-background/95 backdrop-blur-xl" : ""
         }`}
       >
         <Link to="/" className="min-w-0" aria-label="Retour à l'accueil">
