@@ -319,21 +319,17 @@ const SearchResults = () => {
       <div id="salles" className="scroll-mt-24 px-4 py-6 md:px-6 md:py-10 xl:py-12">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 gap-8 md:h-[calc(100vh-22rem)] md:min-h-[620px] md:grid-cols-[minmax(0,1.05fr)_minmax(340px,0.95fr)] md:items-stretch lg:grid-cols-[minmax(0,1.05fr)_minmax(420px,0.95fr)]">
-            <div className="order-1 flex min-h-0 flex-col overflow-hidden rounded-lg border border-border bg-card luxury-shadow md:h-full">
-              <div className="flex items-center gap-2 border-b border-border px-4 py-3 text-sm font-body text-muted-foreground">
-                <SlidersHorizontal className="w-4 h-4 shrink-0 text-primary" />
-                <span>
-                  {isMapZoneFilteringActive
-                    ? "Résultats ajustés à la zone actuellement visible sur la carte"
-                    : "Sélection affinée en temps réel"}
-                </span>
-              </div>
-
-              <div className="min-h-0 flex-1 overflow-y-auto p-4 xl:p-5">
+            <div className="order-1 min-h-0 md:h-full md:overflow-y-auto md:pr-1 xl:pr-2">
+              {isMapZoneFilteringActive && (
+                <div className="mb-4 flex items-center gap-2 rounded-lg border border-border bg-background px-4 py-3 text-sm font-body text-muted-foreground">
+                  <SlidersHorizontal className="w-4 h-4 shrink-0 text-primary" />
+                  <span>Résultats ajustés à la zone actuellement visible sur la carte</span>
+                </div>
+              )}
                 {results.length > 0 ? (
-                  <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
+                  <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
                     {results.map((venue) => (
-                      <VenueGridCard key={venue.id} venue={venue} />
+                      <VenueGridCard key={venue.id} venue={venue} size="large" />
                     ))}
                   </div>
                 ) : filteredResults.length > 0 ? (
@@ -351,7 +347,6 @@ const SearchResults = () => {
                     </p>
                   </div>
                 )}
-              </div>
             </div>
 
             <aside className="order-2 hidden min-h-0 md:block md:h-full">

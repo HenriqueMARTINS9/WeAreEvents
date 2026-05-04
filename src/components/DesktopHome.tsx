@@ -83,21 +83,23 @@ const DesktopHome = () => {
     <div className="min-h-screen bg-background text-foreground">
       <DesktopNav />
 
-      <section data-header-theme="light" className="relative h-screen min-h-[620px] overflow-hidden bg-foreground">
-        <video
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="metadata"
-          poster={activeHero.image}
-          className="absolute inset-0 h-full w-full object-cover image-grade-luxe hero-video-active"
-        >
-          <source src={HERO_BACKGROUND_VIDEO} type="video/mp4" />
-        </video>
-        <div className="absolute inset-0 bg-gradient-to-r from-foreground/90 via-foreground/50 to-foreground/20" />
-        <div className="absolute inset-0 bg-gradient-to-t from-foreground/90 via-transparent to-foreground/40" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_22%,rgba(218,86,110,0.22),transparent_30%),radial-gradient(circle_at_78%_24%,rgba(216,180,96,0.2),transparent_24%)]" />
+      <section data-header-theme="light" className="relative h-screen min-h-[620px] overflow-visible bg-foreground">
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          <video
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            poster={activeHero.image}
+            className="absolute inset-0 h-full w-full object-cover image-grade-luxe hero-video-active"
+          >
+            <source src={HERO_BACKGROUND_VIDEO} type="video/mp4" />
+          </video>
+          <div className="absolute inset-0 bg-gradient-to-r from-foreground/90 via-foreground/50 to-foreground/20" />
+          <div className="absolute inset-0 bg-gradient-to-t from-foreground/90 via-transparent to-foreground/40" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_22%,rgba(218,86,110,0.22),transparent_30%),radial-gradient(circle_at_78%_24%,rgba(216,180,96,0.2),transparent_24%)]" />
+        </div>
 
         <div className="relative z-10 flex h-full max-w-7xl mx-auto flex-col justify-center px-6 pb-14 pt-24 xl:px-8">
           <div className="max-w-4xl">
