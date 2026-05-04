@@ -50,20 +50,6 @@ const SearchMenuLink = ({ to, label, icon, onClick }: { to: string; label: strin
   </Link>
 );
 
-const MobileQuickChip = ({ label, active, onClick }: { label: string; active?: boolean; onClick: () => void }) => (
-  <button
-    type="button"
-    onClick={onClick}
-    className={`h-10 shrink-0 rounded-full border px-4 text-sm font-body font-semibold transition-colors ${
-      active
-        ? "border-foreground bg-foreground text-primary-foreground"
-        : "border-border bg-background text-foreground shadow-sm active:bg-muted"
-    }`}
-  >
-    {label}
-  </button>
-);
-
 const formatMobileDate = (value: string) => {
   if (!value) return "";
 
@@ -352,8 +338,8 @@ const SearchResults = () => {
       )}
 
       {isMobile && (
-        <section className="bg-background pb-28 pt-[calc(5rem+env(safe-area-inset-top))] md:hidden">
-          <div className="sticky top-[calc(4.25rem+env(safe-area-inset-top))] z-[900] border-b border-border bg-background/95 pb-3 pt-2 backdrop-blur-xl">
+        <section className="bg-background pb-28 pt-[calc(4.25rem+env(safe-area-inset-top))] md:hidden">
+          <div className="sticky top-[calc(3.75rem+env(safe-area-inset-top))] z-[900] border-b border-border bg-background/95 pb-3 pt-1 backdrop-blur-xl">
             <div className="px-4">
               <div className="flex items-center gap-2">
                 <button
@@ -383,19 +369,11 @@ const SearchResults = () => {
                 </button>
               </div>
 
-              <div className="mt-3 flex gap-2 overflow-x-auto pb-1 hide-scrollbar">
-                <MobileQuickChip label={eventType || "Type"} active={Boolean(eventType)} onClick={() => setMobileSearchOpen(true)} />
-                <MobileQuickChip label={mobileDateLabel || "Date"} active={Boolean(eventDate)} onClick={() => setMobileSearchOpen(true)} />
-                <MobileQuickChip label={guests ? `${guests} invités` : "Invités"} active={Boolean(guests)} onClick={() => setMobileSearchOpen(true)} />
-                <MobileQuickChip label={priceTier || "Prix"} active={Boolean(priceTier)} onClick={() => setShowAllFilters(true)} />
-                <MobileQuickChip label={ambianceType || "Ambiance"} active={Boolean(ambianceType)} onClick={() => setShowAllFilters(true)} />
-                <MobileQuickChip label={activeAdvancedFilterCount ? `${activeAdvancedFilterCount} filtre${activeAdvancedFilterCount > 1 ? "s" : ""}` : "Plus"} active={activeAdvancedFilterCount > 0} onClick={() => setShowAllFilters(true)} />
-              </div>
             </div>
           </div>
 
           <div id="salles" className="scroll-mt-40 px-4 pt-5">
-            <div className="mb-5 flex items-end justify-between gap-3">
+            <div className="mb-5">
               <div>
                 <p className="text-xs font-body font-semibold uppercase text-primary">
                   Lieux vérifiés
@@ -404,13 +382,6 @@ const SearchResults = () => {
                   {results.length} salle{results.length !== 1 ? "s" : ""}
                 </h1>
               </div>
-              <button
-                type="button"
-                onClick={() => setMobileSearchOpen(true)}
-                className="rounded-full border border-border px-4 py-2 text-sm font-body font-semibold text-foreground active:bg-muted"
-              >
-                Modifier
-              </button>
             </div>
 
             {results.length > 0 ? (
@@ -581,18 +552,15 @@ const SearchResults = () => {
 
       {mobileMapOpen && (
         <div className="fixed inset-0 z-[2300] bg-background md:hidden">
-          <div className="absolute inset-x-0 top-0 z-[700] flex items-center justify-between px-4 pb-3 pt-[max(1rem,env(safe-area-inset-top))]">
+          <div className="absolute inset-x-0 top-0 z-[700] flex justify-end px-4 pb-3 pt-[max(1rem,env(safe-area-inset-top))]">
             <button
               type="button"
               onClick={() => setMobileMapOpen(false)}
-              className="inline-flex h-11 items-center gap-2 rounded-full bg-background px-4 text-sm font-body font-semibold text-foreground shadow-xl"
+              className="flex h-11 w-11 items-center justify-center rounded-full bg-background text-foreground shadow-xl active:scale-[0.97]"
+              aria-label="Retour à la liste"
             >
-              <X className="h-4 w-4" />
-              Liste
+              <X className="h-5 w-5" />
             </button>
-            <span className="rounded-full bg-background px-4 py-2 text-sm font-body font-semibold text-foreground shadow-xl">
-              {filteredResults.length} lieu{filteredResults.length > 1 ? "x" : ""}
-            </span>
           </div>
           <SearchResultsMap
             venues={filteredResults}
