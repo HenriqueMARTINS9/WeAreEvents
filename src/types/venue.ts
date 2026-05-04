@@ -35,7 +35,7 @@ export interface Venue {
   videoEndSeconds?: number;
   tiktokUrl?: string;
   googleReviewUrl: string;
-  priceTier: "€" | "€€" | "€€€";
+  priceTier: "€" | "€€" | "€€€" | "€€€€";
   closingTime: string;
   ambianceTypes: string[];
   externalOptions: string[];
@@ -125,7 +125,7 @@ export const SERVICES = [
   "Vestiaire",
 ] as const;
 
-export const PRICE_TIERS = ["€", "€€", "€€€"] as const;
+export const PRICE_TIERS = ["€", "€€", "€€€", "€€€€"] as const;
 
 export const AMBIANCE_TYPES = [
   "Calme",

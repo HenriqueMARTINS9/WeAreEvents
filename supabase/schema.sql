@@ -43,6 +43,14 @@ create table if not exists public.venues (
   updated_at timestamptz not null default now()
 );
 
+alter table public.venues add column if not exists video_start_seconds integer not null default 0;
+alter table public.venues add column if not exists video_end_seconds integer;
+alter table public.venues add column if not exists price_tier text not null default '€€';
+alter table public.venues add column if not exists closing_time text not null default '';
+alter table public.venues add column if not exists ambiance_types text[] not null default '{}';
+alter table public.venues add column if not exists external_options text[] not null default '{}';
+alter table public.venues add column if not exists metro_access text;
+
 create table if not exists public.blog_posts (
   id uuid primary key default gen_random_uuid(),
   slug text not null unique,

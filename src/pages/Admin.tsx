@@ -14,8 +14,6 @@ import {
   Upload,
   X,
 } from "lucide-react";
-import { blogPosts } from "@/data/blog";
-import { mockVenues } from "@/data/venues";
 import { AMBIANCE_TYPES, EVENT_TYPES, EXTERNAL_OPTIONS, PRICE_TIERS, SERVICES } from "@/types/venue";
 import { isSupabaseConfigured, supabase, type BlogPostInsert, type VenueInsert } from "@/lib/supabase";
 
@@ -33,10 +31,36 @@ const toNumber = (value: string, fallback = 0) => {
   return Number.isFinite(parsed) ? parsed : fallback;
 };
 
-const defaultVenue = mockVenues[0];
-const defaultBlogPost = blogPosts[0];
 const imageBucket = "wearevents-images";
 type UploadedMedia = { url: string; kind: "image" | "video" };
+type VenueMediaTarget = "principale" | "secondaires" | "video";
+
+const formatAdminError = (error: unknown) => {
+  const message =
+    error instanceof Error
+      ? error.message
+      : typeof error === "object" && error && "message" in error
+        ? String((error as { message?: unknown }).message)
+        : "";
+
+  if (/schema cache|could not find.*column|column .* does not exist/i.test(message)) {
+    return `${message} — La base Supabase n'est pas à jour. Relance le SQL de supabase/schema.sql, surtout les lignes ALTER TABLE.`;
+  }
+
+  if (/duplicate key|unique constraint|violates unique/i.test(message)) {
+    return `${message} — Le slug ou le code lieu existe déjà.`;
+  }
+
+  if (/row-level security|permission denied|not authorized|unauthorized/i.test(message)) {
+    return `${message} — Vérifie que tu es connecté avec un utilisateur Supabase Auth et que les policies RLS ont été créées.`;
+  }
+
+  if (/bucket|storage|object/i.test(message)) {
+    return `${message} — Vérifie que le bucket ${imageBucket} existe et que les policies Storage du schéma ont été appliquées.`;
+  }
+
+  return message || "Une erreur inconnue est survenue.";
+};
 
 const createEmptyVenueForm = () => ({
   title: "",
@@ -56,8 +80,8 @@ const createEmptyVenueForm = () => ({
   accessDetails: "",
   usefulInformation: "",
   pricingText: "",
-  coverImage: defaultVenue.coverImage,
-  gallery: defaultVenue.gallery.join("\n"),
+  coverImage: "",
+  gallery: "",
   videoUrl: "",
   videoStartSeconds: "0",
   videoEndSeconds: "",
@@ -78,11 +102,11 @@ const createEmptyVenueForm = () => ({
 const createEmptyBlogForm = () => ({
   title: "",
   slug: "",
-  category: defaultBlogPost.category,
+  category: "",
   excerpt: "",
   content: "",
-  readTime: defaultBlogPost.readTime,
-  image: defaultBlogPost.image,
+  readTime: "",
+  image: "",
   published: true,
 });
 
@@ -130,7 +154,9 @@ const Admin = () => {
     ]);
 
     if (!venuesResult.error) setAdminVenues(venuesResult.data ?? []);
+    if (venuesResult.error) setMessage(formatAdminError(venuesResult.error));
     if (!blogResult.error) setAdminBlogPosts(blogResult.data ?? []);
+    if (blogResult.error) setMessage(formatAdminError(blogResult.error));
   };
 
   useEffect(() => {
@@ -166,22 +192,6 @@ const Admin = () => {
     return uploads;
   };
 
-  const applyVenueMediaUrls = (media: UploadedMedia[]) => {
-    if (!media.length) return;
-    const imageUrls = media.filter((item) => item.kind === "image").map((item) => item.url);
-    const videoUrl = media.find((item) => item.kind === "video")?.url;
-    setVenueForm((current) => ({
-      ...current,
-      ...(imageUrls.length
-        ? {
-            coverImage: imageUrls[0],
-            gallery: [...imageUrls.slice(1), ...toList(current.gallery)].join("\n"),
-          }
-        : {}),
-      ...(videoUrl ? { videoUrl } : {}),
-    }));
-  };
-
   const applyBlogImageUrls = (urls: string[]) => {
     if (!urls.length) return;
     setBlogForm((current) => ({ ...current, image: urls[0] }));
@@ -199,23 +209,47 @@ const Admin = () => {
     return `blog/${folderName}`;
   };
 
-  const handleVenueMediaUpload = async (files: FileList | null) => {
+  const handleVenueMediaUpload = async (files: FileList | null, target: VenueMediaTarget) => {
     if (!files?.length) return;
     setUploadingImages(true);
     setMessage("");
 
     try {
-      const folder = getVenueMediaFolder();
-      const media = await uploadMediaFiles(files, folder, ["image", "video"]);
-      if (!media.length) throw new Error("Sélectionne au moins une image ou une vidéo.");
-      applyVenueMediaUrls(media);
-      setMessage(`Médias importés dans ${imageBucket}/${folder}. La première image devient la couverture, les autres vont en galerie, la vidéo remplit l'URL vidéo.`);
+      const folder = `${getVenueMediaFolder()}/${target}`;
+      const acceptedKinds: Array<UploadedMedia["kind"]> = target === "video" ? ["video"] : ["image"];
+      const selectedFiles = target === "secondaires" ? Array.from(files) : Array.from(files).slice(0, 1);
+      const media = await uploadMediaFiles(selectedFiles, folder, acceptedKinds);
+      if (!media.length) {
+        throw new Error(target === "video" ? "Sélectionne une vidéo." : "Sélectionne au moins une image.");
+      }
+
+      const urls = media.map((item) => item.url);
+
+      setVenueForm((current) => {
+        if (target === "principale") {
+          return { ...current, coverImage: urls[0] };
+        }
+
+        if (target === "secondaires") {
+          return { ...current, gallery: [...toList(current.gallery), ...urls].join("\n") };
+        }
+
+        return { ...current, videoUrl: urls[0] };
+      });
+
+      const targetLabel =
+        target === "principale" ? "Image principale" : target === "secondaires" ? "Images secondaires" : "Vidéo";
+      setMessage(`${targetLabel} importée${urls.length > 1 ? "s" : ""} dans ${imageBucket}/${folder}.`);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Impossible d'importer les médias.");
+      setMessage(formatAdminError(error));
     } finally {
       setUploadingImages(false);
     }
   };
+
+  const handleVenueMainImageUpload = (files: FileList | null) => handleVenueMediaUpload(files, "principale");
+  const handleVenueGalleryImagesUpload = (files: FileList | null) => handleVenueMediaUpload(files, "secondaires");
+  const handleVenueVideoUpload = (files: FileList | null) => handleVenueMediaUpload(files, "video");
 
   const handleBlogImageUpload = async (files: FileList | null) => {
     if (!files?.length) return;
@@ -229,7 +263,7 @@ const Admin = () => {
       applyBlogImageUrls(media.map((item) => item.url));
       setMessage("Image de l'article importée.");
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Impossible d'importer l'image.");
+      setMessage(formatAdminError(error));
     } finally {
       setUploadingImages(false);
     }
@@ -269,60 +303,73 @@ const Admin = () => {
     setSaving(true);
     setMessage("");
 
-    const spaces = venueForm.spaces
-      .split("\n")
-      .map((line, index) => {
-        const [name = "", capacity = "0", description = ""] = line.split("|").map((part) => part.trim());
-        return { id: slugify(name) || `space-${index + 1}`, name, capacity: toNumber(capacity), description };
-      })
-      .filter((space) => space.name);
+    try {
+      const spaces = venueForm.spaces
+        .split("\n")
+        .map((line, index) => {
+          const [name = "", capacity = "0", description = ""] = line.split("|").map((part) => part.trim());
+          return { id: slugify(name) || `space-${index + 1}`, name, capacity: toNumber(capacity), description };
+        })
+        .filter((space) => space.name);
 
-    const payload: VenueInsert = {
-      title: venueForm.title,
-      slug: venueForm.slug || slugify(venueForm.title),
-      tagline: venueForm.tagline,
-      description: venueForm.description,
-      city: venueForm.city,
-      address: venueForm.address,
-      location: { lat: toNumber(venueForm.lat), lng: toNumber(venueForm.lng) },
-      venue_code: venueForm.venueCode.replace(/\D/g, "").slice(0, 4),
-      min_capacity: toNumber(venueForm.minCapacity),
-      max_capacity: toNumber(venueForm.maxCapacity),
-      event_categories: toList(venueForm.eventCategories),
-      services: toList(venueForm.services),
-      spaces,
-      access_details: toList(venueForm.accessDetails),
-      useful_information: toList(venueForm.usefulInformation),
-      pricing_text: venueForm.pricingText,
-      cover_image: venueForm.coverImage,
-      gallery: toList(venueForm.gallery),
-      video_url: venueForm.videoUrl || null,
-      video_start_seconds: toNumber(venueForm.videoStartSeconds),
-      video_end_seconds: venueForm.videoEndSeconds ? toNumber(venueForm.videoEndSeconds) : null,
-      tiktok_url: venueForm.tiktokUrl || null,
-      google_review_url: venueForm.googleReviewUrl,
-      price_tier: venueForm.priceTier as "€" | "€€" | "€€€",
-      closing_time: venueForm.closingTime,
-      ambiance_types: toList(venueForm.ambianceTypes),
-      external_options: toList(venueForm.externalOptions),
-      metro_access: venueForm.metroAccess || null,
-      featured: venueForm.featured,
-      active: venueForm.active,
-      contact_email: venueForm.contactEmail,
-      rating: toNumber(venueForm.rating),
-      review_count: toNumber(venueForm.reviewCount),
-    };
+      const payload: VenueInsert = {
+        title: venueForm.title.trim(),
+        slug: (venueForm.slug || slugify(venueForm.title)).trim(),
+        tagline: venueForm.tagline,
+        description: venueForm.description,
+        city: venueForm.city.trim(),
+        address: venueForm.address.trim(),
+        location: { lat: toNumber(venueForm.lat), lng: toNumber(venueForm.lng) },
+        venue_code: venueForm.venueCode.replace(/\D/g, "").slice(0, 4),
+        min_capacity: toNumber(venueForm.minCapacity),
+        max_capacity: toNumber(venueForm.maxCapacity),
+        event_categories: toList(venueForm.eventCategories),
+        services: toList(venueForm.services),
+        spaces,
+        access_details: toList(venueForm.accessDetails),
+        useful_information: toList(venueForm.usefulInformation),
+        pricing_text: venueForm.pricingText,
+        cover_image: venueForm.coverImage.trim(),
+        gallery: toList(venueForm.gallery),
+        video_url: venueForm.videoUrl.trim() || null,
+        video_start_seconds: toNumber(venueForm.videoStartSeconds),
+        video_end_seconds: venueForm.videoEndSeconds ? toNumber(venueForm.videoEndSeconds) : null,
+        tiktok_url: venueForm.tiktokUrl.trim() || null,
+        google_review_url: venueForm.googleReviewUrl,
+        price_tier: venueForm.priceTier as "€" | "€€" | "€€€" | "€€€€",
+        closing_time: venueForm.closingTime,
+        ambiance_types: toList(venueForm.ambianceTypes),
+        external_options: toList(venueForm.externalOptions),
+        metro_access: venueForm.metroAccess.trim() || null,
+        featured: venueForm.featured,
+        active: venueForm.active,
+        contact_email: venueForm.contactEmail.trim(),
+        rating: toNumber(venueForm.rating),
+        review_count: toNumber(venueForm.reviewCount),
+      };
 
-    const { error } = editingVenueId
-      ? await supabase.from("venues").update(payload).eq("id", editingVenueId)
-      : await supabase.from("venues").insert(payload);
+      if (!payload.title) throw new Error("Le nom de la salle est obligatoire.");
+      if (!payload.slug) throw new Error("Le slug est obligatoire.");
+      if (!/^\d{4}$/.test(payload.venue_code)) throw new Error("Le code lieu doit contenir exactement 4 chiffres.");
+      if (!payload.city) throw new Error("La ville est obligatoire.");
+      if (!payload.address) throw new Error("L'adresse est obligatoire.");
+      if (!payload.contact_email) throw new Error("L'email contact est obligatoire.");
+      if (!payload.cover_image) throw new Error("Ajoute une image principale avant d'enregistrer la salle.");
 
-    setSaving(false);
-    setMessage(error ? error.message : editingVenueId ? "Salle mise à jour." : "Salle ajoutée.");
-    if (!error) {
+      const { error } = editingVenueId
+        ? await supabase.from("venues").update(payload).eq("id", editingVenueId)
+        : await supabase.from("venues").insert(payload);
+
+      if (error) throw error;
+
+      setMessage(editingVenueId ? "Salle mise à jour." : "Salle ajoutée.");
       closeModal();
       loadAdminRecords();
       setView("venues");
+    } catch (error) {
+      setMessage(formatAdminError(error));
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -332,28 +379,36 @@ const Admin = () => {
     setSaving(true);
     setMessage("");
 
-    const payload: BlogPostInsert = {
-      title: blogForm.title,
-      slug: blogForm.slug || slugify(blogForm.title),
-      category: blogForm.category,
-      excerpt: blogForm.excerpt,
-      content: blogForm.content,
-      read_time: blogForm.readTime,
-      image: blogForm.image,
-      published: blogForm.published,
-      published_at: blogForm.published ? new Date().toISOString() : null,
-    };
+    try {
+      const payload: BlogPostInsert = {
+        title: blogForm.title.trim(),
+        slug: (blogForm.slug || slugify(blogForm.title)).trim(),
+        category: blogForm.category,
+        excerpt: blogForm.excerpt,
+        content: blogForm.content,
+        read_time: blogForm.readTime,
+        image: blogForm.image,
+        published: blogForm.published,
+        published_at: blogForm.published ? new Date().toISOString() : null,
+      };
 
-    const { error } = editingBlogId
-      ? await supabase.from("blog_posts").update(payload).eq("id", editingBlogId)
-      : await supabase.from("blog_posts").insert(payload);
+      if (!payload.title) throw new Error("Le titre est obligatoire.");
+      if (!payload.slug) throw new Error("Le slug est obligatoire.");
 
-    setSaving(false);
-    setMessage(error ? error.message : editingBlogId ? "Article mis à jour." : "Article ajouté.");
-    if (!error) {
+      const { error } = editingBlogId
+        ? await supabase.from("blog_posts").update(payload).eq("id", editingBlogId)
+        : await supabase.from("blog_posts").insert(payload);
+
+      if (error) throw error;
+
+      setMessage(editingBlogId ? "Article mis à jour." : "Article ajouté.");
       closeModal();
       loadAdminRecords();
       setView("blogs");
+    } catch (error) {
+      setMessage(formatAdminError(error));
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -496,7 +551,9 @@ const Admin = () => {
             saving={saving}
             editing={Boolean(editingVenueId)}
             onSubmit={handleVenueSubmit}
-            onFilesSelected={handleVenueMediaUpload}
+            onMainImageSelected={handleVenueMainImageUpload}
+            onGalleryImagesSelected={handleVenueGalleryImagesUpload}
+            onVideoSelected={handleVenueVideoUpload}
             uploadingImages={uploadingImages}
           />
         </AdminModal>
@@ -709,7 +766,17 @@ const AdminModal = ({ title, onClose, children }: { title: string; onClose: () =
   </div>
 );
 
-const VenueForm = ({ form, setForm, saving, editing, onSubmit, onFilesSelected, uploadingImages }: any) => (
+const VenueForm = ({
+  form,
+  setForm,
+  saving,
+  editing,
+  onSubmit,
+  onMainImageSelected,
+  onGalleryImagesSelected,
+  onVideoSelected,
+  uploadingImages,
+}: any) => (
   <form onSubmit={onSubmit} className="grid grid-cols-1 gap-5 xl:grid-cols-2">
     <AdminInput label="Nom de la salle" value={form.title} onChange={(value) => setForm({ ...form, title: value, slug: form.slug || slugify(value) })} required />
     <AdminInput label="Slug" value={form.slug} onChange={(value) => setForm({ ...form, slug: value })} required />
@@ -725,14 +792,39 @@ const VenueForm = ({ form, setForm, saving, editing, onSubmit, onFilesSelected, 
     <AdminSelect label="Symbole prix" value={form.priceTier} onChange={(value) => setForm({ ...form, priceTier: value })} options={PRICE_TIERS} />
     <AdminInput label="Heure de fermeture" value={form.closingTime} onChange={(value) => setForm({ ...form, closingTime: value })} placeholder="Ex: 02:00" />
     <AdminInput label="Accès métro" value={form.metroAccess} onChange={(value) => setForm({ ...form, metroAccess: value })} placeholder="Ex: George V, ligne 1" />
-    <AdminImageTools
-      title="Médias de la salle"
-      description="Import manuel dans le bucket S3 : dossier venues/nom-de-la-salle/. La première image devient la couverture, les autres images vont en galerie, la première vidéo remplit l'URL vidéo."
-      accept="image/*,video/*"
-      onFilesSelected={onFilesSelected}
+    <AdminMediaField
+      title="Image principale"
+      description="Upload dans venues/nom-de-la-salle/principale/. Cette image devient la couverture de la fiche."
+      accept="image/*"
+      fieldLabel="URL image principale"
+      value={form.coverImage}
+      onChange={(value) => setForm({ ...form, coverImage: value })}
+      onFilesSelected={onMainImageSelected}
+      uploading={uploadingImages}
+      required
+    />
+    <AdminMediaField
+      title="Images secondaires"
+      description="Upload dans venues/nom-de-la-salle/secondaires/. Les URLs sont ajoutées à la galerie."
+      accept="image/*"
+      fieldLabel="URLs images secondaires"
+      value={form.gallery}
+      onChange={(value) => setForm({ ...form, gallery: value })}
+      onFilesSelected={onGalleryImagesSelected}
+      uploading={uploadingImages}
+      multiple
+      multiline
+    />
+    <AdminMediaField
+      title="Vidéo"
+      description="Upload dans venues/nom-de-la-salle/video/. La vidéo remplira l'URL vidéo de la salle."
+      accept="video/*"
+      fieldLabel="URL vidéo"
+      value={form.videoUrl}
+      onChange={(value) => setForm({ ...form, videoUrl: value })}
+      onFilesSelected={onVideoSelected}
       uploading={uploadingImages}
     />
-    <AdminInput label="Image principale" value={form.coverImage} onChange={(value) => setForm({ ...form, coverImage: value })} required />
     <AdminTextarea label="Accroche" value={form.tagline} onChange={(value) => setForm({ ...form, tagline: value })} />
     <AdminTextarea label="Description" value={form.description} onChange={(value) => setForm({ ...form, description: value })} />
     <AdminTextarea label="Catégories d'événements" hint="Sépare par virgule ou ligne." value={form.eventCategories} onChange={(value) => setForm({ ...form, eventCategories: value })} />
@@ -740,10 +832,8 @@ const VenueForm = ({ form, setForm, saving, editing, onSubmit, onFilesSelected, 
     <AdminTextarea label="Types d'ambiance" hint={`Ex: ${AMBIANCE_TYPES.join(", ")}`} value={form.ambianceTypes} onChange={(value) => setForm({ ...form, ambianceTypes: value })} />
     <AdminTextarea label="Personnalisation externe" hint={`Ex: ${EXTERNAL_OPTIONS.join(", ")}`} value={form.externalOptions} onChange={(value) => setForm({ ...form, externalOptions: value })} />
     <AdminTextarea label="Espaces" hint="Une ligne par espace : Nom | Capacité | Description" value={form.spaces} onChange={(value) => setForm({ ...form, spaces: value })} />
-    <AdminTextarea label="Galerie" hint="Une URL par ligne." value={form.gallery} onChange={(value) => setForm({ ...form, gallery: value })} />
     <AdminTextarea label="Accès" value={form.accessDetails} onChange={(value) => setForm({ ...form, accessDetails: value })} />
     <AdminTextarea label="Informations utiles" value={form.usefulInformation} onChange={(value) => setForm({ ...form, usefulInformation: value })} />
-    <AdminInput label="URL vidéo" value={form.videoUrl} onChange={(value) => setForm({ ...form, videoUrl: value })} />
     <AdminInput label="Début vidéo en secondes" value={form.videoStartSeconds} onChange={(value) => setForm({ ...form, videoStartSeconds: value })} />
     <AdminInput label="Fin vidéo en secondes" value={form.videoEndSeconds} onChange={(value) => setForm({ ...form, videoEndSeconds: value })} />
     <AdminInput label="URL TikTok" value={form.tiktokUrl} onChange={(value) => setForm({ ...form, tiktokUrl: value })} />
@@ -762,8 +852,16 @@ const BlogForm = ({ form, setForm, saving, editing, onSubmit, onFilesSelected, u
     <AdminInput label="Slug" value={form.slug} onChange={(value) => setForm({ ...form, slug: value })} required />
     <AdminInput label="Catégorie" value={form.category} onChange={(value) => setForm({ ...form, category: value })} />
     <AdminInput label="Temps de lecture" value={form.readTime} onChange={(value) => setForm({ ...form, readTime: value })} />
-    <AdminImageTools title="Image de l'article" description="Import manuel dans le bucket S3 : dossier blog/titre-de-l-article/." accept="image/*" onFilesSelected={onFilesSelected} uploading={uploadingImages} />
-    <AdminInput label="Image" value={form.image} onChange={(value) => setForm({ ...form, image: value })} />
+    <AdminMediaField
+      title="Image de l'article"
+      description="Upload dans blog/titre-de-l-article/."
+      accept="image/*"
+      fieldLabel="URL image"
+      value={form.image}
+      onChange={(value) => setForm({ ...form, image: value })}
+      onFilesSelected={onFilesSelected}
+      uploading={uploadingImages}
+    />
     <AdminTextarea label="Résumé" value={form.excerpt} onChange={(value) => setForm({ ...form, excerpt: value })} />
     <div className="xl:col-span-2"><AdminTextarea label="Contenu" value={form.content} onChange={(value) => setForm({ ...form, content: value })} rows={12} /></div>
     <div className="flex items-center rounded-lg border border-border bg-card p-4">
@@ -783,7 +881,19 @@ type FieldProps = {
   placeholder?: string;
 };
 
-const AdminImageTools = ({ title, description, accept, onFilesSelected, uploading }: any) => (
+const AdminMediaField = ({
+  title,
+  description,
+  accept,
+  fieldLabel,
+  value,
+  onChange,
+  onFilesSelected,
+  uploading,
+  multiple = false,
+  multiline = false,
+  required = false,
+}: any) => (
   <section className="rounded-lg border border-border bg-card p-4">
     <div className="mb-4 flex items-start gap-3">
       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-secondary text-secondary-foreground"><Image className="h-5 w-5" /></div>
@@ -795,11 +905,11 @@ const AdminImageTools = ({ title, description, accept, onFilesSelected, uploadin
     <div className="grid grid-cols-1 gap-3">
       <label className="inline-flex h-11 cursor-pointer items-center justify-center gap-2 rounded-lg border border-border bg-background px-4 text-sm font-body font-semibold transition-colors hover:border-primary/40">
         {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-        Importer des fichiers
+        Importer
         <input
           type="file"
           accept={accept}
-          multiple
+          multiple={multiple}
           disabled={uploading}
           onChange={(event) => {
             onFilesSelected(event.target.files);
@@ -808,7 +918,25 @@ const AdminImageTools = ({ title, description, accept, onFilesSelected, uploadin
           className="sr-only"
         />
       </label>
-      <p className="text-xs font-body text-muted-foreground">Les dossiers Supabase Storage sont créés automatiquement au premier fichier uploadé.</p>
+      <label className="block">
+        <span className="mb-2 block text-xs font-body font-semibold text-muted-foreground">{fieldLabel}</span>
+        {multiline ? (
+          <textarea
+            value={value}
+            onChange={(event) => onChange(event.target.value)}
+            rows={5}
+            className="w-full rounded-lg border border-border bg-background px-3 py-3 text-sm font-body leading-relaxed outline-none focus:border-primary"
+          />
+        ) : (
+          <input
+            value={value}
+            onChange={(event) => onChange(event.target.value)}
+            required={required}
+            className="h-11 w-full rounded-lg border border-border bg-background px-3 text-sm font-body outline-none focus:border-primary"
+          />
+        )}
+      </label>
+      <p className="text-xs font-body text-muted-foreground">Le dossier est créé automatiquement au premier upload.</p>
     </div>
   </section>
 );
