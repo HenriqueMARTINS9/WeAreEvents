@@ -18,7 +18,7 @@ const Blog = () => {
   return (
     <div className="min-h-screen bg-background text-foreground">
       {isMobile ? (
-        <MobileHeader onCodeSearch={() => setShowCodeSearch(true)} />
+        <MobileHeader onCodeSearch={() => setShowCodeSearch(true)} withBackground />
       ) : (
         <DesktopNav />
       )}

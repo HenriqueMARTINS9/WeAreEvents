@@ -7,13 +7,15 @@ import { useEstablishmentReferralModal } from "@/lib/establishment-referral-moda
 
 interface MobileHeaderProps {
   onCodeSearch: () => void;
+  withBackground?: boolean;
 }
 
-const MobileHeader = ({ onCodeSearch }: MobileHeaderProps) => {
+const MobileHeader = ({ onCodeSearch, withBackground = false }: MobileHeaderProps) => {
   const headerRef = useRef<HTMLDivElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [useLightChrome, setUseLightChrome] = useState(false);
   const { openModal } = useEstablishmentReferralModal();
+  const showLightChrome = !withBackground && useLightChrome;
 
   useEffect(() => {
     const updateChrome = () => {
@@ -47,10 +49,15 @@ const MobileHeader = ({ onCodeSearch }: MobileHeaderProps) => {
 
   return (
     <>
-      <div ref={headerRef} className="fixed inset-x-0 top-0 z-[1000] flex items-center justify-between px-4 pb-3 pt-[max(1rem,env(safe-area-inset-top))]">
+      <div
+        ref={headerRef}
+        className={`fixed inset-x-0 top-0 z-[1000] flex items-center justify-between px-4 pb-3 pt-[max(1rem,env(safe-area-inset-top))] ${
+          withBackground ? "border-b border-border bg-background/95 shadow-sm backdrop-blur-xl" : ""
+        }`}
+      >
         <Link to="/" className="min-w-0" aria-label="Retour à l'accueil">
           <img
-            src={useLightChrome ? logoWhite : logoBlack}
+            src={showLightChrome ? logoWhite : logoBlack}
             alt="wearevents"
             className="h-8 drop-shadow transition-opacity duration-300"
           />
@@ -60,7 +67,7 @@ const MobileHeader = ({ onCodeSearch }: MobileHeaderProps) => {
           type="button"
           onClick={() => setMenuOpen(true)}
           className={`flex h-10 w-10 items-center justify-center rounded-lg shadow-lg transition-all active:scale-[0.98] ${
-            useLightChrome
+            showLightChrome
               ? "glass text-primary-foreground"
               : "border border-border bg-background/80 text-foreground backdrop-blur-xl"
           }`}

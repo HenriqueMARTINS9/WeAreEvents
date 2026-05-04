@@ -207,7 +207,7 @@ const SearchResults = () => {
   return (
     <div className="min-h-screen bg-background">
       {isMobile ? (
-        <MobileHeader onCodeSearch={() => setShowCodeSearch(true)} />
+        <MobileHeader onCodeSearch={() => setShowCodeSearch(true)} withBackground />
       ) : (
         <header className="fixed inset-x-0 top-0 z-[1000] border-b border-border bg-background/95 backdrop-blur-xl">
           <div className="mx-auto grid h-20 max-w-7xl grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-4 xl:px-6">
