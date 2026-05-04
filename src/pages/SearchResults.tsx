@@ -443,7 +443,7 @@ const SearchResults = () => {
       )}
 
       {!isMobile && (
-        <div id="salles" className="scroll-mt-24 px-4 py-6 md:px-6 md:pb-6 md:pt-24">
+        <div id="salles" className="scroll-mt-24 bg-card px-4 py-6 md:px-6 md:pb-6 md:pt-24">
           <div className="max-w-7xl mx-auto">
             <div className="grid grid-cols-1 gap-8 md:h-[calc(100vh-12rem)] md:min-h-[560px] md:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.95fr)] md:items-stretch lg:grid-cols-[minmax(0,1.05fr)_minmax(440px,0.95fr)]">
               <div className="order-1 min-h-0 md:h-full md:overflow-y-auto md:pr-1 xl:pr-2">
