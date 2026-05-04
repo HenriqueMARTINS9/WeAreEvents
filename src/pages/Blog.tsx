@@ -1,17 +1,27 @@
 import { ArrowRight, Clock3 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
+import { useState } from "react";
 import DesktopNav from "@/components/DesktopNav";
+import MobileHeader from "@/components/MobileHeader";
 import SiteFooter from "@/components/SiteFooter";
+import VenueCodeSearch from "@/components/VenueCodeSearch";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { fetchBlogPosts } from "@/lib/supabase-data";
 
 const Blog = () => {
+  const isMobile = useIsMobile();
+  const [showCodeSearch, setShowCodeSearch] = useState(false);
   const { data: posts = [] } = useQuery({ queryKey: ["blog-posts"], queryFn: fetchBlogPosts });
   const heroPost = posts[0];
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <DesktopNav />
+      {isMobile ? (
+        <MobileHeader onCodeSearch={() => setShowCodeSearch(true)} />
+      ) : (
+        <DesktopNav />
+      )}
 
       <main>
         <section className="px-6 pb-16 pt-32">
@@ -88,6 +98,12 @@ const Blog = () => {
       </main>
 
       <SiteFooter variant="dark" />
+      {showCodeSearch && (
+        <VenueCodeSearch
+          onClose={() => setShowCodeSearch(false)}
+          onVenueFound={() => setShowCodeSearch(false)}
+        />
+      )}
     </div>
   );
 };
