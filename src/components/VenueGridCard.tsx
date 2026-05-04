@@ -6,9 +6,10 @@ import type { Venue } from "@/types/venue";
 interface VenueGridCardProps {
   venue: Venue;
   size?: "default" | "large";
+  variant?: "default" | "mobile";
 }
 
-const VenueGridCard = ({ venue, size = "default" }: VenueGridCardProps) => {
+const VenueGridCard = ({ venue, size = "default", variant = "default" }: VenueGridCardProps) => {
   const navigate = useNavigate();
   const isLarge = size === "large";
   const images = useMemo(
@@ -26,6 +27,71 @@ const VenueGridCard = ({ venue, size = "default" }: VenueGridCardProps) => {
     event.stopPropagation();
     setActiveImageIndex((current) => (current + 1) % images.length);
   };
+
+  if (variant === "mobile") {
+    return (
+      <article
+        onClick={() => navigate(`/salle/${venue.slug}`)}
+        className="group cursor-pointer"
+      >
+        <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-muted">
+          <img
+            src={activeImage}
+            alt={venue.title}
+            className="h-full w-full object-cover image-grade-luxe transition-transform duration-700 group-active:scale-[1.02]"
+            loading="lazy"
+          />
+          {hasMultipleImages && (
+            <>
+              <button
+                type="button"
+                onClick={showPreviousImage}
+                className="absolute left-3 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-background/86 text-foreground shadow-lg backdrop-blur-md active:scale-[0.96]"
+                aria-label={`Photo précédente de ${venue.title}`}
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </button>
+              <button
+                type="button"
+                onClick={showNextImage}
+                className="absolute right-3 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-background/86 text-foreground shadow-lg backdrop-blur-md active:scale-[0.96]"
+                aria-label={`Photo suivante de ${venue.title}`}
+              >
+                <ChevronRight className="h-5 w-5" />
+              </button>
+              <div className="absolute bottom-3 right-3 z-10 inline-flex items-center gap-1 rounded-full bg-foreground/62 px-2.5 py-1 text-xs font-body font-semibold text-primary-foreground backdrop-blur-md">
+                <Images className="h-3.5 w-3.5" />
+                {activeImageIndex + 1}/{images.length}
+              </div>
+            </>
+          )}
+        </div>
+
+        <div className="pt-3">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h3 className="truncate font-heading text-2xl font-semibold leading-tight text-foreground">
+                {venue.title}
+              </h3>
+              <p className="mt-1 text-sm font-body text-muted-foreground">
+                {venue.city}
+              </p>
+            </div>
+            <span className="mt-0.5 inline-flex shrink-0 items-center gap-1 text-sm font-body font-semibold text-foreground">
+              <Star className="h-4 w-4 fill-foreground text-foreground" />
+              {venue.rating}
+            </span>
+          </div>
+          <p className="mt-2 line-clamp-1 text-sm font-body leading-relaxed text-muted-foreground">
+            {venue.tagline}
+          </p>
+          <p className="mt-1 text-sm font-body font-semibold text-foreground">
+            {venue.minCapacity}–{venue.maxCapacity} invités · {venue.pricingText}
+          </p>
+        </div>
+      </article>
+    );
+  }
 
   return (
     <div

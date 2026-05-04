@@ -58,7 +58,7 @@ const MobileSwipeHome = () => {
   };
 
   return (
-    <div className="fixed inset-0 overflow-x-hidden bg-foreground">
+    <div data-header-theme="light" className="fixed inset-0 overflow-x-hidden bg-foreground">
       <MobileHeader
         onCodeSearch={() => setShowCodeSearch(true)}
       />

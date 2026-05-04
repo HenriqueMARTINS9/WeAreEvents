@@ -11,6 +11,9 @@ interface SearchResultsMapProps {
   venues: Venue[];
   onVisibleVenuesChange: (venueIds: string[]) => void;
   className?: string;
+  fullHeight?: boolean;
+  interactiveOnMobile?: boolean;
+  hideBadge?: boolean;
 }
 
 const FRANCE_CENTER: [number, number] = [46.603354, 1.888334];
@@ -62,42 +65,31 @@ const MapViewport = ({
   return null;
 };
 
-const SearchResultsMap = ({ venues, onVisibleVenuesChange, className = "" }: SearchResultsMapProps) => {
+const SearchResultsMap = ({ venues, onVisibleVenuesChange, className = "", fullHeight = false, interactiveOnMobile = false, hideBadge = false }: SearchResultsMapProps) => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const allowTouchInteractions = interactiveOnMobile || !isMobile;
   const mapKey = useMemo(() => venues.map((venue) => venue.id).join("-") || "empty", [venues]);
   const [mapInstance, setMapInstance] = useState<LeafletMap | null>(null);
 
   return (
-    <div className={`isolate flex overflow-hidden rounded-lg border border-border bg-card luxury-shadow xl:h-full xl:flex-col ${className}`}>
-      <div className="flex items-center justify-between border-b border-border px-4 py-3">
-        <div>
-          <p className="text-xs font-body font-semibold text-primary">Carte des lieux</p>
-          <p className="mt-1 text-sm font-body text-muted-foreground">
-            Visualisez les adresses correspondant à votre sélection.
-          </p>
-        </div>
-        <div className="inline-flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2 text-xs font-body font-semibold text-foreground">
+    <div className={`isolate relative overflow-hidden rounded-2xl border border-border bg-card shadow-xl xl:h-full ${className}`}>
+      {!hideBadge && (
+        <div className="absolute right-4 top-4 z-[500] inline-flex items-center gap-2 rounded-full border border-border bg-background/95 px-3 py-2 text-xs font-body font-semibold text-foreground shadow-lg backdrop-blur-md">
           <MapPin className="h-3.5 w-3.5 text-primary" />
           {venues.length} lieu{venues.length > 1 ? "x" : ""}
         </div>
-      </div>
+      )}
 
-      <div className="flex items-center justify-between gap-3 border-b border-border bg-muted/40 px-4 py-3">
-        <p className="text-xs font-body text-muted-foreground">
-          Le scroll de page reste sur la liste. Faites glisser la carte pour ajuster la zone affichée.
-        </p>
-      </div>
-
-      <div className="relative z-0 h-[360px] md:h-[420px] xl:min-h-0 xl:flex-1">
+      <div className={`relative z-0 ${fullHeight ? "h-full" : "h-[360px] md:h-full"}`}>
         <MapContainer
           key={mapKey}
           center={FRANCE_CENTER}
           zoom={5.5}
           scrollWheelZoom={!isMobile}
-          dragging={!isMobile}
-          touchZoom={false}
-          doubleClickZoom={!isMobile}
+          dragging={allowTouchInteractions}
+          touchZoom={interactiveOnMobile}
+          doubleClickZoom={allowTouchInteractions}
           boxZoom={false}
           keyboard={false}
           className="z-0 h-full w-full"

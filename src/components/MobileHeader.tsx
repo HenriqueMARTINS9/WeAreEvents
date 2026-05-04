@@ -1,6 +1,7 @@
 import { ArrowRight, Building2, FileText, Home, Menu, Search, Sparkles, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import logoBlack from "@/assets/logo-black.svg";
 import logoWhite from "@/assets/logo-white.svg";
 import { useEstablishmentReferralModal } from "@/lib/establishment-referral-modal";
 
@@ -9,20 +10,60 @@ interface MobileHeaderProps {
 }
 
 const MobileHeader = ({ onCodeSearch }: MobileHeaderProps) => {
+  const headerRef = useRef<HTMLDivElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [useLightChrome, setUseLightChrome] = useState(false);
   const { openModal } = useEstablishmentReferralModal();
+
+  useEffect(() => {
+    const updateChrome = () => {
+      const header = headerRef.current;
+      if (!header) return;
+
+      const rect = header.getBoundingClientRect();
+      const sampleY = Math.min(window.innerHeight - 1, Math.max(0, rect.bottom - 8));
+      const sampleXs = [0.2, 0.5, 0.8].map((ratio) => window.innerWidth * ratio);
+
+      const lightThemeHits = sampleXs.filter((x) => {
+        const elements = document.elementsFromPoint(x, sampleY);
+        return elements.some((element) => {
+          if (header.contains(element)) return false;
+          return Boolean(element.closest('[data-header-theme="light"]'));
+        });
+      }).length;
+
+      setUseLightChrome(lightThemeHits >= 1);
+    };
+
+    updateChrome();
+    window.addEventListener("scroll", updateChrome, { passive: true });
+    window.addEventListener("resize", updateChrome);
+
+    return () => {
+      window.removeEventListener("scroll", updateChrome);
+      window.removeEventListener("resize", updateChrome);
+    };
+  }, []);
 
   return (
     <>
-      <div className="fixed inset-x-0 top-0 z-[1000] flex items-center justify-between px-4 pb-3 pt-[max(1rem,env(safe-area-inset-top))]">
+      <div ref={headerRef} className="fixed inset-x-0 top-0 z-[1000] flex items-center justify-between px-4 pb-3 pt-[max(1rem,env(safe-area-inset-top))]">
         <Link to="/" className="min-w-0" aria-label="Retour à l'accueil">
-          <img src={logoWhite} alt="wearevents" className="h-8 drop-shadow" />
+          <img
+            src={useLightChrome ? logoWhite : logoBlack}
+            alt="wearevents"
+            className="h-8 drop-shadow transition-opacity duration-300"
+          />
         </Link>
 
         <button
           type="button"
           onClick={() => setMenuOpen(true)}
-          className="flex h-10 w-10 items-center justify-center rounded-lg glass text-primary-foreground shadow-lg active:scale-[0.98] transition-transform"
+          className={`flex h-10 w-10 items-center justify-center rounded-lg shadow-lg transition-all active:scale-[0.98] ${
+            useLightChrome
+              ? "glass text-primary-foreground"
+              : "border border-border bg-background/80 text-foreground backdrop-blur-xl"
+          }`}
           aria-label="Ouvrir le menu"
         >
           <Menu className="h-5 w-5" />

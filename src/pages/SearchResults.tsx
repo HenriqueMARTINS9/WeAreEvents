@@ -1,10 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useSearchParams, useNavigate } from "react-router-dom";
-import { CalendarDays, Clock3, Euro, MapPin, Music2, SlidersHorizontal, Sparkles, Tag, UtensilsCrossed, Users, ShieldCheck, X } from "lucide-react";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
+import { Building2, CalendarDays, FileText, Home, Map as MapIcon, MapPin, Menu, Search, SlidersHorizontal, Sparkles, Users, X } from "lucide-react";
 import { fetchVenues, filterVenues, findVenueByCode, getVenueLocationSuggestionsFromVenues } from "@/lib/supabase-data";
 import { EVENT_TYPES } from "@/types/venue";
-import DesktopNav from "@/components/DesktopNav";
 import MobileHeader from "@/components/MobileHeader";
 import FilterSelect from "@/components/FilterSelect";
 import LocationAutocomplete from "@/components/LocationAutocomplete";
@@ -13,8 +12,9 @@ import SearchResultsMap from "@/components/SearchResultsMap";
 import VenueGridCard from "@/components/VenueGridCard";
 import VenueCodeSearch from "@/components/VenueCodeSearch";
 import { useIsMobile } from "@/hooks/use-mobile";
+import logoBlack from "@/assets/logo-black.svg";
+import { useEstablishmentReferralModal } from "@/lib/establishment-referral-modal";
 
-const SEARCH_BACKGROUND_VIDEO = "https://videos.pexels.com/video-files/3571264/3571264-uhd_2560_1440_30fps.mp4";
 const PRICE_FILTERS = ["€", "€€", "€€€", "€€€€"] as const;
 const VENUE_TYPE_FILTERS = ["Bar", "Restaurant", "Salle"] as const;
 const AMBIANCE_FILTERS = ["Calme", "Animée", "Festive"] as const;
@@ -37,9 +37,46 @@ type FilterGroupProps = {
 const toggleValue = (values: string[], value: string) =>
   values.includes(value) ? values.filter((item) => item !== value) : [...values, value];
 
+const SearchMenuLink = ({ to, label, icon, onClick }: { to: string; label: string; icon: ReactNode; onClick: () => void }) => (
+  <Link
+    to={to}
+    onClick={onClick}
+    className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-body font-semibold transition-colors hover:bg-muted"
+  >
+    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-secondary text-primary">
+      {icon}
+    </span>
+    {label}
+  </Link>
+);
+
+const MobileQuickChip = ({ label, active, onClick }: { label: string; active?: boolean; onClick: () => void }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className={`h-10 shrink-0 rounded-full border px-4 text-sm font-body font-semibold transition-colors ${
+      active
+        ? "border-foreground bg-foreground text-primary-foreground"
+        : "border-border bg-background text-foreground shadow-sm active:bg-muted"
+    }`}
+  >
+    {label}
+  </button>
+);
+
+const formatMobileDate = (value: string) => {
+  if (!value) return "";
+
+  const date = new Date(`${value}T12:00:00`);
+  if (Number.isNaN(date.getTime())) return "";
+
+  return new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short" }).format(date);
+};
+
 const SearchResults = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { openModal } = useEstablishmentReferralModal();
   const [locationQuery, setLocationQuery] = useState(searchParams.get("location") || searchParams.get("city") || "");
   const [eventType, setEventType] = useState(searchParams.get("type") || "");
   const [eventDate, setEventDate] = useState(searchParams.get("date") || "");
@@ -55,6 +92,9 @@ const SearchResults = () => {
   const [foodFilter, setFoodFilter] = useState("");
   const [showAllFilters, setShowAllFilters] = useState(false);
   const [showCodeSearch, setShowCodeSearch] = useState(false);
+  const [desktopMenuOpen, setDesktopMenuOpen] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [mobileMapOpen, setMobileMapOpen] = useState(false);
   const [visibleVenueIds, setVisibleVenueIds] = useState<string[] | null>(null);
   const isMobile = useIsMobile();
   const codeParam = searchParams.get("code");
@@ -121,6 +161,12 @@ const SearchResults = () => {
     ...optionFilters,
     ...equipmentFilters,
   ].filter(Boolean).length;
+  const mobileDateLabel = formatMobileDate(eventDate);
+  const mobileSearchSummary = [
+    mobileDateLabel || "Date",
+    guests ? `${guests} invités` : "Invités",
+    eventType || "Type d'événement",
+  ].join(" · ");
   const resetAdvancedFilters = () => {
     setVenueType("");
     setPriceTier("");
@@ -177,188 +223,387 @@ const SearchResults = () => {
       {isMobile ? (
         <MobileHeader onCodeSearch={() => setShowCodeSearch(true)} />
       ) : (
-        <DesktopNav />
-      )}
+        <header className="fixed inset-x-0 top-0 z-[1000] border-b border-border bg-background/95 backdrop-blur-xl">
+          <div className="mx-auto grid h-20 max-w-7xl grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-4 xl:px-6">
+            <Link to="/" className="shrink-0" aria-label="Retour à l'accueil">
+              <img src={logoBlack} alt="wearevents" className="h-7 xl:h-8" />
+            </Link>
 
-      <section data-header-theme="light" className="relative overflow-visible bg-foreground px-4 pb-6 pt-32 text-primary-foreground md:flex md:min-h-screen md:items-center md:px-6 md:pb-10 xl:pb-12">
-        {!isMobile && (
-          <div className="pointer-events-none absolute inset-0 overflow-hidden">
-            <video
-              autoPlay
-              muted
-              loop
-              playsInline
-              preload="metadata"
-              className="absolute inset-0 h-full w-full object-cover image-grade-luxe hero-video-active"
-            >
-              <source src={SEARCH_BACKGROUND_VIDEO} type="video/mp4" />
-            </video>
-            <div className="absolute inset-0 bg-gradient-to-r from-foreground/90 via-foreground/50 to-foreground/20" />
-            <div className="absolute inset-0 bg-gradient-to-t from-foreground/90 via-transparent to-foreground/40" />
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_22%,rgba(218,86,110,0.22),transparent_30%),radial-gradient(circle_at_78%_24%,rgba(216,180,96,0.2),transparent_24%)]" />
-          </div>
-        )}
-
-        <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-col justify-center">
-          <div className="mb-6 grid grid-cols-1 gap-4 md:mb-10 md:grid-cols-[1fr_auto] md:items-end">
-            <div>
-              <p className="mb-3 inline-flex items-center gap-2 rounded-lg border border-primary-foreground/20 bg-primary-foreground/10 px-3 py-1.5 text-xs font-body font-semibold text-primary backdrop-blur-md">
-                <ShieldCheck className="w-3.5 h-3.5" />
-                Lieux vérifiés
-              </p>
-              <h1 className="font-heading text-4xl md:text-6xl font-semibold leading-[0.98] mb-3 md:mb-4">
-                Trouvez le lieu idéal pour votre événement.
-              </h1>
-              <p className="max-w-2xl text-sm font-body leading-relaxed text-primary-foreground/76 md:text-base">
-                Recherchez par ville ou code postal, capacité et type d'événement, puis envoyez votre demande en quelques clics.
-              </p>
-            </div>
-            <div className="w-fit rounded-lg border border-primary-foreground/20 bg-primary-foreground/10 px-4 py-3 text-sm font-body text-primary-foreground/78 backdrop-blur-md">
-              <span className="font-semibold text-primary-foreground">{results.length}</span>{" "}
-              salle{results.length !== 1 ? "s" : ""} {isMapZoneFilteringActive ? "dans la zone" : "trouvée"}{results.length !== 1 ? "s" : ""}
-              {isMapZoneFilteringActive && (
-                <span className="ml-1 text-primary-foreground/68">sur {filteredResults.length}</span>
-              )}
-            </div>
-          </div>
-
-          <div className="rounded-lg border border-primary-foreground/20 bg-foreground/50 p-4 text-foreground shadow-2xl backdrop-blur-xl hairline-top">
-            <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1.18fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)] lg:items-stretch">
-              <LocationAutocomplete
-                value={locationQuery}
-                onChange={setLocationQuery}
-                options={locationOptions}
-                placeholder="Ville ou code postal"
-                className="h-12 bg-background"
-                icon={<MapPin className="w-4 h-4" />}
-              />
-              <FilterSelect
-                value={eventType}
-                onChange={setEventType}
-                placeholder="Type d'événement"
-                emptyLabel="Tous les types"
-                options={EVENT_TYPES}
-                icon={<Sparkles className="w-4 h-4" />}
-                className="h-12"
-              />
-              <div className="flex h-12 items-center gap-2 rounded-lg border border-border bg-background px-3">
-                <Users className="w-4 h-4 text-primary shrink-0" />
-                <input
-                  type="number"
-                  value={guests}
-                  onChange={(e) => setGuests(e.target.value)}
-                  placeholder="Nombre d'invités"
-                  className="min-w-0 flex-1 bg-transparent text-sm font-body focus:outline-none"
-                />
+            <div className="mx-auto flex w-full max-w-4xl items-center justify-center gap-2">
+              <div className="min-w-0 flex-1 rounded-full border border-border bg-background p-1.5 shadow-lg">
+                <div className="grid grid-cols-[minmax(190px,1.2fr)_minmax(145px,0.75fr)_minmax(150px,0.85fr)_minmax(130px,0.65fr)_auto] items-center">
+                  <div className="min-w-0 px-3">
+                    <p className="mb-0.5 text-[11px] font-body font-semibold text-foreground">Lieu</p>
+                    <LocationAutocomplete
+                      value={locationQuery}
+                      onChange={setLocationQuery}
+                      options={locationOptions}
+                      placeholder="Ville ou code postal"
+                      className="h-8 border-0 bg-transparent px-0 hover:border-transparent focus-within:border-transparent focus-within:ring-0"
+                      icon={<MapPin className="w-4 h-4" />}
+                    />
+                  </div>
+                  <div className="min-w-0 border-l border-border px-3">
+                    <p className="mb-0.5 text-[11px] font-body font-semibold text-foreground">Date</p>
+                    <label className="flex h-8 items-center gap-2">
+                      <CalendarDays className="h-4 w-4 shrink-0 text-primary" />
+                      <input
+                        type="date"
+                        value={eventDate}
+                        onChange={(event) => setEventDate(event.target.value)}
+                        className="min-w-0 flex-1 bg-transparent text-sm font-body text-muted-foreground outline-none [color-scheme:light]"
+                        aria-label="Date de l'événement"
+                      />
+                    </label>
+                  </div>
+                  <div className="min-w-0 border-l border-border px-3">
+                    <p className="mb-0.5 text-[11px] font-body font-semibold text-foreground">Événement</p>
+                    <FilterSelect
+                      value={eventType}
+                      onChange={setEventType}
+                      placeholder="Type"
+                      emptyLabel="Tous les types"
+                      options={EVENT_TYPES}
+                      icon={<Sparkles className="w-4 h-4" />}
+                      className="h-8 border-0 bg-transparent px-0 hover:border-transparent focus:ring-0"
+                    />
+                  </div>
+                  <div className="min-w-0 border-l border-border px-3">
+                    <p className="mb-0.5 text-[11px] font-body font-semibold text-foreground">Invités</p>
+                    <div className="flex h-8 items-center gap-2">
+                      <Users className="h-4 w-4 shrink-0 text-primary" />
+                      <input
+                        type="number"
+                        value={guests}
+                        onChange={(event) => setGuests(event.target.value)}
+                        placeholder="Nombre"
+                        className="min-w-0 flex-1 bg-transparent text-sm font-body outline-none placeholder:text-muted-foreground"
+                      />
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => document.getElementById("salles")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+                    className="mr-1 flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform hover:scale-105 active:scale-[0.98]"
+                    aria-label="Lancer la recherche"
+                  >
+                    <Search className="h-5 w-5" />
+                  </button>
+                </div>
               </div>
-              <label className="flex h-12 items-center gap-2 rounded-lg border border-border bg-background px-3">
-                <CalendarDays className="h-4 w-4 shrink-0 text-primary" />
-                <input
-                  type="date"
-                  value={eventDate}
-                  onChange={(event) => setEventDate(event.target.value)}
-                  className="min-w-0 flex-1 bg-transparent text-sm font-body focus:outline-none [color-scheme:light]"
-                  aria-label="Date de l'événement"
-                />
-              </label>
-            </div>
 
-            <div className="mt-4 flex gap-3 overflow-x-auto pb-1 md:flex-wrap md:overflow-visible md:pb-0">
               <button
                 type="button"
                 onClick={() => setShowAllFilters(true)}
-                className="inline-flex h-12 shrink-0 items-center gap-2 rounded-lg border border-foreground/70 bg-background px-4 text-sm font-body font-semibold text-foreground transition-colors hover:bg-foreground hover:text-primary-foreground"
+                className="inline-flex h-10 shrink-0 items-center gap-2 rounded-full border border-border bg-background px-3 text-sm font-body font-semibold text-foreground shadow-sm transition-colors hover:border-foreground"
               >
                 <SlidersHorizontal className="h-4 w-4" />
                 Tous les filtres{activeAdvancedFilterCount ? ` (${activeAdvancedFilterCount})` : ""}
               </button>
-              <div className="w-[8.5rem] shrink-0">
-                <FilterSelect value={priceTier} onChange={setPriceTier} placeholder="Prix" emptyLabel="Tous les prix" options={PRICE_FILTERS} icon={<Euro className="w-4 h-4" />} className="h-12" />
-              </div>
-              <div className="w-40 shrink-0">
-                <FilterSelect value={offerType} onChange={setOfferType} placeholder="Offres" emptyLabel="Toutes offres" options={OFFER_FILTERS} icon={<Tag className="w-4 h-4" />} className="h-12" />
-              </div>
-              <div className="w-52 shrink-0">
-                <FilterSelect value={ambianceType} onChange={setAmbianceType} placeholder="Ambiance" emptyLabel="Toutes ambiances" options={AMBIANCE_FILTERS} icon={<Music2 className="w-4 h-4" />} className="h-12" />
-              </div>
-              <div className="w-[21rem] max-w-full shrink-0">
-                <FilterSelect value={privatizationType} onChange={setPrivatizationType} placeholder="Type de privatisation" emptyLabel="Toute privatisation" options={PRIVATIZATION_FILTERS} icon={<UtensilsCrossed className="w-4 h-4" />} className="h-12" />
-              </div>
-              <button
-                type="button"
-                onClick={() => toggleOptionFilter("Possibilité de danser")}
-                className={`h-12 shrink-0 rounded-lg border px-4 text-sm font-body font-semibold transition-colors ${
-                  optionFilters.includes("Possibilité de danser") ? "border-foreground bg-foreground text-primary-foreground" : "border-foreground/70 bg-background text-foreground hover:bg-muted"
-                }`}
-              >
-                Possibilité de danser
-              </button>
-              <button
-                type="button"
-                onClick={() => setClosingFilter(closingFilter === "Après 2h" ? "" : "Après 2h")}
-                className={`h-12 shrink-0 rounded-lg border px-4 text-sm font-body font-semibold transition-colors ${
-                  closingFilter === "Après 2h" ? "border-foreground bg-foreground text-primary-foreground" : "border-foreground/70 bg-background text-foreground hover:bg-muted"
-                }`}
-              >
-                Ouvert après 2h
-              </button>
-              <button
-                type="button"
-                onClick={() => toggleEquipmentFilter("Terrasse")}
-                className={`h-12 shrink-0 rounded-lg border px-4 text-sm font-body font-semibold transition-colors ${
-                  equipmentFilters.includes("Terrasse") ? "border-foreground bg-foreground text-primary-foreground" : "border-foreground/70 bg-background text-foreground hover:bg-muted"
-                }`}
-              >
-                Terrasse
-              </button>
             </div>
-          </div>
-        </div>
-      </section>
 
-      <div id="salles" className="scroll-mt-24 px-4 py-6 md:px-6 md:py-10 xl:py-12">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 gap-8 md:h-[calc(100vh-22rem)] md:min-h-[620px] md:grid-cols-[minmax(0,1.05fr)_minmax(340px,0.95fr)] md:items-stretch lg:grid-cols-[minmax(0,1.05fr)_minmax(420px,0.95fr)]">
-            <div className="order-1 min-h-0 md:h-full md:overflow-y-auto md:pr-1 xl:pr-2">
-              {isMapZoneFilteringActive && (
-                <div className="mb-4 flex items-center gap-2 rounded-lg border border-border bg-background px-4 py-3 text-sm font-body text-muted-foreground">
-                  <SlidersHorizontal className="w-4 h-4 shrink-0 text-primary" />
-                  <span>Résultats ajustés à la zone actuellement visible sur la carte</span>
+            <div className="relative flex justify-end">
+              <button
+                type="button"
+                onClick={() => setDesktopMenuOpen((current) => !current)}
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-background text-foreground shadow-sm transition-colors hover:border-foreground"
+                aria-label="Ouvrir le menu"
+                aria-expanded={desktopMenuOpen}
+              >
+                <Menu className="h-5 w-5" />
+              </button>
+
+              {desktopMenuOpen && (
+                <div className="absolute right-0 top-[calc(100%+0.75rem)] z-[1200] w-72 overflow-hidden rounded-2xl border border-border bg-background p-2 text-foreground shadow-2xl">
+                  <SearchMenuLink to="/" label="Accueil" icon={<Home className="h-4 w-4" />} onClick={() => setDesktopMenuOpen(false)} />
+                  <SearchMenuLink to="/recherche" label="Trouver ma salle" icon={<Sparkles className="h-4 w-4" />} onClick={() => setDesktopMenuOpen(false)} />
+                  <SearchMenuLink to="/blog" label="Blog" icon={<FileText className="h-4 w-4" />} onClick={() => setDesktopMenuOpen(false)} />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDesktopMenuOpen(false);
+                      openModal();
+                    }}
+                    className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-body font-semibold transition-colors hover:bg-muted"
+                  >
+                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-secondary text-primary">
+                      <Building2 className="h-4 w-4" />
+                    </span>
+                    Référencer mon établissement
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDesktopMenuOpen(false);
+                      setShowCodeSearch(true);
+                    }}
+                    className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-body font-semibold transition-colors hover:bg-muted"
+                  >
+                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-secondary text-primary">
+                      <Search className="h-4 w-4" />
+                    </span>
+                    Code lieu
+                  </button>
                 </div>
               )}
-                {results.length > 0 ? (
-                  <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-                    {results.map((venue) => (
-                      <VenueGridCard key={venue.id} venue={venue} size="large" />
-                    ))}
-                  </div>
-                ) : filteredResults.length > 0 ? (
-                  <div className="rounded-lg border border-border bg-background py-20 text-center">
-                    <p className="mb-2 font-heading text-2xl font-semibold">Aucune salle dans la zone affichée</p>
-                    <p className="mx-auto max-w-md text-sm font-body text-muted-foreground">
-                      Déplacez la carte ou cliquez sur “Recentrer” pour revoir l'ensemble des lieux correspondant à vos filtres.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="rounded-lg border border-border bg-background py-20 text-center">
-                    <p className="mb-2 font-heading text-2xl font-semibold">Aucune salle trouvée</p>
-                    <p className="mx-auto max-w-md text-sm font-body text-muted-foreground">
-                      Essayez une autre ville, un autre format ou un volume d'invités différent.
-                    </p>
-                  </div>
-                )}
+            </div>
+          </div>
+        </header>
+      )}
+
+      {isMobile && (
+        <section className="bg-background pb-28 pt-[calc(5rem+env(safe-area-inset-top))] md:hidden">
+          <div className="sticky top-[calc(4.25rem+env(safe-area-inset-top))] z-[900] border-b border-border bg-background/95 pb-3 pt-2 backdrop-blur-xl">
+            <div className="px-4">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setMobileSearchOpen(true)}
+                  className="flex min-w-0 flex-1 items-center gap-3 rounded-full border border-border bg-card px-3 py-2.5 text-left shadow-lg active:scale-[0.99]"
+                >
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-foreground text-primary-foreground">
+                    <Search className="h-4 w-4" />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-body font-semibold text-foreground">
+                      {locationQuery || "Où recherchez-vous ?"}
+                    </span>
+                    <span className="mt-0.5 block truncate text-xs font-body text-muted-foreground">
+                      {mobileSearchSummary}
+                    </span>
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowAllFilters(true)}
+                  className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-border bg-background text-foreground shadow-md active:scale-[0.97]"
+                  aria-label="Tous les filtres"
+                >
+                  <SlidersHorizontal className="h-5 w-5" />
+                </button>
+              </div>
+
+              <div className="mt-3 flex gap-2 overflow-x-auto pb-1 hide-scrollbar">
+                <MobileQuickChip label={eventType || "Type"} active={Boolean(eventType)} onClick={() => setMobileSearchOpen(true)} />
+                <MobileQuickChip label={mobileDateLabel || "Date"} active={Boolean(eventDate)} onClick={() => setMobileSearchOpen(true)} />
+                <MobileQuickChip label={guests ? `${guests} invités` : "Invités"} active={Boolean(guests)} onClick={() => setMobileSearchOpen(true)} />
+                <MobileQuickChip label={priceTier || "Prix"} active={Boolean(priceTier)} onClick={() => setShowAllFilters(true)} />
+                <MobileQuickChip label={ambianceType || "Ambiance"} active={Boolean(ambianceType)} onClick={() => setShowAllFilters(true)} />
+                <MobileQuickChip label={activeAdvancedFilterCount ? `${activeAdvancedFilterCount} filtre${activeAdvancedFilterCount > 1 ? "s" : ""}` : "Plus"} active={activeAdvancedFilterCount > 0} onClick={() => setShowAllFilters(true)} />
+              </div>
+            </div>
+          </div>
+
+          <div id="salles" className="scroll-mt-40 px-4 pt-5">
+            <div className="mb-5 flex items-end justify-between gap-3">
+              <div>
+                <p className="text-xs font-body font-semibold uppercase text-primary">
+                  Lieux vérifiés
+                </p>
+                <h1 className="mt-1 font-heading text-2xl font-semibold text-foreground">
+                  {results.length} salle{results.length !== 1 ? "s" : ""}
+                </h1>
+              </div>
+              <button
+                type="button"
+                onClick={() => setMobileSearchOpen(true)}
+                className="rounded-full border border-border px-4 py-2 text-sm font-body font-semibold text-foreground active:bg-muted"
+              >
+                Modifier
+              </button>
             </div>
 
-            <aside className="order-2 hidden min-h-0 md:block md:h-full">
-              <SearchResultsMap
-                venues={filteredResults}
-                onVisibleVenuesChange={setVisibleVenueIds}
-                className="md:h-full"
-              />
-            </aside>
+            {results.length > 0 ? (
+              <div className="space-y-8">
+                {results.map((venue) => (
+                  <VenueGridCard key={venue.id} venue={venue} variant="mobile" />
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-border bg-card px-5 py-16 text-center">
+                <p className="mb-2 font-heading text-2xl font-semibold">Aucune salle trouvée</p>
+                <p className="text-sm font-body text-muted-foreground">
+                  Essayez une autre ville, un autre format ou un volume d'invités différent.
+                </p>
+              </div>
+            )}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setMobileMapOpen(true)}
+            className="fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] left-1/2 z-[950] inline-flex -translate-x-1/2 items-center gap-2 rounded-full bg-foreground px-5 py-3 text-sm font-body font-semibold text-primary-foreground shadow-2xl active:scale-[0.97]"
+          >
+            Carte
+            <MapIcon className="h-4 w-4" />
+          </button>
+        </section>
+      )}
+
+      {!isMobile && (
+        <div id="salles" className="scroll-mt-24 px-4 py-6 md:px-6 md:pb-6 md:pt-24">
+          <div className="max-w-7xl mx-auto">
+            <div className="grid grid-cols-1 gap-8 md:h-[calc(100vh-12rem)] md:min-h-[560px] md:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.95fr)] md:items-stretch lg:grid-cols-[minmax(0,1.05fr)_minmax(440px,0.95fr)]">
+              <div className="order-1 min-h-0 md:h-full md:overflow-y-auto md:pr-1 xl:pr-2">
+                {isMapZoneFilteringActive && (
+                  <div className="mb-4 flex items-center gap-2 rounded-lg border border-border bg-background px-4 py-3 text-sm font-body text-muted-foreground">
+                    <SlidersHorizontal className="w-4 h-4 shrink-0 text-primary" />
+                    <span>Résultats ajustés à la zone actuellement visible sur la carte</span>
+                  </div>
+                )}
+                  {results.length > 0 ? (
+                    <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+                      {results.map((venue) => (
+                        <VenueGridCard key={venue.id} venue={venue} size="large" />
+                      ))}
+                    </div>
+                  ) : filteredResults.length > 0 ? (
+                    <div className="rounded-lg border border-border bg-background py-20 text-center">
+                      <p className="mb-2 font-heading text-2xl font-semibold">Aucune salle dans la zone affichée</p>
+                      <p className="mx-auto max-w-md text-sm font-body text-muted-foreground">
+                        Déplacez la carte ou cliquez sur “Recentrer” pour revoir l'ensemble des lieux correspondant à vos filtres.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="rounded-lg border border-border bg-background py-20 text-center">
+                      <p className="mb-2 font-heading text-2xl font-semibold">Aucune salle trouvée</p>
+                      <p className="mx-auto max-w-md text-sm font-body text-muted-foreground">
+                        Essayez une autre ville, un autre format ou un volume d'invités différent.
+                      </p>
+                    </div>
+                  )}
+              </div>
+
+              <aside className="order-2 hidden min-h-0 md:block md:h-full">
+                <SearchResultsMap
+                  venues={filteredResults}
+                  onVisibleVenuesChange={setVisibleVenueIds}
+                  className="md:h-full"
+                />
+              </aside>
+            </div>
           </div>
         </div>
-      </div>
+      )}
+
+      {mobileSearchOpen && (
+        <div className="fixed inset-0 z-[2200] flex items-end bg-foreground/70 backdrop-blur-md md:hidden" onClick={() => setMobileSearchOpen(false)}>
+          <div
+            className="flex max-h-[88dvh] w-full flex-col overflow-hidden rounded-t-3xl bg-background text-foreground luxury-shadow animate-slide-up"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-border px-5 py-4">
+              <div>
+                <p className="text-xs font-body font-semibold text-primary">Recherche</p>
+                <h2 className="font-heading text-3xl font-semibold">Trouver une salle</h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setMobileSearchOpen(false)}
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-border text-muted-foreground active:bg-muted"
+                aria-label="Fermer la recherche"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="flex-1 space-y-4 overflow-y-auto px-5 py-5">
+              <div>
+                <p className="mb-2 text-xs font-body font-semibold uppercase text-muted-foreground">Lieu</p>
+                <LocationAutocomplete
+                  value={locationQuery}
+                  onChange={setLocationQuery}
+                  options={locationOptions}
+                  placeholder="Ville ou code postal"
+                  className="h-12"
+                  icon={<MapPin className="w-4 h-4" />}
+                />
+              </div>
+
+              <div>
+                <p className="mb-2 text-xs font-body font-semibold uppercase text-muted-foreground">Date</p>
+                <label className="flex h-12 items-center gap-2 rounded-lg border border-border bg-background px-3 focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/20">
+                  <CalendarDays className="h-4 w-4 shrink-0 text-primary" />
+                  <input
+                    type="date"
+                    value={eventDate}
+                    onChange={(event) => setEventDate(event.target.value)}
+                    className="min-w-0 flex-1 bg-transparent text-sm font-body font-semibold focus:outline-none [color-scheme:light]"
+                    aria-label="Date de l'événement"
+                  />
+                </label>
+              </div>
+
+              <div>
+                <p className="mb-2 text-xs font-body font-semibold uppercase text-muted-foreground">Type d'événement</p>
+                <FilterSelect
+                  value={eventType}
+                  onChange={setEventType}
+                  placeholder="Type d'événement"
+                  emptyLabel="Tous les types"
+                  options={EVENT_TYPES}
+                  icon={<Sparkles className="w-4 h-4" />}
+                  className="h-12"
+                />
+              </div>
+
+              <div>
+                <p className="mb-2 text-xs font-body font-semibold uppercase text-muted-foreground">Invités</p>
+                <div className="flex h-12 items-center gap-2 rounded-lg border border-border bg-background px-3 focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/20">
+                  <Users className="w-4 h-4 text-primary shrink-0" />
+                  <input
+                    type="number"
+                    value={guests}
+                    onChange={(event) => setGuests(event.target.value)}
+                    placeholder="Nombre d'invités"
+                    className="min-w-0 flex-1 bg-transparent text-sm font-body font-semibold focus:outline-none"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t border-border p-5">
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileSearchOpen(false);
+                  document.getElementById("salles")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}
+                className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-sm font-body font-semibold text-primary-foreground active:scale-[0.98]"
+              >
+                <Search className="h-4 w-4" />
+                Voir {filteredResults.length} salle{filteredResults.length !== 1 ? "s" : ""}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {mobileMapOpen && (
+        <div className="fixed inset-0 z-[2300] bg-background md:hidden">
+          <div className="absolute inset-x-0 top-0 z-[700] flex items-center justify-between px-4 pb-3 pt-[max(1rem,env(safe-area-inset-top))]">
+            <button
+              type="button"
+              onClick={() => setMobileMapOpen(false)}
+              className="inline-flex h-11 items-center gap-2 rounded-full bg-background px-4 text-sm font-body font-semibold text-foreground shadow-xl"
+            >
+              <X className="h-4 w-4" />
+              Liste
+            </button>
+            <span className="rounded-full bg-background px-4 py-2 text-sm font-body font-semibold text-foreground shadow-xl">
+              {filteredResults.length} lieu{filteredResults.length > 1 ? "x" : ""}
+            </span>
+          </div>
+          <SearchResultsMap
+            venues={filteredResults}
+            onVisibleVenuesChange={setVisibleVenueIds}
+            className="h-full rounded-none border-0 shadow-none"
+            fullHeight
+            interactiveOnMobile
+            hideBadge
+          />
+        </div>
+      )}
 
       {showAllFilters && (
         <div className="fixed inset-0 z-[2200] flex items-end bg-foreground/70 p-0 backdrop-blur-md sm:items-center sm:justify-center sm:p-4">

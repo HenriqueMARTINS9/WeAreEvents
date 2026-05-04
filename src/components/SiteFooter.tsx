@@ -37,7 +37,12 @@ const SiteFooter = ({ variant = "light" }: SiteFooterProps) => {
         <div>
           <h4 className="font-body font-semibold text-sm mb-3">Contact</h4>
           <div className={`space-y-2 text-sm font-body ${isDark ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
-            <p>contact@wearevents.fr</p>
+            <a
+              href="mailto:contact@wearevents.fr"
+              className={`block transition-colors ${isDark ? "hover:text-primary-foreground" : "hover:text-foreground"}`}
+            >
+              contact@wearevents.fr
+            </a>
             <p>Paris, France</p>
             <button
               type="button"
