@@ -369,8 +369,8 @@ const SearchResults = () => {
       )}
 
       {isMobile && (
-        <section className="bg-background pb-28 pt-[calc(4.25rem+env(safe-area-inset-top))] md:hidden">
-          <div className="sticky top-[calc(3.75rem+env(safe-area-inset-top))] z-[900] border-b border-border bg-background/95 pb-3 pt-1 backdrop-blur-xl">
+        <section className="bg-background pb-28 pt-[calc(4.5rem+env(safe-area-inset-top))] md:hidden">
+          <div className="sticky top-[calc(4.25rem+env(safe-area-inset-top))] z-[900] border-b border-border bg-background/95 pb-3 pt-1 backdrop-blur-xl">
             <div className="px-4">
               <div className="flex items-center gap-2">
                 <button
