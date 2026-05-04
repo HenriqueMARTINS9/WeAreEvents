@@ -6,12 +6,13 @@ import type { Venue } from "@/types/venue";
 interface VenueGridCardProps {
   venue: Venue;
   size?: "default" | "large";
-  variant?: "default" | "mobile";
+  variant?: "default" | "mobile" | "search";
 }
 
 const VenueGridCard = ({ venue, size = "default", variant = "default" }: VenueGridCardProps) => {
   const navigate = useNavigate();
   const isLarge = size === "large";
+  const isSearch = variant === "search";
   const images = useMemo(
     () => [venue.coverImage, ...venue.gallery].filter((image, index, list) => image && list.indexOf(image) === index),
     [venue.coverImage, venue.gallery],
@@ -96,7 +97,9 @@ const VenueGridCard = ({ venue, size = "default", variant = "default" }: VenueGr
   return (
     <div
       onClick={() => navigate(`/salle/${venue.slug}`)}
-      className="group flex h-full cursor-pointer flex-col overflow-hidden rounded-lg border border-border bg-card luxury-shadow transition-all duration-300 hover:-translate-y-1 hover:border-primary/40"
+      className={`group flex h-full cursor-pointer flex-col overflow-hidden rounded-lg border border-border bg-card transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 ${
+        isSearch ? "shadow-sm hover:shadow-xl" : "luxury-shadow"
+      }`}
     >
       <div className={`relative overflow-hidden bg-foreground ${isLarge ? "h-72" : "h-64"}`}>
         <img

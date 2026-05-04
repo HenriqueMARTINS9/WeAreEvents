@@ -446,7 +446,7 @@ const SearchResults = () => {
         <div id="salles" className="scroll-mt-24 bg-card px-4 py-6 md:px-6 md:pb-6 md:pt-24">
           <div className="max-w-7xl mx-auto">
             <div className="grid grid-cols-1 gap-8 md:h-[calc(100vh-12rem)] md:min-h-[560px] md:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.95fr)] md:items-stretch lg:grid-cols-[minmax(0,1.05fr)_minmax(440px,0.95fr)]">
-              <div className="order-1 min-h-0 bg-card md:h-full md:overflow-y-auto md:pr-1 xl:pr-2">
+              <div className="order-1 min-h-0 bg-card md:h-full md:overflow-y-auto md:px-2 md:py-2 xl:px-3">
                 {isMapZoneFilteringActive && (
                   <div className="mb-4 flex items-center gap-2 rounded-lg border border-border bg-background px-4 py-3 text-sm font-body text-muted-foreground">
                     <SlidersHorizontal className="w-4 h-4 shrink-0 text-primary" />
@@ -454,9 +454,9 @@ const SearchResults = () => {
                   </div>
                 )}
                   {results.length > 0 ? (
-                    <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+                    <div className="grid grid-cols-1 gap-6 pb-8 xl:grid-cols-2">
                       {results.map((venue) => (
-                        <VenueGridCard key={venue.id} venue={venue} size="large" />
+                        <VenueGridCard key={venue.id} venue={venue} size="large" variant="search" />
                       ))}
                     </div>
                   ) : filteredResults.length > 0 ? (
