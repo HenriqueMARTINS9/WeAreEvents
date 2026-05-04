@@ -127,6 +127,37 @@ const SearchResults = () => {
     }, 80);
   }, []);
 
+  useEffect(() => {
+    if (!isMobile || !mobileSearchOpen) return;
+
+    const scrollY = window.scrollY;
+    const originalStyles = {
+      position: document.body.style.position,
+      top: document.body.style.top,
+      left: document.body.style.left,
+      right: document.body.style.right,
+      width: document.body.style.width,
+      overflow: document.body.style.overflow,
+    };
+
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.left = "0";
+    document.body.style.right = "0";
+    document.body.style.width = "100%";
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.position = originalStyles.position;
+      document.body.style.top = originalStyles.top;
+      document.body.style.left = originalStyles.left;
+      document.body.style.right = originalStyles.right;
+      document.body.style.width = originalStyles.width;
+      document.body.style.overflow = originalStyles.overflow;
+      window.scrollTo(0, scrollY);
+    };
+  }, [isMobile, mobileSearchOpen]);
+
   const results = useMemo(() => {
     if (isMobile || visibleVenueIds === null) return filteredResults;
 
