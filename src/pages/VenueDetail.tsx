@@ -337,7 +337,7 @@ const VenueDetail = () => {
             <aside className="lg:sticky lg:top-28 lg:self-start">
               <div className="rounded-lg border border-border bg-card p-5 luxury-shadow lg:max-h-[calc(100dvh-8rem)] lg:overflow-y-auto">
                 <p className="text-xs font-body font-semibold text-primary">Réservation</p>
-                <h2 className="mt-2 font-heading text-3xl font-semibold">{venue.pricingText}</h2>
+                <h2 className="mt-2 font-heading text-3xl font-semibold">Demande de disponibilité</h2>
                 <p className="mt-2 text-sm font-body text-muted-foreground">Recevez un retour qualifié sur la disponibilité, les options et la cohérence avec votre événement.</p>
                 <div className="mt-5 grid grid-cols-2 gap-3">
                   <div className="rounded-lg bg-secondary p-3">
