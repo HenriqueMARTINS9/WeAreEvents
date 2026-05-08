@@ -1,8 +1,12 @@
 create extension if not exists pgcrypto;
 
-insert into storage.buckets (id, name, public)
-values ('wearevents-images', 'wearevents-images', true)
-on conflict (id) do update set public = excluded.public;
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('wearevents-images', 'wearevents-images', true, 262144000, null)
+on conflict (id) do update
+set
+  public = excluded.public,
+  file_size_limit = excluded.file_size_limit,
+  allowed_mime_types = excluded.allowed_mime_types;
 
 create table if not exists public.venues (
   id uuid primary key default gen_random_uuid(),

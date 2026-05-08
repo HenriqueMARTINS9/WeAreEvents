@@ -31,9 +31,67 @@ const toNumber = (value: string, fallback = 0) => {
   return Number.isFinite(parsed) ? parsed : fallback;
 };
 
+type ReservationOptionForm = {
+  name: string;
+  capacity: string;
+  description: string;
+};
+
+const parseReservationOptions = (value: string): ReservationOptionForm[] => {
+  const options = value
+    .split("\n")
+    .map((line) => {
+      const [name = "", capacity = "", description = ""] = line.split("|").map((part) => part.trim());
+      return { name, capacity, description };
+    })
+    .filter((option) => option.name || option.capacity || option.description);
+
+  return options.length ? options : [{ name: "", capacity: "", description: "" }];
+};
+
+const serializeReservationOptions = (options: ReservationOptionForm[]) =>
+  options
+    .map((option) => [option.name, option.capacity, option.description].map((part) => part.trim()).join(" | "))
+    .join("\n");
+
 const imageBucket = "wearevents-images";
+const maxUploadSizeBytes = 250 * 1024 * 1024;
 type UploadedMedia = { url: string; kind: "image" | "video" };
 type VenueMediaTarget = "principale" | "secondaires" | "video";
+
+const formatFileSize = (size: number) => `${Math.round(size / 1024 / 1024)} Mo`;
+
+const getFileExtension = (file: File) => file.name.split(".").pop()?.toLowerCase() ?? "";
+
+const getMediaKind = (file: File): UploadedMedia["kind"] | null => {
+  const extension = getFileExtension(file);
+
+  if (file.type.startsWith("image/") || ["jpg", "jpeg", "png", "webp", "gif", "avif", "heic", "heif"].includes(extension)) {
+    return "image";
+  }
+
+  if (file.type.startsWith("video/") || ["mp4", "mov", "m4v", "webm"].includes(extension)) {
+    return "video";
+  }
+
+  return null;
+};
+
+const getUploadContentType = (file: File, kind: UploadedMedia["kind"]) => {
+  if (file.type) return file.type;
+
+  const extension = getFileExtension(file);
+  if (extension === "mov") return "video/quicktime";
+  if (extension === "m4v") return "video/x-m4v";
+  if (extension === "webm") return "video/webm";
+  if (extension === "mp4") return "video/mp4";
+  if (extension === "png") return "image/png";
+  if (extension === "webp") return "image/webp";
+  if (extension === "gif") return "image/gif";
+  if (extension === "avif") return "image/avif";
+
+  return kind === "video" ? "video/mp4" : "image/jpeg";
+};
 
 const formatAdminError = (error: unknown) => {
   const message =
@@ -53,6 +111,14 @@ const formatAdminError = (error: unknown) => {
 
   if (/row-level security|permission denied|not authorized|unauthorized/i.test(message)) {
     return `${message} — Vérifie que tu es connecté avec un utilisateur Supabase Auth et que les policies RLS ont été créées.`;
+  }
+
+  if (/maximum allowed size|exceeded.*size|file.*too large|payload too large|entity too large/i.test(message)) {
+    return `${message} — La vidéo dépasse la limite Supabase. Relance le SQL du bucket puis vérifie aussi la limite globale dans Storage Settings.`;
+  }
+
+  if (/mime|content.?type|file type/i.test(message)) {
+    return `${message} — Le type du fichier est refusé. Les .mov sont envoyés comme video/quicktime côté app.`;
   }
 
   if (/bucket|storage|object/i.test(message)) {
@@ -207,18 +273,22 @@ const Admin = () => {
     const uploads: UploadedMedia[] = [];
 
     for (const [index, file] of Array.from(files).entries()) {
-      const kind: UploadedMedia["kind"] | null = file.type.startsWith("image/")
-        ? "image"
-        : file.type.startsWith("video/")
-          ? "video"
-          : null;
+      if (file.size > maxUploadSizeBytes) {
+        throw new Error(`${file.name} fait ${formatFileSize(file.size)}. La limite configurée côté app est ${formatFileSize(maxUploadSizeBytes)}.`);
+      }
+
+      const kind = getMediaKind(file);
 
       if (!kind || !acceptedKinds.includes(kind)) continue;
 
-      const extension = file.name.includes(".") ? file.name.split(".").pop() : kind === "video" ? "mp4" : "jpg";
+      const extension = getFileExtension(file) || (kind === "video" ? "mp4" : "jpg");
       const safeName = slugify(file.name.replace(/\.[^.]+$/, "")) || "image";
       const path = `${folder}/${Date.now()}-${index + 1}-${safeName}.${extension}`;
-      const { error } = await supabase.storage.from(imageBucket).upload(path, file, { cacheControl: "31536000", upsert: false });
+      const { error } = await supabase.storage.from(imageBucket).upload(path, file, {
+        cacheControl: "31536000",
+        contentType: getUploadContentType(file, kind),
+        upsert: false,
+      });
       if (error) throw error;
       uploads.push({ kind, url: supabase.storage.from(imageBucket).getPublicUrl(path).data.publicUrl });
     }
@@ -391,6 +461,7 @@ const Admin = () => {
       if (!payload.address) throw new Error("L'adresse est obligatoire.");
       if (!payload.contact_email) throw new Error("L'email contact est obligatoire.");
       if (!payload.cover_image) throw new Error("Ajoute une image principale avant d'enregistrer la salle.");
+      if (!spaces.length) throw new Error("Ajoute au moins une option de réservation.");
 
       const { error } = editingVenueId
         ? await supabase.from("venues").update(payload).eq("id", editingVenueId)
@@ -875,7 +946,7 @@ const VenueForm = ({
     <AdminTextarea label="Services" hint="Sépare par virgule ou ligne." value={form.services} onChange={(value) => setForm({ ...form, services: value })} />
     <AdminTextarea label="Types d'ambiance" hint={`Ex: ${AMBIANCE_TYPES.join(", ")}`} value={form.ambianceTypes} onChange={(value) => setForm({ ...form, ambianceTypes: value })} />
     <AdminTextarea label="Personnalisation externe" hint={`Ex: ${EXTERNAL_OPTIONS.join(", ")}`} value={form.externalOptions} onChange={(value) => setForm({ ...form, externalOptions: value })} />
-    <AdminTextarea label="Espaces" hint="Une ligne par espace : Nom | Capacité | Description" value={form.spaces} onChange={(value) => setForm({ ...form, spaces: value })} />
+    <ReservationOptionsField value={form.spaces} onChange={(value) => setForm({ ...form, spaces: value })} />
     <AdminTextarea label="Accès" value={form.accessDetails} onChange={(value) => setForm({ ...form, accessDetails: value })} />
     <AdminTextarea label="Informations utiles" value={form.usefulInformation} onChange={(value) => setForm({ ...form, usefulInformation: value })} />
     <AdminInput label="Début vidéo en secondes" value={form.videoStartSeconds} onChange={(value) => setForm({ ...form, videoStartSeconds: value })} />
@@ -914,6 +985,96 @@ const BlogForm = ({ form, setForm, saving, editing, onSubmit, onFilesSelected, u
     <SubmitBar saving={saving} label={editing ? "Mettre à jour l'article" : "Publier l'article"} />
   </form>
 );
+
+const ReservationOptionsField = ({ value, onChange }: { value: string; onChange: (value: string) => void }) => {
+  const options = parseReservationOptions(value);
+
+  const updateOption = (index: number, patch: Partial<ReservationOptionForm>) => {
+    const nextOptions = options.map((option, optionIndex) =>
+      optionIndex === index ? { ...option, ...patch } : option,
+    );
+    onChange(serializeReservationOptions(nextOptions));
+  };
+
+  const addOption = () => {
+    onChange(serializeReservationOptions([...options, { name: "", capacity: "", description: "" }]));
+  };
+
+  const removeOption = (index: number) => {
+    const nextOptions = options.filter((_option, optionIndex) => optionIndex !== index);
+    onChange(serializeReservationOptions(nextOptions.length ? nextOptions : [{ name: "", capacity: "", description: "" }]));
+  };
+
+  return (
+    <section className="rounded-lg border border-border bg-card p-4 xl:col-span-2">
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h3 className="text-sm font-body font-semibold">Options de réservation</h3>
+          <p className="mt-1 text-xs font-body leading-relaxed text-muted-foreground">
+            Créez les espaces sélectionnables dans la demande de disponibilité : salle principale, salle secondaire, annexe, terrasse...
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={addOption}
+          className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg border border-border bg-background px-4 text-sm font-body font-semibold transition-colors hover:border-primary/40"
+        >
+          <Plus className="h-4 w-4" />
+          Ajouter
+        </button>
+      </div>
+
+      <div className="space-y-3">
+        {options.map((option, index) => (
+          <div key={index} className="rounded-lg border border-border bg-background p-4">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <p className="text-xs font-body font-semibold text-primary">Option {index + 1}</p>
+              <button
+                type="button"
+                onClick={() => removeOption(index)}
+                className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-destructive/30 px-3 text-xs font-body font-semibold text-destructive transition-colors hover:bg-destructive hover:text-destructive-foreground"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Supprimer
+              </button>
+            </div>
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_8rem]">
+              <label>
+                <span className="mb-2 block text-xs font-body font-semibold text-muted-foreground">Nom</span>
+                <input
+                  value={option.name}
+                  onChange={(event) => updateOption(index, { name: event.target.value })}
+                  placeholder="Salle principale"
+                  className="h-11 w-full rounded-lg border border-border bg-card px-3 text-sm font-body outline-none focus:border-primary"
+                />
+              </label>
+              <label>
+                <span className="mb-2 block text-xs font-body font-semibold text-muted-foreground">Capacité</span>
+                <input
+                  type="number"
+                  value={option.capacity}
+                  onChange={(event) => updateOption(index, { capacity: event.target.value })}
+                  placeholder="120"
+                  className="h-11 w-full rounded-lg border border-border bg-card px-3 text-sm font-body outline-none focus:border-primary"
+                />
+              </label>
+              <label className="md:col-span-2">
+                <span className="mb-2 block text-xs font-body font-semibold text-muted-foreground">Description</span>
+                <textarea
+                  value={option.description}
+                  onChange={(event) => updateOption(index, { description: event.target.value })}
+                  rows={3}
+                  placeholder="Espace principal modulable, idéal pour cocktails, dîners et soirées privées."
+                  className="w-full rounded-lg border border-border bg-card px-3 py-3 text-sm font-body leading-relaxed outline-none focus:border-primary"
+                />
+              </label>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+};
 
 type FieldProps = {
   label: string;
