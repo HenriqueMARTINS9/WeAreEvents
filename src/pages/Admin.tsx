@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import {
   Building2,
@@ -99,6 +99,35 @@ const createEmptyVenueForm = () => ({
   reviewCount: "0",
 });
 
+type VenueFormState = ReturnType<typeof createEmptyVenueForm>;
+const venueDraftStorageKey = "wearevents-admin-venue-draft";
+
+const readVenueDraft = (): VenueFormState | null => {
+  if (typeof window === "undefined") return null;
+
+  try {
+    const rawDraft = window.localStorage.getItem(venueDraftStorageKey);
+    if (!rawDraft) return null;
+    const parsed = JSON.parse(rawDraft);
+
+    if (!parsed || typeof parsed !== "object") return null;
+
+    return { ...createEmptyVenueForm(), ...(parsed as Partial<VenueFormState>) };
+  } catch {
+    return null;
+  }
+};
+
+const writeVenueDraft = (form: VenueFormState) => {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(venueDraftStorageKey, JSON.stringify(form));
+};
+
+const clearVenueDraft = () => {
+  if (typeof window === "undefined") return;
+  window.localStorage.removeItem(venueDraftStorageKey);
+};
+
 const createEmptyBlogForm = () => ({
   title: "",
   slug: "",
@@ -162,6 +191,11 @@ const Admin = () => {
   useEffect(() => {
     loadAdminRecords();
   }, [session]);
+
+  useEffect(() => {
+    if (modal !== "venue" || editingVenueId) return;
+    writeVenueDraft(venueForm);
+  }, [editingVenueId, modal, venueForm]);
 
   const canSubmit = useMemo(() => Boolean(supabase && session), [session]);
   const activeVenues = adminVenues.filter((venue) => venue.active).length;
@@ -286,8 +320,10 @@ const Admin = () => {
   };
 
   const openCreateVenue = () => {
-    setVenueForm(createEmptyVenueForm());
+    const draft = readVenueDraft();
+    setVenueForm(draft ?? createEmptyVenueForm());
     setEditingVenueId(null);
+    setMessage(draft ? "Dernier brouillon de salle récupéré." : "");
     setModal("venue");
   };
 
@@ -362,6 +398,7 @@ const Admin = () => {
 
       if (error) throw error;
 
+      if (!editingVenueId) clearVenueDraft();
       setMessage(editingVenueId ? "Salle mise à jour." : "Salle ajoutée.");
       closeModal();
       loadAdminRecords();
@@ -544,7 +581,7 @@ const Admin = () => {
       </main>
 
       {modal === "venue" && (
-        <AdminModal title={editingVenueId ? "Modifier la salle" : "Ajouter une salle"} onClose={closeModal}>
+        <AdminModal title={editingVenueId ? "Modifier la salle" : "Ajouter une salle"} message={message} onClose={closeModal}>
           <VenueForm
             form={venueForm}
             setForm={setVenueForm}
@@ -559,7 +596,7 @@ const Admin = () => {
         </AdminModal>
       )}
       {modal === "blog" && (
-        <AdminModal title={editingBlogId ? "Modifier l'article" : "Ajouter un article"} onClose={closeModal}>
+        <AdminModal title={editingBlogId ? "Modifier l'article" : "Ajouter un article"} message={message} onClose={closeModal}>
           <BlogForm
             form={blogForm}
             setForm={setBlogForm}
@@ -751,7 +788,7 @@ const AdminTable = ({ title, description, createLabel, onCreate, columns, rows, 
   </section>
 );
 
-const AdminModal = ({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) => (
+const AdminModal = ({ title, message, onClose, children }: { title: string; message?: string; onClose: () => void; children: React.ReactNode }) => (
   <div className="fixed inset-0 z-[2200] flex items-center justify-center p-4">
     <div className="absolute inset-0 bg-foreground/70 backdrop-blur-md" onClick={onClose} />
     <section className="relative flex max-h-[92vh] w-full max-w-6xl flex-col overflow-hidden rounded-lg bg-background luxury-shadow">
@@ -761,7 +798,14 @@ const AdminModal = ({ title, onClose, children }: { title: string; onClose: () =
           <X className="h-4 w-4" />
         </button>
       </header>
-      <div className="overflow-y-auto p-5">{children}</div>
+      <div className="overflow-y-auto p-5">
+        {message && (
+          <div className="mb-5 rounded-lg border border-border bg-card px-4 py-3 text-sm font-body text-muted-foreground">
+            {message}
+          </div>
+        )}
+        {children}
+      </div>
     </section>
   </div>
 );
@@ -893,20 +937,30 @@ const AdminMediaField = ({
   multiple = false,
   multiline = false,
   required = false,
-}: any) => (
-  <section className="rounded-lg border border-border bg-card p-4">
-    <div className="mb-4 flex items-start gap-3">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-secondary text-secondary-foreground"><Image className="h-5 w-5" /></div>
-      <div>
-        <h3 className="font-body text-sm font-semibold">{title}</h3>
-        <p className="mt-1 text-xs font-body leading-relaxed text-muted-foreground">{description}</p>
+}: any) => {
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  return (
+    <section className="rounded-lg border border-border bg-card p-4">
+      <div className="mb-4 flex items-start gap-3">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-secondary text-secondary-foreground"><Image className="h-5 w-5" /></div>
+        <div>
+          <h3 className="font-body text-sm font-semibold">{title}</h3>
+          <p className="mt-1 text-xs font-body leading-relaxed text-muted-foreground">{description}</p>
+        </div>
       </div>
-    </div>
-    <div className="grid grid-cols-1 gap-3">
-      <label className="inline-flex h-11 cursor-pointer items-center justify-center gap-2 rounded-lg border border-border bg-background px-4 text-sm font-body font-semibold transition-colors hover:border-primary/40">
-        {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-        Importer
+      <div className="grid grid-cols-1 gap-3">
+        <button
+          type="button"
+          disabled={uploading}
+          onClick={() => fileInputRef.current?.click()}
+          className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-border bg-background px-4 text-sm font-body font-semibold transition-colors hover:border-primary/40 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+          {uploading ? "Import en cours..." : "Importer"}
+        </button>
         <input
+          ref={fileInputRef}
           type="file"
           accept={accept}
           multiple={multiple}
@@ -915,31 +969,31 @@ const AdminMediaField = ({
             onFilesSelected(event.target.files);
             event.currentTarget.value = "";
           }}
-          className="sr-only"
+          className="hidden"
         />
-      </label>
-      <label className="block">
-        <span className="mb-2 block text-xs font-body font-semibold text-muted-foreground">{fieldLabel}</span>
-        {multiline ? (
-          <textarea
-            value={value}
-            onChange={(event) => onChange(event.target.value)}
-            rows={5}
-            className="w-full rounded-lg border border-border bg-background px-3 py-3 text-sm font-body leading-relaxed outline-none focus:border-primary"
-          />
-        ) : (
-          <input
-            value={value}
-            onChange={(event) => onChange(event.target.value)}
-            required={required}
-            className="h-11 w-full rounded-lg border border-border bg-background px-3 text-sm font-body outline-none focus:border-primary"
-          />
-        )}
-      </label>
-      <p className="text-xs font-body text-muted-foreground">Le dossier est créé automatiquement au premier upload.</p>
-    </div>
-  </section>
-);
+        <label className="block">
+          <span className="mb-2 block text-xs font-body font-semibold text-muted-foreground">{fieldLabel}</span>
+          {multiline ? (
+            <textarea
+              value={value}
+              onChange={(event) => onChange(event.target.value)}
+              rows={5}
+              className="w-full rounded-lg border border-border bg-background px-3 py-3 text-sm font-body leading-relaxed outline-none focus:border-primary"
+            />
+          ) : (
+            <input
+              value={value}
+              onChange={(event) => onChange(event.target.value)}
+              required={required}
+              className="h-11 w-full rounded-lg border border-border bg-background px-3 text-sm font-body outline-none focus:border-primary"
+            />
+          )}
+        </label>
+        <p className="text-xs font-body text-muted-foreground">Le dossier est créé automatiquement au premier upload.</p>
+      </div>
+    </section>
+  );
+};
 
 const AdminInput = ({ label, value, onChange, required, placeholder }: FieldProps) => (
   <label className="block rounded-lg border border-border bg-card p-4">
