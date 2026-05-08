@@ -416,7 +416,7 @@ const BookingModal = ({ venue, onClose }: BookingModalProps) => {
                             : "border-border bg-secondary text-secondary-foreground"
                         }`}
                       >
-                        {space.capacity}
+                        {space.capacity} pers.
                       </span>
                     </div>
                     {selected && (

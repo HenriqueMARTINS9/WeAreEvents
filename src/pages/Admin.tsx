@@ -37,20 +37,34 @@ type ReservationOptionForm = {
   description: string;
 };
 
+const isNumericText = (value: string) => /^\d+$/.test(value.trim());
+
+const normalizeReservationOption = (option: ReservationOptionForm): ReservationOptionForm => {
+  const name = option.name.trim();
+  const capacity = option.capacity.trim();
+  const description = option.description.trim();
+
+  if (isNumericText(name) && capacity && !isNumericText(capacity)) {
+    return { name: capacity, capacity: name, description };
+  }
+
+  return { name, capacity, description };
+};
+
 const parseReservationOptions = (value: string): ReservationOptionForm[] => {
   const options = value
     .split("\n")
     .map((line) => {
-      const [name = "", capacity = "", description = ""] = line.split("|").map((part) => part.trim());
-      return { name, capacity, description };
-    })
-    .filter((option) => option.name || option.capacity || option.description);
+      const [name = "", capacity = "", ...descriptionParts] = line.split("|").map((part) => part.trim());
+      return normalizeReservationOption({ name, capacity, description: descriptionParts.join(" | ") });
+    });
 
   return options.length ? options : [{ name: "", capacity: "", description: "" }];
 };
 
 const serializeReservationOptions = (options: ReservationOptionForm[]) =>
   options
+    .map(normalizeReservationOption)
     .map((option) => [option.name, option.capacity, option.description].map((part) => part.trim()).join(" | "))
     .join("\n");
 
@@ -410,11 +424,15 @@ const Admin = () => {
     setMessage("");
 
     try {
-      const spaces = venueForm.spaces
-        .split("\n")
-        .map((line, index) => {
-          const [name = "", capacity = "0", description = ""] = line.split("|").map((part) => part.trim());
-          return { id: slugify(name) || `space-${index + 1}`, name, capacity: toNumber(capacity), description };
+      const spaces = parseReservationOptions(venueForm.spaces)
+        .map((option, index) => {
+          const normalizedOption = normalizeReservationOption(option);
+          return {
+            id: slugify(normalizedOption.name) || `space-${index + 1}`,
+            name: normalizedOption.name,
+            capacity: toNumber(normalizedOption.capacity),
+            description: normalizedOption.description,
+          };
         })
         .filter((space) => space.name);
 
@@ -462,6 +480,9 @@ const Admin = () => {
       if (!payload.contact_email) throw new Error("L'email contact est obligatoire.");
       if (!payload.cover_image) throw new Error("Ajoute une image principale avant d'enregistrer la salle.");
       if (!spaces.length) throw new Error("Ajoute au moins une option de réservation.");
+      if (spaces.some((space) => isNumericText(space.name))) {
+        throw new Error("Le nom d'une option de réservation ne peut pas être seulement un nombre. Mets par exemple Salle principale, puis la capacité dans le champ Capacité.");
+      }
 
       const { error } = editingVenueId
         ? await supabase.from("venues").update(payload).eq("id", editingVenueId)
@@ -536,7 +557,13 @@ const Admin = () => {
       maxCapacity: String(venue.max_capacity ?? ""),
       eventCategories: (venue.event_categories ?? []).join(", "),
       services: (venue.services ?? []).join(", "),
-      spaces: (venue.spaces ?? []).map((space: any) => `${space.name} | ${space.capacity} | ${space.description}`).join("\n"),
+      spaces: serializeReservationOptions(
+        (venue.spaces ?? []).map((space: any) => ({
+          name: String(space.name ?? ""),
+          capacity: String(space.capacity ?? ""),
+          description: String(space.description ?? ""),
+        })),
+      ),
       accessDetails: (venue.access_details ?? []).join("\n"),
       usefulInformation: (venue.useful_information ?? []).join("\n"),
       pricingText: venue.pricing_text ?? "",
@@ -1013,6 +1040,9 @@ const ReservationOptionsField = ({ value, onChange }: { value: string; onChange:
           <p className="mt-1 text-xs font-body leading-relaxed text-muted-foreground">
             Créez les espaces sélectionnables dans la demande de disponibilité : salle principale, salle secondaire, annexe, terrasse...
           </p>
+          <p className="mt-1 text-xs font-body leading-relaxed text-muted-foreground">
+            Le champ Nom est affiché sur la carte de réservation. La capacité apparaît dans la petite pastille à droite.
+          </p>
         </div>
         <button
           type="button"
@@ -1054,7 +1084,7 @@ const ReservationOptionsField = ({ value, onChange }: { value: string; onChange:
                   type="number"
                   value={option.capacity}
                   onChange={(event) => updateOption(index, { capacity: event.target.value })}
-                  placeholder="120"
+                  placeholder="120 pers."
                   className="h-11 w-full rounded-lg border border-border bg-card px-3 text-sm font-body outline-none focus:border-primary"
                 />
               </label>
