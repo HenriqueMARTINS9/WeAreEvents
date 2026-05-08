@@ -70,10 +70,15 @@ const serializeReservationOptions = (options: ReservationOptionForm[]) =>
 
 const imageBucket = "wearevents-images";
 const maxUploadSizeBytes = 250 * 1024 * 1024;
+const maxImageUploadSizeBytes = 1 * 1024 * 1024;
+const maxVideoUploadSizeBytes = 20 * 1024 * 1024;
 type UploadedMedia = { url: string; kind: "image" | "video" };
 type VenueMediaTarget = "principale" | "secondaires" | "video";
 
-const formatFileSize = (size: number) => `${Math.round(size / 1024 / 1024)} Mo`;
+const formatFileSize = (size: number) => {
+  if (size < 1024 * 1024) return `${Math.round(size / 1024)} Ko`;
+  return `${Math.round((size / 1024 / 1024) * 10) / 10} Mo`;
+};
 
 const getFileExtension = (file: File) => file.name.split(".").pop()?.toLowerCase() ?? "";
 
@@ -105,6 +110,237 @@ const getUploadContentType = (file: File, kind: UploadedMedia["kind"]) => {
   if (extension === "avif") return "image/avif";
 
   return kind === "video" ? "video/mp4" : "image/jpeg";
+};
+
+const canvasToBlob = (canvas: HTMLCanvasElement, type: string, quality: number) =>
+  new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (blob) resolve(blob);
+      else reject(new Error("Impossible de compresser l'image sélectionnée."));
+    }, type, quality);
+  });
+
+const waitForVideoEvent = (video: HTMLVideoElement, eventName: keyof HTMLMediaElementEventMap) =>
+  new Promise<void>((resolve, reject) => {
+    const handleEvent = () => {
+      cleanup();
+      resolve();
+    };
+    const handleError = () => {
+      cleanup();
+      reject(new Error("Impossible de lire la vidéo sélectionnée."));
+    };
+    const cleanup = () => {
+      video.removeEventListener(eventName, handleEvent);
+      video.removeEventListener("error", handleError);
+    };
+
+    video.addEventListener(eventName, handleEvent, { once: true });
+    video.addEventListener("error", handleError, { once: true });
+  });
+
+const getVideoRecorderMimeType = () => {
+  if (typeof MediaRecorder === "undefined") return "";
+
+  return (
+    [
+      "video/webm;codecs=vp9",
+      "video/webm;codecs=vp8",
+      "video/webm",
+      "video/mp4;codecs=h264",
+      "video/mp4",
+    ].find((mimeType) => MediaRecorder.isTypeSupported(mimeType)) ?? ""
+  );
+};
+
+const getVideoExtensionFromMimeType = (mimeType: string) => (mimeType.includes("mp4") ? "mp4" : "webm");
+
+const decodeImageFile = async (file: File) => {
+  try {
+    const bitmap = await createImageBitmap(file);
+    return {
+      source: bitmap as CanvasImageSource,
+      width: bitmap.width,
+      height: bitmap.height,
+      close: () => bitmap.close(),
+    };
+  } catch {
+    return new Promise<{ source: CanvasImageSource; width: number; height: number; close: () => void }>((resolve, reject) => {
+      const imageUrl = URL.createObjectURL(file);
+      const image = new window.Image();
+
+      image.onload = () => {
+        URL.revokeObjectURL(imageUrl);
+        resolve({
+          source: image,
+          width: image.naturalWidth,
+          height: image.naturalHeight,
+          close: () => undefined,
+        });
+      };
+
+      image.onerror = () => {
+        URL.revokeObjectURL(imageUrl);
+        reject(new Error(`Impossible de lire ${file.name}. Essaie avec une image JPG, PNG ou WebP.`));
+      };
+
+      image.src = imageUrl;
+    });
+  }
+};
+
+const compressImageForUpload = async (file: File) => {
+  if (file.size <= maxImageUploadSizeBytes) return file;
+
+  const decodedImage = await decodeImageFile(file);
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d");
+
+  if (!context) {
+    decodedImage.close();
+    throw new Error("Impossible de préparer la compression de l'image.");
+  }
+
+  const longestSide = Math.max(decodedImage.width, decodedImage.height);
+  let maxDimension = Math.min(longestSide, 2200);
+  let quality = 0.86;
+  let bestBlob: Blob | null = null;
+
+  try {
+    for (let attempt = 0; attempt < 24; attempt += 1) {
+      const scale = Math.min(1, maxDimension / longestSide);
+      canvas.width = Math.max(1, Math.round(decodedImage.width * scale));
+      canvas.height = Math.max(1, Math.round(decodedImage.height * scale));
+
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      context.fillStyle = "#ffffff";
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.drawImage(decodedImage.source, 0, 0, canvas.width, canvas.height);
+
+      const blob = await canvasToBlob(canvas, "image/jpeg", quality);
+      if (!bestBlob || blob.size < bestBlob.size) bestBlob = blob;
+      if (blob.size <= maxImageUploadSizeBytes) {
+        return new File([blob], `${slugify(file.name.replace(/\.[^.]+$/, "")) || "image"}.jpg`, {
+          type: "image/jpeg",
+          lastModified: Date.now(),
+        });
+      }
+
+      if (quality > 0.52) {
+        quality = Math.max(0.52, quality - 0.08);
+      } else {
+        maxDimension = Math.max(480, Math.round(maxDimension * 0.82));
+        quality = 0.82;
+      }
+    }
+  } finally {
+    decodedImage.close();
+  }
+
+  throw new Error(
+    `${file.name} reste trop lourde après compression (${bestBlob ? formatFileSize(bestBlob.size) : "taille inconnue"}). Essaie avec une image moins grande.`,
+  );
+};
+
+const compressVideoForUpload = async (file: File) => {
+  if (file.size <= maxVideoUploadSizeBytes) return file;
+
+  const mimeType = getVideoRecorderMimeType();
+  if (!mimeType) {
+    throw new Error("La compression vidéo n'est pas supportée par ce navigateur. Essaie avec Chrome ou Edge.");
+  }
+
+  const sourceUrl = URL.createObjectURL(file);
+  const video = document.createElement("video");
+  video.src = sourceUrl;
+  video.muted = true;
+  video.playsInline = true;
+  video.preload = "auto";
+
+  try {
+    await waitForVideoEvent(video, "loadedmetadata");
+
+    const duration = video.duration;
+    if (!Number.isFinite(duration) || duration <= 0) {
+      throw new Error("Impossible de déterminer la durée de la vidéo.");
+    }
+
+    const targetBitrate = Math.floor((maxVideoUploadSizeBytes * 8 * 0.72) / duration);
+    if (targetBitrate < 180_000) {
+      throw new Error(`La vidéo est trop longue pour être compressée à moins de ${formatFileSize(maxVideoUploadSizeBytes)} sans devenir illisible.`);
+    }
+
+    const videoBitrate = Math.max(180_000, Math.min(1_800_000, targetBitrate));
+    const maxDimension = videoBitrate < 500_000 ? 720 : videoBitrate < 900_000 ? 960 : 1280;
+    const scale = Math.min(1, maxDimension / Math.max(video.videoWidth, video.videoHeight));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(2, Math.round((video.videoWidth * scale) / 2) * 2);
+    canvas.height = Math.max(2, Math.round((video.videoHeight * scale) / 2) * 2);
+
+    const context = canvas.getContext("2d");
+    if (!context) throw new Error("Impossible de préparer la compression vidéo.");
+
+    const stream = canvas.captureStream(24);
+    const capturedSourceStream =
+      typeof (video as HTMLVideoElement & { captureStream?: () => MediaStream }).captureStream === "function"
+        ? (video as HTMLVideoElement & { captureStream: () => MediaStream }).captureStream()
+        : typeof (video as HTMLVideoElement & { mozCaptureStream?: () => MediaStream }).mozCaptureStream === "function"
+          ? (video as HTMLVideoElement & { mozCaptureStream: () => MediaStream }).mozCaptureStream()
+          : null;
+
+    capturedSourceStream?.getAudioTracks().forEach((track) => stream.addTrack(track));
+    const chunks: Blob[] = [];
+    const recorder = new MediaRecorder(stream, {
+      mimeType,
+      videoBitsPerSecond: videoBitrate,
+    });
+
+    const recording = new Promise<Blob>((resolve, reject) => {
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) chunks.push(event.data);
+      };
+      recorder.onerror = () => reject(new Error("La compression vidéo a échoué."));
+      recorder.onstop = () => resolve(new Blob(chunks, { type: mimeType.split(";")[0] || mimeType }));
+    });
+
+    let animationFrame = 0;
+    const drawFrame = () => {
+      if (video.paused || video.ended) return;
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      animationFrame = requestAnimationFrame(drawFrame);
+    };
+
+    if (video.readyState < HTMLMediaElement.HAVE_FUTURE_DATA) {
+      await waitForVideoEvent(video, "canplay");
+    }
+    recorder.start(1000);
+    await video.play();
+    drawFrame();
+    await waitForVideoEvent(video, "ended");
+
+    if (animationFrame) cancelAnimationFrame(animationFrame);
+    if (recorder.state !== "inactive") recorder.stop();
+
+    const compressedBlob = await recording;
+    stream.getTracks().forEach((track) => track.stop());
+
+    if (compressedBlob.size > maxVideoUploadSizeBytes) {
+      throw new Error(
+        `${file.name} reste trop lourde après compression (${formatFileSize(compressedBlob.size)}). Essaie une vidéo plus courte ou plus légère.`,
+      );
+    }
+
+    const extension = getVideoExtensionFromMimeType(mimeType);
+    return new File([compressedBlob], `${slugify(file.name.replace(/\.[^.]+$/, "")) || "video"}.${extension}`, {
+      type: compressedBlob.type,
+      lastModified: Date.now(),
+    });
+  } finally {
+    video.pause();
+    video.removeAttribute("src");
+    video.load();
+    URL.revokeObjectURL(sourceUrl);
+  }
 };
 
 const formatAdminError = (error: unknown) => {
@@ -295,12 +531,13 @@ const Admin = () => {
 
       if (!kind || !acceptedKinds.includes(kind)) continue;
 
-      const extension = getFileExtension(file) || (kind === "video" ? "mp4" : "jpg");
-      const safeName = slugify(file.name.replace(/\.[^.]+$/, "")) || "image";
+      const uploadFile = kind === "image" ? await compressImageForUpload(file) : await compressVideoForUpload(file);
+      const extension = getFileExtension(uploadFile) || (kind === "video" ? "mp4" : "jpg");
+      const safeName = slugify(uploadFile.name.replace(/\.[^.]+$/, "")) || "image";
       const path = `${folder}/${Date.now()}-${index + 1}-${safeName}.${extension}`;
-      const { error } = await supabase.storage.from(imageBucket).upload(path, file, {
+      const { error } = await supabase.storage.from(imageBucket).upload(path, uploadFile, {
         cacheControl: "31536000",
-        contentType: getUploadContentType(file, kind),
+        contentType: getUploadContentType(uploadFile, kind),
         upsert: false,
       });
       if (error) throw error;
@@ -1130,6 +1367,8 @@ const AdminMediaField = ({
   required = false,
 }: any) => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const compressesImages = typeof accept === "string" && accept.includes("image");
+  const compressesVideos = typeof accept === "string" && accept.includes("video");
 
   return (
     <section className="rounded-lg border border-border bg-card p-4">
@@ -1180,7 +1419,11 @@ const AdminMediaField = ({
             />
           )}
         </label>
-        <p className="text-xs font-body text-muted-foreground">Le dossier est créé automatiquement au premier upload.</p>
+        <p className="text-xs font-body text-muted-foreground">
+          {compressesImages ? "Les images sont compressées automatiquement à moins de 1 Mo. " : ""}
+          {compressesVideos ? `Les vidéos de plus de ${formatFileSize(maxVideoUploadSizeBytes)} sont compressées automatiquement. ` : ""}
+          Le dossier est créé automatiquement au premier upload.
+        </p>
       </div>
     </section>
   );

@@ -71,8 +71,10 @@ const mapBlogPost = (row: any): BlogPost => ({
   category: row.category ?? "",
   title: row.title,
   excerpt: row.excerpt ?? "",
+  content: row.content ?? "",
   readTime: row.read_time ?? "",
   image: row.image ?? "",
+  publishedAt: row.published_at ?? undefined,
 });
 
 export const filterVenues = (
@@ -198,6 +200,23 @@ export const fetchBlogPosts = async (): Promise<BlogPost[]> => {
   }
 
   return data.map(mapBlogPost);
+};
+
+export const fetchBlogPostBySlug = async (slug: string): Promise<BlogPost | undefined> => {
+  if (!supabase) return blogPosts.find((post) => post.slug === slug);
+
+  const { data, error } = await supabase
+    .from("blog_posts")
+    .select("*")
+    .eq("published", true)
+    .eq("slug", slug)
+    .maybeSingle();
+
+  if (!error && data) {
+    return mapBlogPost(data);
+  }
+
+  return blogPosts.find((post) => post.slug === slug);
 };
 
 export const findVenueByCode = async (code: string): Promise<Venue | undefined> => {

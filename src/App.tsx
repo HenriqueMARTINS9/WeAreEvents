@@ -8,6 +8,7 @@ import Index from "./pages/Index.tsx";
 import VenueDetail from "./pages/VenueDetail.tsx";
 import SearchResults from "./pages/SearchResults.tsx";
 import Blog from "./pages/Blog.tsx";
+import BlogDetail from "./pages/BlogDetail.tsx";
 import Admin from "./pages/Admin.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
@@ -24,6 +25,7 @@ const App = () => (
             <Route path="/salle/:slug" element={<VenueDetail />} />
             <Route path="/recherche" element={<SearchResults />} />
             <Route path="/blog" element={<Blog />} />
+            <Route path="/blog/:slug" element={<BlogDetail />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -62,7 +62,7 @@ const Blog = () => {
                     {heroPost.excerpt}
                   </p>
                   <Link
-                    to={`/blog#${heroPost.slug}`}
+                    to={`/blog/${heroPost.slug}`}
                     className="mt-7 inline-flex w-fit items-center gap-2 rounded-lg border border-border px-4 py-2.5 text-sm font-body font-semibold transition-colors hover:border-primary/40 hover:text-primary"
                   >
                     Lire l'article
@@ -78,7 +78,7 @@ const Blog = () => {
         <section className="px-6 pb-24">
           <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 md:grid-cols-3 xl:px-2">
             {posts.slice(1).map((post) => (
-              <article key={post.slug} id={post.slug} className="overflow-hidden rounded-lg border border-border bg-card">
+              <Link key={post.slug} to={`/blog/${post.slug}`} className="group overflow-hidden rounded-lg border border-border bg-card transition-transform hover:-translate-y-1">
                 <img src={post.image} alt="" className="h-56 w-full object-cover image-grade-luxe" />
                 <div className="p-6">
                   <div className="mb-4 flex items-center justify-between gap-3 text-xs font-body font-semibold text-muted-foreground">
@@ -88,10 +88,10 @@ const Blog = () => {
                       {post.readTime}
                     </span>
                   </div>
-                  <h2 className="font-heading text-2xl font-semibold leading-tight">{post.title}</h2>
+                  <h2 className="font-heading text-2xl font-semibold leading-tight group-hover:text-primary">{post.title}</h2>
                   <p className="mt-3 text-sm font-body leading-relaxed text-muted-foreground">{post.excerpt}</p>
                 </div>
-              </article>
+              </Link>
             ))}
           </div>
         </section>

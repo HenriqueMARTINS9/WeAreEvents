@@ -276,7 +276,7 @@ const DesktopHome = () => {
                   <h3 className="font-heading text-2xl font-semibold leading-tight">{post.title}</h3>
                   <p className="mt-3 text-sm font-body leading-relaxed text-muted-foreground">{post.excerpt}</p>
                   <button
-                    onClick={() => navigate(`/blog#${post.slug}`)}
+                    onClick={() => navigate(`/blog/${post.slug}`)}
                     className="mt-5 inline-flex items-center gap-2 text-sm font-body font-semibold text-foreground transition-colors hover:text-primary"
                   >
                     Lire l'article
