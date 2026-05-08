@@ -72,7 +72,14 @@ const imageBucket = "wearevents-images";
 const maxUploadSizeBytes = 250 * 1024 * 1024;
 const maxImageUploadSizeBytes = 1 * 1024 * 1024;
 const maxVideoUploadSizeBytes = 20 * 1024 * 1024;
-type UploadedMedia = { url: string; kind: "image" | "video" };
+type UploadedMedia = {
+  url: string;
+  kind: "image" | "video";
+  originalSize: number;
+  uploadedSize: number;
+  compressed: boolean;
+  note?: string;
+};
 type VenueMediaTarget = "principale" | "secondaires" | "video";
 
 const formatFileSize = (size: number) => {
@@ -120,8 +127,9 @@ const canvasToBlob = (canvas: HTMLCanvasElement, type: string, quality: number) 
     }, type, quality);
   });
 
-const waitForVideoEvent = (video: HTMLVideoElement, eventName: keyof HTMLMediaElementEventMap) =>
+const waitForVideoEvent = (video: HTMLVideoElement, eventName: keyof HTMLMediaElementEventMap, timeoutMs = 20_000) =>
   new Promise<void>((resolve, reject) => {
+    let timeoutId: number | undefined;
     const handleEvent = () => {
       cleanup();
       resolve();
@@ -133,10 +141,18 @@ const waitForVideoEvent = (video: HTMLVideoElement, eventName: keyof HTMLMediaEl
     const cleanup = () => {
       video.removeEventListener(eventName, handleEvent);
       video.removeEventListener("error", handleError);
+      if (timeoutId) window.clearTimeout(timeoutId);
     };
 
     video.addEventListener(eventName, handleEvent, { once: true });
     video.addEventListener("error", handleError, { once: true });
+
+    if (timeoutMs > 0) {
+      timeoutId = window.setTimeout(() => {
+        cleanup();
+        reject(new Error("La vidéo met trop de temps à être lue par le navigateur."));
+      }, timeoutMs);
+    }
   });
 
 const getVideoRecorderMimeType = () => {
@@ -316,7 +332,7 @@ const compressVideoForUpload = async (file: File) => {
     recorder.start(1000);
     await video.play();
     drawFrame();
-    await waitForVideoEvent(video, "ended");
+    await waitForVideoEvent(video, "ended", 0);
 
     if (animationFrame) cancelAnimationFrame(animationFrame);
     if (recorder.state !== "inactive") recorder.stop();
@@ -340,6 +356,41 @@ const compressVideoForUpload = async (file: File) => {
     video.removeAttribute("src");
     video.load();
     URL.revokeObjectURL(sourceUrl);
+  }
+};
+
+const prepareMediaFileForUpload = async (file: File, kind: UploadedMedia["kind"]) => {
+  if (kind === "image") {
+    const compressedImage = await compressImageForUpload(file);
+    return {
+      file: compressedImage,
+      compressed: compressedImage !== file,
+      note: compressedImage !== file ? `Image compressée de ${formatFileSize(file.size)} à ${formatFileSize(compressedImage.size)}.` : undefined,
+    };
+  }
+
+  if (file.size <= maxVideoUploadSizeBytes) {
+    return { file, compressed: false, note: undefined };
+  }
+
+  try {
+    const compressedVideo = await compressVideoForUpload(file);
+    return {
+      file: compressedVideo,
+      compressed: compressedVideo !== file,
+      note:
+        compressedVideo !== file
+          ? `Vidéo compressée de ${formatFileSize(file.size)} à ${formatFileSize(compressedVideo.size)}.`
+          : undefined,
+    };
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : "compression impossible";
+
+    return {
+      file,
+      compressed: false,
+      note: `Compression vidéo impossible (${reason}). La vidéo originale est envoyée en ${formatFileSize(file.size)}.`,
+    };
   }
 };
 
@@ -531,7 +582,8 @@ const Admin = () => {
 
       if (!kind || !acceptedKinds.includes(kind)) continue;
 
-      const uploadFile = kind === "image" ? await compressImageForUpload(file) : await compressVideoForUpload(file);
+      const preparedMedia = await prepareMediaFileForUpload(file, kind);
+      const uploadFile = preparedMedia.file;
       const extension = getFileExtension(uploadFile) || (kind === "video" ? "mp4" : "jpg");
       const safeName = slugify(uploadFile.name.replace(/\.[^.]+$/, "")) || "image";
       const path = `${folder}/${Date.now()}-${index + 1}-${safeName}.${extension}`;
@@ -541,7 +593,14 @@ const Admin = () => {
         upsert: false,
       });
       if (error) throw error;
-      uploads.push({ kind, url: supabase.storage.from(imageBucket).getPublicUrl(path).data.publicUrl });
+      uploads.push({
+        kind,
+        url: supabase.storage.from(imageBucket).getPublicUrl(path).data.publicUrl,
+        originalSize: file.size,
+        uploadedSize: uploadFile.size,
+        compressed: preparedMedia.compressed,
+        note: preparedMedia.note,
+      });
     }
 
     return uploads;
@@ -594,7 +653,13 @@ const Admin = () => {
 
       const targetLabel =
         target === "principale" ? "Image principale" : target === "secondaires" ? "Images secondaires" : "Vidéo";
-      setMessage(`${targetLabel} importée${urls.length > 1 ? "s" : ""} dans ${imageBucket}/${folder}.`);
+      const importNotes = media.map((item) => item.note).filter(Boolean);
+      setMessage(
+        [
+          `${targetLabel} importée${urls.length > 1 ? "s" : ""} dans ${imageBucket}/${folder}.`,
+          ...importNotes,
+        ].join(" "),
+      );
     } catch (error) {
       setMessage(formatAdminError(error));
     } finally {
@@ -616,7 +681,8 @@ const Admin = () => {
       const media = await uploadMediaFiles(files, folder, ["image"]);
       if (!media.length) throw new Error("Sélectionne au moins une image.");
       applyBlogImageUrls(media.map((item) => item.url));
-      setMessage("Image de l'article importée.");
+      const importNotes = media.map((item) => item.note).filter(Boolean);
+      setMessage(["Image de l'article importée.", ...importNotes].join(" "));
     } catch (error) {
       setMessage(formatAdminError(error));
     } finally {
@@ -1421,7 +1487,7 @@ const AdminMediaField = ({
         </label>
         <p className="text-xs font-body text-muted-foreground">
           {compressesImages ? "Les images sont compressées automatiquement à moins de 1 Mo. " : ""}
-          {compressesVideos ? `Les vidéos de plus de ${formatFileSize(maxVideoUploadSizeBytes)} sont compressées automatiquement. ` : ""}
+          {compressesVideos ? `Les vidéos de plus de ${formatFileSize(maxVideoUploadSizeBytes)} sont compressées si le navigateur le permet, sinon l'original est envoyé jusqu'à ${formatFileSize(maxUploadSizeBytes)}. ` : ""}
           Le dossier est créé automatiquement au premier upload.
         </p>
       </div>
