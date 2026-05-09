@@ -46,7 +46,7 @@ const HERO_MOMENTS = [
   },
 ] as const;
 
-const HERO_BACKGROUND_VIDEO = "https://videos.pexels.com/video-files/3571264/3571264-uhd_2560_1440_30fps.mp4";
+const HERO_BACKGROUND_VIDEO = "https://www.pexels.com/fr-fr/download/video/30077981/";
 
 const DesktopHome = () => {
   const navigate = useNavigate();
