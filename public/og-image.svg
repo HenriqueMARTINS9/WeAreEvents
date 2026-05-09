@@ -1,0 +1,19 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="630" fill="#171717"/>
+  <circle cx="960" cy="124" r="280" fill="#D94F6D" opacity="0.18"/>
+  <circle cx="172" cy="506" r="260" fill="#D94F6D" opacity="0.12"/>
+  <image href="/logo-white.svg" x="82" y="80" width="360" height="90" preserveAspectRatio="xMinYMid meet"/>
+  <text x="82" y="286" fill="#FFFFFF" font-family="Georgia, serif" font-size="78" font-weight="600">
+    Le lieu idéal pour
+  </text>
+  <text x="82" y="372" fill="#FFFFFF" font-family="Georgia, serif" font-size="78" font-weight="600">
+    votre événement.
+  </text>
+  <text x="86" y="454" fill="#D7D0CB" font-family="Arial, sans-serif" font-size="28">
+    Salles vérifiées, demandes gratuites et réponses qualifiées.
+  </text>
+  <rect x="82" y="508" width="256" height="58" rx="16" fill="#D94F6D"/>
+  <text x="112" y="546" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="22" font-weight="700">
+    Trouver ma salle
+  </text>
+</svg>

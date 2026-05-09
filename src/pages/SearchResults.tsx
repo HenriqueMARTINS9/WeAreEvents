@@ -14,6 +14,7 @@ import VenueCodeSearch from "@/components/VenueCodeSearch";
 import { useIsMobile } from "@/hooks/use-mobile";
 import logoBlack from "@/assets/logo-black.svg";
 import { useEstablishmentReferralModal } from "@/lib/establishment-referral-modal";
+import Seo, { siteUrl } from "@/components/Seo";
 
 const PRICE_FILTERS = ["€", "€€", "€€€", "€€€€"] as const;
 const VENUE_TYPE_FILTERS = ["Bar", "Restaurant", "Salle"] as const;
@@ -237,6 +238,19 @@ const SearchResults = () => {
 
   return (
     <div className={`min-h-screen ${isMobile ? "bg-background" : "bg-card"}`}>
+      <Seo
+        title="Trouver une salle événementielle - Recherche wearevents"
+        description="Recherchez une salle par ville, capacité, type d'événement, ambiance et budget. Comparez les lieux et envoyez une demande gratuite."
+        path="/recherche"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "CollectionPage",
+          name: "Recherche de salles événementielles",
+          description: "Salles, restaurants, bars et lieux événementiels disponibles à la privatisation.",
+          url: `${siteUrl}/recherche`,
+          numberOfItems: filteredResults.length,
+        }}
+      />
       {isMobile ? (
         <MobileHeader onCodeSearch={() => setShowCodeSearch(true)} withBackground />
       ) : (

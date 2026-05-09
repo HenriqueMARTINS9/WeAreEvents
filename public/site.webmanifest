@@ -1,0 +1,16 @@
+{
+  "name": "wearevents",
+  "short_name": "wearevents",
+  "description": "Trouvez le lieu idéal pour votre événement.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#171717",
+  "theme_color": "#D94F6D",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

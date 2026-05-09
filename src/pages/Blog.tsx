@@ -8,6 +8,7 @@ import SiteFooter from "@/components/SiteFooter";
 import VenueCodeSearch from "@/components/VenueCodeSearch";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { fetchBlogPosts } from "@/lib/supabase-data";
+import Seo, { siteUrl } from "@/components/Seo";
 
 const Blog = () => {
   const isMobile = useIsMobile();
@@ -17,6 +18,18 @@ const Blog = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <Seo
+        title="Blog événementiel - Conseils pour choisir le bon lieu"
+        description="Guides pratiques, checklists et conseils concrets pour choisir une salle, organiser un mariage, un anniversaire, un séminaire ou privatiser un lieu."
+        path="/blog"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "Blog",
+          name: "Blog wearevents",
+          description: "Conseils et guides pour trouver le bon lieu événementiel.",
+          url: `${siteUrl}/blog`,
+        }}
+      />
       {isMobile ? (
         <MobileHeader onCodeSearch={() => setShowCodeSearch(true)} withBackground />
       ) : (

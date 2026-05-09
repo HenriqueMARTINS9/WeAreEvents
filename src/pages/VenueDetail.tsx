@@ -10,6 +10,7 @@ import BookingModal from "@/components/BookingModal";
 import SiteFooter from "@/components/SiteFooter";
 import VenueDetailSheet from "@/components/VenueDetailSheet";
 import VenueMediaLightbox, { type VenueMediaItem } from "@/components/VenueMediaLightbox";
+import Seo, { siteUrl } from "@/components/Seo";
 
 const VenueDetail = () => {
   const { slug } = useParams();
@@ -27,6 +28,7 @@ const VenueDetail = () => {
   if (!venue) {
     return (
       <div className="min-h-screen flex items-center justify-center">
+        <Seo title="Salle introuvable - wearevents" description="Cette salle n'existe pas ou n'est plus disponible." noindex />
         <div className="text-center">
           <h1 className="font-heading text-2xl font-bold mb-2">Salle introuvable</h1>
           <p className="text-muted-foreground font-body mb-4">Cette salle n'existe pas ou n'est plus disponible.</p>
@@ -41,6 +43,12 @@ const VenueDetail = () => {
   if (isMobile) {
     return (
       <>
+        <Seo
+          title={`${venue.title} à ${venue.city} - Salle événementielle`}
+          description={`${venue.tagline || venue.description} Capacité ${venue.minCapacity} à ${venue.maxCapacity} personnes. Demande de disponibilité gratuite.`}
+          path={`/salle/${venue.slug}`}
+          image={venue.coverImage}
+        />
         <VenueDetailSheet venue={venue} onClose={() => navigate(-1)} onBooking={() => setBookingOpen(true)} />
         {bookingOpen && <BookingModal venue={venue} onClose={() => setBookingOpen(false)} />}
       </>
@@ -77,6 +85,40 @@ const VenueDetail = () => {
 
   return (
     <div className="min-h-screen">
+      <Seo
+        title={`${venue.title} à ${venue.city} - Salle événementielle`}
+        description={`${venue.tagline || venue.description} Capacité ${venue.minCapacity} à ${venue.maxCapacity} personnes. Demande de disponibilité gratuite.`}
+        path={`/salle/${venue.slug}`}
+        image={venue.coverImage}
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "EventVenue",
+          name: venue.title,
+          description: venue.description || venue.tagline,
+          image: [venue.coverImage, ...venue.gallery].filter(Boolean),
+          url: `${siteUrl}/salle/${venue.slug}`,
+          address: {
+            "@type": "PostalAddress",
+            streetAddress: venue.address,
+            addressLocality: venue.city,
+            addressCountry: "FR",
+          },
+          geo: {
+            "@type": "GeoCoordinates",
+            latitude: venue.location.lat,
+            longitude: venue.location.lng,
+          },
+          aggregateRating: venue.reviewCount
+            ? {
+                "@type": "AggregateRating",
+                ratingValue: venue.rating,
+                reviewCount: venue.reviewCount,
+              }
+            : undefined,
+          maximumAttendeeCapacity: venue.maxCapacity,
+          email: venue.contactEmail,
+        }}
+      />
       <DesktopNav />
 
       <main className="pt-24">

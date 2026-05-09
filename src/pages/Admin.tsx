@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { AMBIANCE_TYPES, EVENT_TYPES, EXTERNAL_OPTIONS, PRICE_TIERS, SERVICES } from "@/types/venue";
 import { isSupabaseConfigured, supabase, type BlogPostInsert, type VenueInsert } from "@/lib/supabase";
+import Seo from "@/components/Seo";
 
 const slugify = (value: string) =>
   value
@@ -922,6 +923,7 @@ const Admin = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <Seo title="Back office - wearevents" description="Espace privé wearevents." path="/admin" noindex />
       <header className="border-b border-border bg-card px-6 py-5">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
           <div>

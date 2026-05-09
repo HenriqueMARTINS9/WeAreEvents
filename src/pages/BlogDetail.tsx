@@ -8,6 +8,7 @@ import SiteFooter from "@/components/SiteFooter";
 import VenueCodeSearch from "@/components/VenueCodeSearch";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { fetchBlogPostBySlug, fetchBlogPosts } from "@/lib/supabase-data";
+import Seo, { siteUrl } from "@/components/Seo";
 
 const BlogContent = ({ content }: { content: string }) => {
   const blocks = content
@@ -70,6 +71,7 @@ const BlogDetail = () => {
   if (!post) {
     return (
       <div className="min-h-screen bg-background text-foreground">
+        <Seo title="Article introuvable - wearevents" description="Cet article n'existe pas ou n'est plus publié." noindex />
         {isMobile ? <MobileHeader onCodeSearch={() => setShowCodeSearch(true)} withBackground /> : <DesktopNav />}
         <main className="flex min-h-screen items-center justify-center px-6 pt-24">
           <div className="max-w-md text-center">
@@ -102,6 +104,34 @@ const BlogDetail = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <Seo
+        title={`${post.title} - Blog wearevents`}
+        description={post.excerpt}
+        path={`/blog/${post.slug}`}
+        image={post.image || undefined}
+        type="article"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "BlogPosting",
+          headline: post.title,
+          description: post.excerpt,
+          image: post.image,
+          url: `${siteUrl}/blog/${post.slug}`,
+          author: {
+            "@type": "Organization",
+            name: "wearevents",
+          },
+          publisher: {
+            "@type": "Organization",
+            name: "wearevents",
+            logo: {
+              "@type": "ImageObject",
+              url: `${siteUrl}/favicon.png`,
+            },
+          },
+          mainEntityOfPage: `${siteUrl}/blog/${post.slug}`,
+        }}
+      />
       {isMobile ? (
         <MobileHeader onCodeSearch={() => setShowCodeSearch(true)} withBackground />
       ) : (
