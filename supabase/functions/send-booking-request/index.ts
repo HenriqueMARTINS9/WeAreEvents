@@ -136,13 +136,19 @@ const renderRows = (rows: Array<{ label: string; value: string }>) =>
     )
     .join("");
 
+const removeCustomerContactDetails = (text: string) =>
+  text
+    .split("\n")
+    .filter((line) => !/^\s*(client|contact|email|e-mail|téléphone|telephone|tel\.?)\s*:/i.test(line))
+    .join("\n");
+
 const buildBrandedEmailHtml = (
   template: EmailTemplate,
   kind: EmailKind,
   requestId?: string,
 ) => {
   const siteUrl = getPublicSiteUrl();
-  const logoUrl = `${siteUrl}/favicon.svg`;
+  const logoUrl = `${siteUrl}/favicon.png`;
   const theme = getEmailTheme(kind);
   const { rows, paragraphs } = splitEmailText(template.text);
   const preview = template.preview || theme.description;
@@ -242,6 +248,11 @@ const buildBrandedEmailHtml = (
 };
 
 const sendEmail = async (template: EmailTemplate, from: string, kind: EmailKind, requestId?: string, replyTo?: string) => {
+  const safeTemplate = kind === "venue"
+    ? { ...template, text: removeCustomerContactDetails(template.text) }
+    : template;
+  const safeReplyTo = kind === "venue" ? undefined : replyTo;
+
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
@@ -250,11 +261,11 @@ const sendEmail = async (template: EmailTemplate, from: string, kind: EmailKind,
     },
     body: JSON.stringify({
       from,
-      to: [template.to],
-      subject: template.subject,
-      text: template.text,
-      html: buildBrandedEmailHtml(template, kind, requestId),
-      reply_to: replyTo,
+      to: [safeTemplate.to],
+      subject: safeTemplate.subject,
+      text: safeTemplate.text,
+      html: buildBrandedEmailHtml(safeTemplate, kind, requestId),
+      reply_to: safeReplyTo,
     }),
   });
 

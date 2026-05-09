@@ -187,6 +187,9 @@ Votre demande pour ${venue.title} a bien été reçue.
 
 Récapitulatif
 Lieu : ${venue.title}, ${venue.city}
+Contact : ${customerName}
+Email : ${request.email}
+Téléphone : ${request.phone}
 Date souhaitée : ${formattedDate}
 Horaires souhaités : ${request.startTime} - ${request.endTime}
 Espaces demandés : ${requestedSpaces}
