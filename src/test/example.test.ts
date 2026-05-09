@@ -77,7 +77,9 @@ describe("booking workflow", () => {
     expect(templates.adminNotification.to).toBe("reservations@wearevents.fr");
     expect(templates.venueContactNotification.to).toBe(venue.contactEmail);
     expect(templates.customerConfirmation.text).toContain(venue.title);
-    expect(templates.venueContactNotification.text).toContain(request.phone);
+    expect(templates.adminNotification.text).toContain(request.phone);
+    expect(templates.venueContactNotification.text).not.toContain(request.phone);
+    expect(templates.venueContactNotification.text).not.toContain(request.email);
     expect(templates.postEventReviewFollowUp.to).toBe(validForm.email);
     expect(templates.postEventReviewFollowUp.scheduledFor).toContain("2099-06-13");
   });

@@ -305,7 +305,7 @@ Deno.serve(async (request) => {
     const [customerConfirmation, adminNotification, venueContactNotification] = await Promise.all([
       sendEmail(templates.customerConfirmation, from, "customer", requestId),
       sendEmail(templates.adminNotification, from, "admin", requestId, customerEmail),
-      sendEmail(templates.venueContactNotification, from, "venue", requestId, customerEmail),
+      sendEmail(templates.venueContactNotification, from, "venue", requestId),
     ]);
 
     return jsonResponse({

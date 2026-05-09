@@ -23,7 +23,7 @@ export interface BookingSubmissionResult {
   emails: BookingEmailTemplates;
 }
 
-const ADMIN_EMAIL = "reservations@Wearevents.fr";
+const ADMIN_EMAIL = "reservations@wearevents.fr";
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const phonePattern = /^[+()\d\s.-]{8,}$/;
@@ -234,8 +234,9 @@ Horaires : ${request.startTime} - ${request.endTime}
 Espaces demandés : ${requestedSpaces}
 Format : ${request.eventType}
 Nombre d'invités : ${guests}
+Message : ${message}
 
-Merci de nous confirmer la disponibilité et les conditions applicables afin que nous puissions accompagner le client avec le niveau de service attendu.
+Les coordonnées du client restent centralisées chez Wearevents. Merci de nous confirmer la disponibilité et les conditions applicables afin que nous puissions accompagner le client avec le niveau de service attendu.
 
 L'équipe Wearevents`,
     },
