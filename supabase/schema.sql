@@ -118,9 +118,8 @@ using (true)
 with check (true);
 
 drop policy if exists "Public can read WeAreEvents images" on storage.objects;
-create policy "Public can read WeAreEvents images"
-on storage.objects for select
-using (bucket_id = 'wearevents-images');
+-- Public buckets serve files by URL without a storage.objects SELECT policy.
+-- Keeping SELECT closed prevents clients from listing every file in the bucket.
 
 drop policy if exists "Authenticated users can upload WeAreEvents images" on storage.objects;
 create policy "Authenticated users can upload WeAreEvents images"
