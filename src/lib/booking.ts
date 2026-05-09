@@ -1,5 +1,6 @@
 import { EVENT_TYPES } from "@/types/venue";
 import type { BookingEmailTemplates, BookingRequest, Venue } from "@/types/venue";
+import { supabase } from "@/lib/supabase";
 
 export interface BookingFormValues {
   firstName: string;
@@ -264,6 +265,20 @@ L'équipe wearevents`,
   };
 };
 
+const sendBookingEmails = async (request: BookingRequest, emails: BookingEmailTemplates) => {
+  if (!supabase) {
+    throw new Error("Supabase n'est pas configuré pour envoyer la demande.");
+  }
+
+  const { error } = await supabase.functions.invoke("send-booking-request", {
+    body: { request, emails },
+  });
+
+  if (error) {
+    throw new Error(error.message || "L'envoi des emails a échoué.");
+  }
+};
+
 export const submitBookingRequest = async (
   form: BookingFormValues,
   venue: Venue,
@@ -273,10 +288,9 @@ export const submitBookingRequest = async (
     throw new Error("VALIDATION_ERROR");
   }
 
-  await new Promise((resolve) => setTimeout(resolve, 900));
-
   const request = createBookingRequest(form, venue);
   const emails = buildBookingEmailTemplates(request, venue);
+  await sendBookingEmails(request, emails);
 
   return { request, emails };
 };

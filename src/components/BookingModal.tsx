@@ -168,10 +168,11 @@ const BookingModal = ({ venue, onClose }: BookingModalProps) => {
       const submission = await submitBookingRequest(form, venue);
       setResult(submission);
       setStatus("success");
-      toast.success("Votre demande a bien été préparée.");
-    } catch {
+      toast.success("Votre demande a bien été envoyée.");
+    } catch (error) {
       setStatus("error");
-      setSubmitError("L'envoi n'a pas abouti. Veuillez réessayer dans quelques instants.");
+      const message = error instanceof Error ? error.message : "";
+      setSubmitError(message || "L'envoi n'a pas abouti. Veuillez réessayer dans quelques instants.");
       toast.error("Impossible d'envoyer la demande pour le moment.");
     }
   };
@@ -279,7 +280,7 @@ const BookingModal = ({ venue, onClose }: BookingModalProps) => {
             </div>
 
             <div className="mt-5 rounded-lg border border-border bg-card p-4">
-              <p className="mb-3 text-xs font-body font-semibold text-primary">Emails préparés</p>
+              <p className="mb-3 text-xs font-body font-semibold text-primary">Emails envoyés</p>
               <div className="space-y-2 text-sm font-body text-foreground/80">
                 <p className="flex items-start gap-2">
                   <MailCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
@@ -292,10 +293,6 @@ const BookingModal = ({ venue, onClose }: BookingModalProps) => {
                 <p className="flex items-start gap-2">
                   <MailCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                   <span className="min-w-0 break-words">Notification lieu : {emails.venueContactNotification.to}</span>
-                </p>
-                <p className="flex items-start gap-2">
-                  <MailCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                  <span className="min-w-0 break-words">Relance avis J+1 : programmée le lendemain de l'événement</span>
                 </p>
               </div>
             </div>
@@ -605,7 +602,7 @@ const BookingModal = ({ venue, onClose }: BookingModalProps) => {
               disabled={status === "submitting"}
               className="w-full py-3.5 rounded-lg bg-primary text-primary-foreground font-body font-semibold text-sm shadow-lg disabled:opacity-60 active:scale-[0.98] transition-transform"
             >
-              {status === "submitting" ? "Préparation de la demande..." : "Envoyer ma demande de disponibilité"}
+              {status === "submitting" ? "Envoi de la demande..." : "Envoyer ma demande de disponibilité"}
             </button>
           </div>
         </form>
