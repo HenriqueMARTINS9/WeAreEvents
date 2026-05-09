@@ -23,7 +23,7 @@ export interface BookingSubmissionResult {
   emails: BookingEmailTemplates;
 }
 
-const ADMIN_EMAIL = "reservations@wearevents.fr";
+const ADMIN_EMAIL = "reservations@Wearevents.fr";
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const phonePattern = /^[+()\d\s.-]{8,}$/;
@@ -174,7 +174,7 @@ export const buildBookingEmailTemplates = (request: BookingRequest, venue: Venue
   const guests = formatGuestCount(request.guestCount);
   const message = request.message || "Aucun message complémentaire.";
   const requestedSpaces = request.requestedSpaces.join(", ");
-  const platformReviewUrl = "https://www.wearevents.fr/avis";
+  const platformReviewUrl = "https://www.Wearevents.fr/avis";
 
   return {
     customerConfirmation: {
@@ -196,7 +196,7 @@ Nombre d'invités : ${guests}
 Votre demande est 100 % gratuite. Notre équipe vérifie la disponibilité et les conditions du lieu. Vous recevrez un retour qualifié sous 24h ouvrées.
 
 Merci pour votre confiance,
-L'équipe wearevents`,
+L'équipe Wearevents`,
     },
     adminNotification: {
       to: ADMIN_EMAIL,
@@ -222,31 +222,27 @@ Action recommandée : vérifier la disponibilité, qualifier le besoin et répon
     },
     venueContactNotification: {
       to: venue.contactEmail,
-      subject: `Demande qualifiée wearevents · ${formattedDate}`,
-      preview: `${request.eventType} pour ${guests}, demande reçue via wearevents.`,
+      subject: `Demande qualifiée Wearevents · ${formattedDate}`,
+      preview: `${request.eventType} pour ${guests}, demande reçue via Wearevents.`,
       text: `Bonjour,
 
 Nous vous transmettons une demande qualifiée pour ${venue.title}.
 
-Référence wearevents : ${request.id}
+Référence Wearevents : ${request.id}
 Date souhaitée : ${formattedDate}
 Horaires : ${request.startTime} - ${request.endTime}
 Espaces demandés : ${requestedSpaces}
 Format : ${request.eventType}
 Nombre d'invités : ${guests}
-Client : ${customerName}
-Email : ${request.email}
-Téléphone : ${request.phone}
-Message : ${message}
 
 Merci de nous confirmer la disponibilité et les conditions applicables afin que nous puissions accompagner le client avec le niveau de service attendu.
 
-L'équipe wearevents`,
+L'équipe Wearevents`,
     },
     postEventReviewFollowUp: {
       to: request.email,
       subject: `Votre retour après ${venue.title}`,
-      preview: "Un mot sur le lieu et sur wearevents nous serait précieux.",
+      preview: "Un mot sur le lieu et sur Wearevents nous serait précieux.",
       scheduledFor: buildReviewFollowUpDate(request.desiredDate),
       text: `Bonjour ${request.firstName},
 
@@ -255,12 +251,12 @@ Nous espérons que votre événement chez ${venue.title} s'est parfaitement dér
 Si vous avez apprécié l'expérience, vous pouvez nous aider en laissant deux avis :
 
 Avis Google du lieu : ${venue.googleReviewUrl}
-Avis wearevents : ${platformReviewUrl}
+Avis Wearevents : ${platformReviewUrl}
 
 Quelques lignes suffisent et aident autant l'établissement que les prochains organisateurs.
 
 Merci encore pour votre confiance,
-L'équipe wearevents`,
+L'équipe Wearevents`,
     },
   };
 };
