@@ -51,6 +51,23 @@ const escapeHtml = (value: string) =>
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
 
+const renderTextWithLinks = (value: string) => {
+  const urlPattern = /https?:\/\/[^\s<>"']+/g;
+  let output = "";
+  let lastIndex = 0;
+
+  for (const match of value.matchAll(urlPattern)) {
+    const url = match[0];
+    const index = match.index ?? 0;
+    output += escapeHtml(value.slice(lastIndex, index));
+    output += `<a href="${escapeHtml(url)}" style="color:#D94F6D;text-decoration:none;font-weight:700;">${escapeHtml(url)}</a>`;
+    lastIndex = index + url.length;
+  }
+
+  output += escapeHtml(value.slice(lastIndex));
+  return output;
+};
+
 type EmailKind = "customer" | "admin" | "venue";
 
 const getPublicSiteUrl = () => (Deno.env.get("PUBLIC_SITE_URL") || "https://www.wearevents.fr").replace(/\/$/, "");
@@ -117,7 +134,7 @@ const renderParagraphs = (paragraphs: string[]) =>
     .slice(0, 5)
     .map(
       (paragraph) =>
-        `<p style="margin:0 0 14px;font-family:Arial,sans-serif;font-size:15px;line-height:1.7;color:#4B4B4B;">${escapeHtml(paragraph)}</p>`,
+        `<p style="margin:0 0 14px;font-family:Arial,sans-serif;font-size:15px;line-height:1.7;color:#4B4B4B;">${renderTextWithLinks(paragraph)}</p>`,
     )
     .join("");
 
@@ -130,7 +147,7 @@ const renderRows = (rows: Array<{ label: string; value: string }>) =>
             ${escapeHtml(row.label)}
           </td>
           <td style="padding:12px 0;border-bottom:1px solid #EFE8E4;font-family:Arial,sans-serif;font-size:14px;line-height:1.5;color:#171717;vertical-align:top;">
-            ${escapeHtml(row.value)}
+            ${renderTextWithLinks(row.value)}
           </td>
         </tr>`,
     )

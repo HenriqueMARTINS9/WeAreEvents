@@ -24,6 +24,7 @@ export interface BookingSubmissionResult {
 }
 
 const ADMIN_EMAIL = "reservations@wearevents.fr";
+const WEAREVENTS_GOOGLE_REVIEW_URL = "https://g.page/r/Cb3yTIoVykRuEBM/review";
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const phonePattern = /^[+()\d\s.-]{8,}$/;
@@ -174,7 +175,7 @@ export const buildBookingEmailTemplates = (request: BookingRequest, venue: Venue
   const guests = formatGuestCount(request.guestCount);
   const message = request.message || "Aucun message complémentaire.";
   const requestedSpaces = request.requestedSpaces.join(", ");
-  const platformReviewUrl = "https://www.Wearevents.fr/avis";
+  const platformReviewUrl = WEAREVENTS_GOOGLE_REVIEW_URL;
 
   return {
     customerConfirmation: {
@@ -197,6 +198,8 @@ Format : ${request.eventType}
 Nombre d'invités : ${guests}
 
 Votre demande est 100 % gratuite. Notre équipe vérifie la disponibilité et les conditions du lieu. Vous recevrez un retour qualifié sous 24h ouvrées.
+
+Après votre événement, votre avis nous aidera beaucoup à faire connaître wearevents : ${platformReviewUrl}
 
 Merci pour votre confiance,
 L'équipe Wearevents`,
