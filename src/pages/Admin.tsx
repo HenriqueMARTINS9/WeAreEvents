@@ -923,7 +923,7 @@ const Admin = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <Seo title="Back office - wearevents" description="Espace privé wearevents." path="/admin" noindex />
+      <Seo title="Back office - Wearevents" description="Espace privé Wearevents." path="/admin" noindex />
       <header className="border-b border-border bg-card px-6 py-5">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
           <div>

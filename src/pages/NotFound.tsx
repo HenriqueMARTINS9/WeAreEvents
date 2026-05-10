@@ -7,7 +7,7 @@ const NotFound = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-6">
-      <Seo title="Page introuvable - wearevents" description="Cette page n'existe pas ou a été déplacée." noindex />
+      <Seo title="Page introuvable - Wearevents" description="Cette page n'existe pas ou a été déplacée." noindex />
       <div className="text-center max-w-md">
         <h1 className="font-heading text-7xl font-bold text-primary mb-4">404</h1>
         <h2 className="font-heading text-2xl font-semibold mb-3">Page introuvable</h2>

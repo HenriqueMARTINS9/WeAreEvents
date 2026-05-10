@@ -28,7 +28,7 @@ const VenueDetail = () => {
   if (!venue) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Seo title="Salle introuvable - wearevents" description="Cette salle n'existe pas ou n'est plus disponible." noindex />
+        <Seo title="Salle introuvable - Wearevents" description="Cette salle n'existe pas ou n'est plus disponible." noindex />
         <div className="text-center">
           <h1 className="font-heading text-2xl font-bold mb-2">Salle introuvable</h1>
           <p className="text-muted-foreground font-body mb-4">Cette salle n'existe pas ou n'est plus disponible.</p>

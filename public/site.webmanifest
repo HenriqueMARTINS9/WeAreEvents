@@ -1,6 +1,6 @@
 {
-  "name": "wearevents",
-  "short_name": "wearevents",
+  "name": "Wearevents",
+  "short_name": "Wearevents",
   "description": "Trouvez le lieu idéal pour votre événement.",
   "start_url": "/",
   "display": "standalone",

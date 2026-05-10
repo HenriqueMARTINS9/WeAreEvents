@@ -25,7 +25,7 @@ const Blog = () => {
         jsonLd={{
           "@context": "https://schema.org",
           "@type": "Blog",
-          name: "Blog wearevents",
+          name: "Blog Wearevents",
           description: "Conseils et guides pour trouver le bon lieu événementiel.",
           url: `${siteUrl}/blog`,
         }}

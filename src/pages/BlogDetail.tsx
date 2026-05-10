@@ -71,7 +71,7 @@ const BlogDetail = () => {
   if (!post) {
     return (
       <div className="min-h-screen bg-background text-foreground">
-        <Seo title="Article introuvable - wearevents" description="Cet article n'existe pas ou n'est plus publié." noindex />
+        <Seo title="Article introuvable - Wearevents" description="Cet article n'existe pas ou n'est plus publié." noindex />
         {isMobile ? <MobileHeader onCodeSearch={() => setShowCodeSearch(true)} withBackground /> : <DesktopNav />}
         <main className="flex min-h-screen items-center justify-center px-6 pt-24">
           <div className="max-w-md text-center">
@@ -105,7 +105,7 @@ const BlogDetail = () => {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Seo
-        title={`${post.title} - Blog wearevents`}
+        title={`${post.title} - Blog Wearevents`}
         description={post.excerpt}
         path={`/blog/${post.slug}`}
         image={post.image || undefined}
@@ -119,11 +119,11 @@ const BlogDetail = () => {
           url: `${siteUrl}/blog/${post.slug}`,
           author: {
             "@type": "Organization",
-            name: "wearevents",
+            name: "Wearevents",
           },
           publisher: {
             "@type": "Organization",
-            name: "wearevents",
+            name: "Wearevents",
             logo: {
               "@type": "ImageObject",
               url: `${siteUrl}/favicon.png`,

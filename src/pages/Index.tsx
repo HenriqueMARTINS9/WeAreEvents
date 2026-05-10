@@ -7,14 +7,15 @@ const Index = () => {
   const isMobile = useIsMobile();
   const seo = (
     <Seo
-      title="wearevents - Le lieu idéal pour votre événement"
+      title="Wearevents - Le lieu idéal pour votre événement"
       description={defaultDescription}
       path="/"
       jsonLd={[
         {
           "@context": "https://schema.org",
           "@type": "Organization",
-          name: "wearevents",
+          name: "Wearevents",
+          alternateName: "wearevents",
           url: siteUrl,
           logo: `${siteUrl}/favicon.png`,
           email: "contact@wearevents.fr",
@@ -22,7 +23,8 @@ const Index = () => {
         {
           "@context": "https://schema.org",
           "@type": "WebSite",
-          name: "wearevents",
+          name: "Wearevents",
+          alternateName: "wearevents",
           url: siteUrl,
           potentialAction: {
             "@type": "SearchAction",

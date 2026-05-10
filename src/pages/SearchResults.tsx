@@ -239,7 +239,7 @@ const SearchResults = () => {
   return (
     <div className={`min-h-screen ${isMobile ? "bg-background" : "bg-card"}`}>
       <Seo
-        title="Trouver une salle événementielle - Recherche wearevents"
+        title="Trouver une salle événementielle - Recherche Wearevents"
         description="Recherchez une salle par ville, capacité, type d'événement, ambiance et budget. Comparez les lieux et envoyez une demande gratuite."
         path="/recherche"
         jsonLd={{

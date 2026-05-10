@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 
 const siteUrl = (import.meta.env.VITE_SITE_URL || "https://www.wearevents.fr").replace(/\/$/, "");
-const defaultTitle = "Wearevents - Trouvez le lieu idéal pour votre événement";
+const defaultTitle = "Wearevents - Le lieu idéal pour votre événement";
 const defaultDescription =
   "Découvrez des lieux événementiels vérifiés, comparez les options et envoyez une demande de disponibilité gratuite en quelques clics.";
 const defaultImage = `${siteUrl}/og-image.svg`;
@@ -68,7 +68,7 @@ const Seo = ({
     upsertMeta('meta[property="og:description"]', { property: "og:description", content: description });
     upsertMeta('meta[property="og:url"]', { property: "og:url", content: canonical });
     upsertMeta('meta[property="og:image"]', { property: "og:image", content: imageUrl });
-    upsertMeta('meta[property="og:site_name"]', { property: "og:site_name", content: "wearevents" });
+    upsertMeta('meta[property="og:site_name"]', { property: "og:site_name", content: "Wearevents" });
     upsertMeta('meta[name="twitter:card"]', { name: "twitter:card", content: "summary_large_image" });
     upsertMeta('meta[name="twitter:title"]', { name: "twitter:title", content: title });
     upsertMeta('meta[name="twitter:description"]', { name: "twitter:description", content: description });
