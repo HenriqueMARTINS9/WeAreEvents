@@ -59,19 +59,6 @@ const VenueCodeSearch = ({ onClose, onVenueFound, mode = "default" }: VenueCodeS
           </button>
         </div>
 
-        {useUnifiedMobileExperience && (
-          <div className="mb-5 flex flex-wrap gap-2">
-            {["Instagram", "TikTok"].map((source) => (
-              <span
-                key={source}
-                className="inline-flex items-center rounded-lg border border-primary/20 bg-secondary px-3 py-2 text-xs font-body font-semibold text-foreground"
-              >
-                {source}
-              </span>
-            ))}
-          </div>
-        )}
-
         <p className="text-muted-foreground text-sm font-body leading-relaxed mb-5">
           {copy.description}
         </p>

@@ -27,22 +27,18 @@ const HERO_MOMENTS = [
   {
     label: "Mariage",
     noun: "mariage",
-    image: "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=1920&q=80",
   },
   {
     label: "Gala",
     noun: "gala",
-    image: "https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=1920&q=80",
   },
   {
     label: "Séminaire",
     noun: "séminaire",
-    image: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=1920&q=80",
   },
   {
     label: "Lancement",
     noun: "lancement",
-    image: "https://images.unsplash.com/photo-1505236858219-8359eb29e329?w=1920&q=80",
   },
 ] as const;
 
@@ -54,6 +50,7 @@ const DesktopHome = () => {
   const [searchEventType, setSearchEventType] = useState("");
   const [searchGuests, setSearchGuests] = useState("");
   const [activeHeroIndex, setActiveHeroIndex] = useState(0);
+  const [heroVideoReady, setHeroVideoReady] = useState(false);
   const { data: venues = [] } = useQuery({ queryKey: ["venues"], queryFn: fetchVenues });
   const { data: posts = [] } = useQuery({ queryKey: ["blog-posts"], queryFn: fetchBlogPosts });
   const featured = [
@@ -85,14 +82,18 @@ const DesktopHome = () => {
 
       <section data-header-theme="light" className="relative h-screen min-h-[620px] overflow-visible bg-foreground">
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div className="absolute inset-0 bg-foreground" />
           <video
             autoPlay
             muted
             loop
             playsInline
-            preload="metadata"
-            poster={activeHero.image}
-            className="absolute inset-0 h-full w-full object-cover image-grade-luxe hero-video-active"
+            preload="auto"
+            onCanPlay={() => setHeroVideoReady(true)}
+            onLoadedData={() => setHeroVideoReady(true)}
+            className={`absolute inset-0 h-full w-full object-cover image-grade-luxe hero-video-active transition-opacity duration-500 ${
+              heroVideoReady ? "opacity-100" : "opacity-0"
+            }`}
           >
             <source src={HERO_BACKGROUND_VIDEO} type="video/mp4" />
           </video>
