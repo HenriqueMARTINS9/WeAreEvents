@@ -79,6 +79,12 @@ const buildReviewFollowUpDate = (dateValue: string) => {
   return nextDay.toISOString();
 };
 
+const formatEventTypePhrase = (eventType: string) => {
+  if (eventType === "Soirée privée") return "une soirée privée";
+  if (eventType === "Corporate") return "un événement corporate";
+  return `un ${eventType.toLowerCase()}`;
+};
+
 export const validateBookingForm = (form: BookingFormValues, venue: Venue): BookingFieldErrors => {
   const values = trimForm(form);
   const errors: BookingFieldErrors = {};
@@ -173,6 +179,7 @@ export const buildBookingEmailTemplates = (request: BookingRequest, venue: Venue
   const customerName = `${request.firstName} ${request.lastName}`;
   const formattedDate = formatDate(request.desiredDate);
   const guests = formatGuestCount(request.guestCount);
+  const eventTypePhrase = formatEventTypePhrase(request.eventType);
   const message = request.message || "Aucun message complémentaire.";
   const requestedSpaces = request.requestedSpaces.join(", ");
   const platformReviewUrl = WEAREVENTS_GOOGLE_REVIEW_URL;
@@ -180,29 +187,21 @@ export const buildBookingEmailTemplates = (request: BookingRequest, venue: Venue
   return {
     customerConfirmation: {
       to: request.email,
-      subject: `Votre demande pour ${venue.title}`,
-      preview: "Nous avons bien reçu votre demande de disponibilité.",
+      subject: "Nous avons bien reçu votre demande",
+      preview: "Notre équipe vérifie actuellement la disponibilité du lieu.",
       text: `Bonjour ${request.firstName},
 
-Votre demande pour ${venue.title} a bien été reçue.
+Votre demande pour ${venue.title} a bien été transmise à notre équipe.
 
-Récapitulatif
-Lieu : ${venue.title}, ${venue.city}
-Contact : ${customerName}
-Email : ${request.email}
-Téléphone : ${request.phone}
-Date souhaitée : ${formattedDate}
-Horaires souhaités : ${request.startTime} - ${request.endTime}
-Espaces demandés : ${requestedSpaces}
-Format : ${request.eventType}
-Nombre d'invités : ${guests}
+Nous prenons maintenant contact avec le lieu afin de vérifier :
 
-Votre demande est 100 % gratuite. Notre équipe vérifie la disponibilité et les conditions du lieu. Vous recevrez un retour qualifié sous 24h ouvrées.
+les disponibilités,
+les conditions de privatisation,
+et les éléments nécessaires à votre projet.
 
-Après votre événement, votre avis nous aidera beaucoup à faire connaître wearevents : ${platformReviewUrl}
+Vous recevrez un retour personnalisé sous 24h ouvrées.
 
-Merci pour votre confiance,
-L'équipe Wearevents`,
+— L'équipe wearevents`,
     },
     adminNotification: {
       to: ADMIN_EMAIL,
@@ -228,23 +227,21 @@ Action recommandée : vérifier la disponibilité, qualifier le besoin et répon
     },
     venueContactNotification: {
       to: venue.contactEmail,
-      subject: `Demande qualifiée Wearevents · ${formattedDate}`,
-      preview: `${request.eventType} pour ${guests}, demande reçue via Wearevents.`,
+      subject: `Nouvelle demande reçue pour ${venue.title}`,
+      preview: `${request.eventType} · ${guests}`,
       text: `Bonjour,
 
-Nous vous transmettons une demande qualifiée pour ${venue.title}.
+Un client souhaite privatiser votre établissement pour ${eventTypePhrase} réunissant environ ${request.guestCount} invités.
 
-Référence Wearevents : ${request.id}
-Date souhaitée : ${formattedDate}
-Horaires : ${request.startTime} - ${request.endTime}
-Espaces demandés : ${requestedSpaces}
-Format : ${request.eventType}
-Nombre d'invités : ${guests}
-Message : ${message}
+Afin que nous puissions lui adresser une proposition rapidement, merci de nous confirmer :
 
-Les coordonnées du client restent centralisées chez Wearevents. Merci de nous confirmer la disponibilité et les conditions applicables afin que nous puissions accompagner le client avec le niveau de service attendu.
+la disponibilité du lieu,
+les modalités de privatisation,
+et les conditions applicables.
 
-L'équipe Wearevents`,
+Nous restons disponibles si des précisions sont nécessaires.
+
+— L'équipe wearevents`,
     },
     postEventReviewFollowUp: {
       to: request.email,

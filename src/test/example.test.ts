@@ -74,13 +74,19 @@ describe("booking workflow", () => {
     const templates = buildBookingEmailTemplates(request, venue);
 
     expect(templates.customerConfirmation.to).toBe(validForm.email);
+    expect(templates.customerConfirmation.subject).toBe("Nous avons bien reçu votre demande");
     expect(templates.adminNotification.to).toBe("reservations@wearevents.fr");
     expect(templates.venueContactNotification.to).toBe(venue.contactEmail);
+    expect(templates.venueContactNotification.subject).toBe(`Nouvelle demande reçue pour ${venue.title}`);
+    expect(templates.venueContactNotification.preview).toBe("Gala · 120 invités");
     expect(templates.customerConfirmation.text).toContain(venue.title);
-    expect(templates.customerConfirmation.text).toContain(request.email);
-    expect(templates.customerConfirmation.text).toContain(request.phone);
-    expect(templates.customerConfirmation.text).toContain("https://g.page/r/Cb3yTIoVykRuEBM/review");
+    expect(templates.customerConfirmation.text).toContain("Votre demande pour");
+    expect(templates.customerConfirmation.text).toContain("Vous recevrez un retour personnalisé sous 24h ouvrées.");
+    expect(templates.customerConfirmation.text).not.toContain(request.email);
+    expect(templates.customerConfirmation.text).not.toContain(request.phone);
     expect(templates.adminNotification.text).toContain(request.phone);
+    expect(templates.venueContactNotification.text).toContain("Un client souhaite privatiser votre établissement");
+    expect(templates.venueContactNotification.text).toContain("les modalités de privatisation");
     expect(templates.venueContactNotification.text).not.toContain(request.phone);
     expect(templates.venueContactNotification.text).not.toContain(request.email);
     expect(templates.postEventReviewFollowUp.to).toBe(validForm.email);

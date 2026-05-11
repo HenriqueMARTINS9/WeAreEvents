@@ -7,7 +7,7 @@ const Index = () => {
   const isMobile = useIsMobile();
   const seo = (
     <Seo
-      title="Wearevents - Le lieu idéal pour votre événement"
+      title="Wearevents | Location de salle pour votre événement"
       description={defaultDescription}
       path="/"
       jsonLd={[

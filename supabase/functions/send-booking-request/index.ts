@@ -86,9 +86,9 @@ const getEmailTheme = (kind: EmailKind) => {
 
   if (kind === "venue") {
     return {
-      eyebrow: "Demande qualifiée",
-      title: "Un client souhaite privatiser votre espace",
-      description: "Merci de confirmer la disponibilité et les conditions applicables afin que nous puissions accompagner le client.",
+      eyebrow: "Nouvelle demande",
+      title: "Nouvelle demande reçue",
+      description: "Merci de confirmer la disponibilité et les conditions applicables.",
       accent: "#D94F6D",
       buttonLabel: "Voir wearevents",
       buttonUrl: getPublicSiteUrl(),
@@ -97,8 +97,8 @@ const getEmailTheme = (kind: EmailKind) => {
 
   return {
     eyebrow: "Demande confirmée",
-    title: "Votre demande est entre de bonnes mains",
-    description: "Notre équipe vérifie la disponibilité, les options et la cohérence du lieu avec votre événement.",
+    title: "Nous avons bien reçu votre demande",
+    description: "Notre équipe vérifie actuellement la disponibilité du lieu.",
     accent: "#D94F6D",
     buttonLabel: "Découvrir d'autres lieux",
     buttonUrl: `${getPublicSiteUrl()}/recherche`,
@@ -131,7 +131,6 @@ const splitEmailText = (text: string) => {
 
 const renderParagraphs = (paragraphs: string[]) =>
   paragraphs
-    .slice(0, 5)
     .map(
       (paragraph) =>
         `<p style="margin:0 0 14px;font-family:Arial,sans-serif;font-size:15px;line-height:1.7;color:#4B4B4B;">${renderTextWithLinks(paragraph)}</p>`,
@@ -169,6 +168,7 @@ const buildBrandedEmailHtml = (
   const theme = getEmailTheme(kind);
   const { rows, paragraphs } = splitEmailText(template.text);
   const preview = template.preview || theme.description;
+  const heroTitle = kind === "admin" ? theme.title : template.subject;
 
   return `<!doctype html>
 <html lang="fr">
@@ -208,7 +208,7 @@ const buildBrandedEmailHtml = (
                         ${escapeHtml(theme.eyebrow)}
                       </div>
                       <h1 style="margin:0 0 14px;font-family:Georgia,serif;font-size:36px;line-height:1.05;font-weight:600;color:#FFFFFF;">
-                        ${escapeHtml(theme.title)}
+                        ${escapeHtml(heroTitle)}
                       </h1>
                       <p style="margin:0;font-family:Arial,sans-serif;font-size:16px;line-height:1.65;color:#D7D0CB;">
                         ${escapeHtml(preview)}

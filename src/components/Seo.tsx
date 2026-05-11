@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 
 const siteUrl = (import.meta.env.VITE_SITE_URL || "https://www.wearevents.fr").replace(/\/$/, "");
-const defaultTitle = "Wearevents - Le lieu idéal pour votre événement";
+const defaultTitle = "Wearevents | Location de salle pour votre événement";
 const defaultDescription =
   "Découvrez des lieux événementiels vérifiés, comparez les options et envoyez une demande de disponibilité gratuite en quelques clics.";
 const defaultImage = `${siteUrl}/og-image.svg`;
