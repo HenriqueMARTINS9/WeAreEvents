@@ -3,6 +3,7 @@ export interface VenueSpace {
   name: string;
   capacity: number;
   description: string;
+  imageUrl?: string;
 }
 
 export interface VenueLocation {
@@ -23,6 +24,7 @@ export interface Venue {
   minCapacity: number;
   maxCapacity: number;
   eventCategories: string[];
+  venueTypes: string[];
   services: string[];
   spaces: VenueSpace[];
   accessDetails: string[];
@@ -39,6 +41,9 @@ export interface Venue {
   closingTime: string;
   ambianceTypes: string[];
   externalOptions: string[];
+  privatizationTypes: string[];
+  guestDispositions: string[];
+  optionFeatures: string[];
   metroAccess?: string;
   featured: boolean;
   active: boolean;
@@ -110,19 +115,31 @@ export const EVENT_TYPES = [
   "Lancement",
 ] as const;
 
+export const VENUE_TYPES = [
+  "Péniche",
+  "Rooftop",
+  "Discothèque",
+  "Bar",
+  "Salle de réception",
+  "Espace extérieur",
+  "Appartement",
+  "Loft",
+  "Villa",
+  "Restaurant",
+] as const;
+
 export const SERVICES = [
-  "Traiteur",
-  "DJ / Musique",
-  "Décoration",
-  "Photographe",
-  "Parking privé",
-  "Terrasse",
-  "Piscine",
-  "Cuisine équipée",
-  "Wi-Fi",
+  "TV",
   "Climatisation",
+  "Accès PMR",
+  "Micro",
+  "Wi-Fi",
+  "Terrasse",
   "Projecteur",
-  "Vestiaire",
+  "Système son",
+  "Mobilier",
+  "Table de mixage",
+  "Parking",
 ] as const;
 
 export const PRICE_TIERS = ["€", "€€", "€€€", "€€€€"] as const;
@@ -137,7 +154,35 @@ export const AMBIANCE_TYPES = [
 ] as const;
 
 export const EXTERNAL_OPTIONS = [
-  "Traiteur externe",
-  "Boissons externes",
-  "Gâteau externe",
+  "Possibilité de ramener sa nourriture",
+  "Possibilité de ramener ses boissons",
+  "Possibilité de ramener son gâteau",
+] as const;
+
+export const PRIVATIZATION_TYPES = [
+  "Forfait consommation (budget par personne)",
+  "Location sèche (budget location)",
+] as const;
+
+export const GUEST_DISPOSITIONS = [
+  "Debout",
+  "Assis",
+  "Les deux",
+] as const;
+
+export const OPTION_FEATURES = [
+  "Possibilité de mettre sa musique",
+  "Espace clos",
+] as const;
+
+export const CLOSING_TIME_OPTIONS = [
+  "Jusqu'à minuit",
+  "Jusqu'à 2h",
+  "Après 2h",
+] as const;
+
+export const CLOSING_TIME_PRESETS = [
+  { label: "Jusqu'à minuit", value: "00:00" },
+  { label: "Jusqu'à 2h", value: "02:00" },
+  { label: "Après 2h", value: "03:00" },
 ] as const;

@@ -151,15 +151,20 @@ const VenueDetailSheet = ({ venue, onClose, onBooking }: VenueDetailSheetProps) 
         <h3 className="font-heading text-lg font-semibold mb-3">Espaces disponibles</h3>
         <div className="space-y-2 mb-6">
           {venue.spaces.map((space) => (
-            <div key={space.id} className="rounded-lg border border-border bg-background p-3">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-sm font-body font-semibold">{space.name}</p>
-                  <p className="mt-1 break-words text-sm font-body text-foreground/70">{space.description}</p>
+            <div key={space.id} className="overflow-hidden rounded-lg border border-border bg-background">
+              {space.imageUrl && (
+                <img src={space.imageUrl} alt={space.name} className="h-32 w-full object-cover image-grade-luxe" loading="lazy" />
+              )}
+              <div className="p-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-body font-semibold">{space.name}</p>
+                    <p className="mt-1 break-words text-sm font-body text-foreground/70">{space.description}</p>
+                  </div>
+                  <span className="shrink-0 rounded-lg bg-foreground px-2 py-1 text-[11px] font-body font-semibold text-primary-foreground">
+                    {space.capacity}
+                  </span>
                 </div>
-                <span className="shrink-0 rounded-lg bg-foreground px-2 py-1 text-[11px] font-body font-semibold text-primary-foreground">
-                  {space.capacity}
-                </span>
               </div>
             </div>
           ))}

@@ -21,6 +21,7 @@ create table if not exists public.venues (
   min_capacity integer not null default 0,
   max_capacity integer not null default 0,
   event_categories text[] not null default '{}',
+  venue_types text[] not null default '{}',
   services text[] not null default '{}',
   spaces jsonb not null default '[]'::jsonb,
   access_details text[] not null default '{}',
@@ -37,6 +38,9 @@ create table if not exists public.venues (
   closing_time text not null default '',
   ambiance_types text[] not null default '{}',
   external_options text[] not null default '{}',
+  privatization_types text[] not null default '{}',
+  guest_dispositions text[] not null default '{}',
+  option_features text[] not null default '{}',
   metro_access text,
   featured boolean not null default false,
   active boolean not null default true,
@@ -53,6 +57,10 @@ alter table public.venues add column if not exists price_tier text not null defa
 alter table public.venues add column if not exists closing_time text not null default '';
 alter table public.venues add column if not exists ambiance_types text[] not null default '{}';
 alter table public.venues add column if not exists external_options text[] not null default '{}';
+alter table public.venues add column if not exists venue_types text[] not null default '{}';
+alter table public.venues add column if not exists privatization_types text[] not null default '{}';
+alter table public.venues add column if not exists guest_dispositions text[] not null default '{}';
+alter table public.venues add column if not exists option_features text[] not null default '{}';
 alter table public.venues add column if not exists metro_access text;
 
 create table if not exists public.blog_posts (

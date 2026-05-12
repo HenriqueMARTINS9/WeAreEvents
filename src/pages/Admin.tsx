@@ -14,7 +14,18 @@ import {
   Upload,
   X,
 } from "lucide-react";
-import { AMBIANCE_TYPES, EVENT_TYPES, EXTERNAL_OPTIONS, PRICE_TIERS, SERVICES } from "@/types/venue";
+import {
+  AMBIANCE_TYPES,
+  CLOSING_TIME_PRESETS,
+  EVENT_TYPES,
+  EXTERNAL_OPTIONS,
+  GUEST_DISPOSITIONS,
+  OPTION_FEATURES,
+  PRICE_TIERS,
+  PRIVATIZATION_TYPES,
+  SERVICES,
+  VENUE_TYPES,
+} from "@/types/venue";
 import { isSupabaseConfigured, supabase, type BlogPostInsert, type VenueInsert } from "@/lib/supabase";
 import Seo from "@/components/Seo";
 
@@ -36,6 +47,7 @@ type ReservationOptionForm = {
   name: string;
   capacity: string;
   description: string;
+  imageUrl: string;
 };
 
 const isNumericText = (value: string) => /^\d+$/.test(value.trim());
@@ -44,29 +56,30 @@ const normalizeReservationOption = (option: ReservationOptionForm): ReservationO
   const name = option.name.trim();
   const capacity = option.capacity.trim();
   const description = option.description.trim();
+  const imageUrl = option.imageUrl.trim();
 
   if (isNumericText(name) && capacity && !isNumericText(capacity)) {
-    return { name: capacity, capacity: name, description };
+    return { name: capacity, capacity: name, description, imageUrl };
   }
 
-  return { name, capacity, description };
+  return { name, capacity, description, imageUrl };
 };
 
 const parseReservationOptions = (value: string): ReservationOptionForm[] => {
   const options = value
     .split("\n")
     .map((line) => {
-      const [name = "", capacity = "", ...descriptionParts] = line.split("|").map((part) => part.trim());
-      return normalizeReservationOption({ name, capacity, description: descriptionParts.join(" | ") });
+      const [name = "", capacity = "", description = "", imageUrl = ""] = line.split("|").map((part) => part.trim());
+      return normalizeReservationOption({ name, capacity, description, imageUrl });
     });
 
-  return options.length ? options : [{ name: "", capacity: "", description: "" }];
+  return options.length ? options : [{ name: "", capacity: "", description: "", imageUrl: "" }];
 };
 
 const serializeReservationOptions = (options: ReservationOptionForm[]) =>
   options
     .map(normalizeReservationOption)
-    .map((option) => [option.name, option.capacity, option.description].map((part) => part.trim()).join(" | "))
+    .map((option) => [option.name, option.capacity, option.description, option.imageUrl].map((part) => part.trim()).join(" | "))
     .join("\n");
 
 const imageBucket = "wearevents-images";
@@ -443,6 +456,7 @@ const createEmptyVenueForm = () => ({
   minCapacity: "",
   maxCapacity: "",
   eventCategories: EVENT_TYPES.slice(0, 2).join(", "),
+  venueTypes: VENUE_TYPES.slice(0, 1).join(", "),
   services: SERVICES.slice(0, 4).join(", "),
   spaces: "Salle principale | 120 | Espace principal modulable",
   accessDetails: "",
@@ -456,9 +470,12 @@ const createEmptyVenueForm = () => ({
   tiktokUrl: "",
   googleReviewUrl: "",
   priceTier: "€€",
-  closingTime: "",
+  closingTime: "02:00",
   ambianceTypes: AMBIANCE_TYPES.slice(0, 2).join(", "),
   externalOptions: EXTERNAL_OPTIONS.slice(0, 1).join(", "),
+  privatizationTypes: PRIVATIZATION_TYPES.slice(0, 1).join(", "),
+  guestDispositions: GUEST_DISPOSITIONS.slice(0, 1).join(", "),
+  optionFeatures: OPTION_FEATURES.slice(0, 1).join(", "),
   metroAccess: "",
   featured: true,
   active: true,
@@ -672,6 +689,34 @@ const Admin = () => {
   const handleVenueGalleryImagesUpload = (files: FileList | null) => handleVenueMediaUpload(files, "secondaires");
   const handleVenueVideoUpload = (files: FileList | null) => handleVenueMediaUpload(files, "video");
 
+  const handleVenueOptionImageUpload = async (optionIndex: number, files: FileList | null) => {
+    if (!files?.length) return;
+    setUploadingImages(true);
+    setMessage("");
+
+    try {
+      const folder = `${getVenueMediaFolder()}/options/option-${optionIndex + 1}`;
+      const media = await uploadMediaFiles(Array.from(files).slice(0, 1), folder, ["image"]);
+      if (!media.length) throw new Error("Sélectionne une image pour cette option.");
+
+      const imageUrl = media[0].url;
+      setVenueForm((current) => {
+        const options = parseReservationOptions(current.spaces);
+        const nextOptions = options.map((option, index) =>
+          index === optionIndex ? { ...option, imageUrl } : option,
+        );
+        return { ...current, spaces: serializeReservationOptions(nextOptions) };
+      });
+
+      const importNotes = media.map((item) => item.note).filter(Boolean);
+      setMessage([`Photo de l'option ${optionIndex + 1} importée dans ${imageBucket}/${folder}.`, ...importNotes].join(" "));
+    } catch (error) {
+      setMessage(formatAdminError(error));
+    } finally {
+      setUploadingImages(false);
+    }
+  };
+
   const handleBlogImageUpload = async (files: FileList | null) => {
     if (!files?.length) return;
     setUploadingImages(true);
@@ -736,6 +781,7 @@ const Admin = () => {
             name: normalizedOption.name,
             capacity: toNumber(normalizedOption.capacity),
             description: normalizedOption.description,
+            imageUrl: normalizedOption.imageUrl || undefined,
           };
         })
         .filter((space) => space.name);
@@ -752,6 +798,7 @@ const Admin = () => {
         min_capacity: toNumber(venueForm.minCapacity),
         max_capacity: toNumber(venueForm.maxCapacity),
         event_categories: toList(venueForm.eventCategories),
+        venue_types: toList(venueForm.venueTypes),
         services: toList(venueForm.services),
         spaces,
         access_details: toList(venueForm.accessDetails),
@@ -768,6 +815,9 @@ const Admin = () => {
         closing_time: venueForm.closingTime,
         ambiance_types: toList(venueForm.ambianceTypes),
         external_options: toList(venueForm.externalOptions),
+        privatization_types: toList(venueForm.privatizationTypes),
+        guest_dispositions: toList(venueForm.guestDispositions),
+        option_features: toList(venueForm.optionFeatures),
         metro_access: venueForm.metroAccess.trim() || null,
         featured: venueForm.featured,
         active: venueForm.active,
@@ -860,12 +910,14 @@ const Admin = () => {
       minCapacity: String(venue.min_capacity ?? ""),
       maxCapacity: String(venue.max_capacity ?? ""),
       eventCategories: (venue.event_categories ?? []).join(", "),
+      venueTypes: (venue.venue_types ?? []).join(", "),
       services: (venue.services ?? []).join(", "),
       spaces: serializeReservationOptions(
         (venue.spaces ?? []).map((space: any) => ({
           name: String(space.name ?? ""),
           capacity: String(space.capacity ?? ""),
           description: String(space.description ?? ""),
+          imageUrl: String(space.imageUrl ?? ""),
         })),
       ),
       accessDetails: (venue.access_details ?? []).join("\n"),
@@ -882,6 +934,9 @@ const Admin = () => {
       closingTime: venue.closing_time ?? "",
       ambianceTypes: (venue.ambiance_types ?? []).join(", "),
       externalOptions: (venue.external_options ?? []).join(", "),
+      privatizationTypes: (venue.privatization_types ?? []).join(", "),
+      guestDispositions: (venue.guest_dispositions ?? []).join(", "),
+      optionFeatures: (venue.option_features ?? []).join(", "),
       metroAccess: venue.metro_access ?? "",
       featured: Boolean(venue.featured),
       active: Boolean(venue.active),
@@ -994,6 +1049,7 @@ const Admin = () => {
             onMainImageSelected={handleVenueMainImageUpload}
             onGalleryImagesSelected={handleVenueGalleryImagesUpload}
             onVideoSelected={handleVenueVideoUpload}
+            onOptionImageSelected={handleVenueOptionImageUpload}
             uploadingImages={uploadingImages}
           />
         </AdminModal>
@@ -1222,6 +1278,7 @@ const VenueForm = ({
   onMainImageSelected,
   onGalleryImagesSelected,
   onVideoSelected,
+  onOptionImageSelected,
   uploadingImages,
 }: any) => (
   <form onSubmit={onSubmit} className="grid grid-cols-1 gap-5 xl:grid-cols-2">
@@ -1237,7 +1294,7 @@ const VenueForm = ({
     <AdminInput label="Capacité maximum" value={form.maxCapacity} onChange={(value) => setForm({ ...form, maxCapacity: value })} />
     <AdminInput label="Prix indicatif" value={form.pricingText} onChange={(value) => setForm({ ...form, pricingText: value })} />
     <AdminSelect label="Symbole prix" value={form.priceTier} onChange={(value) => setForm({ ...form, priceTier: value })} options={PRICE_TIERS} />
-    <AdminInput label="Heure de fermeture" value={form.closingTime} onChange={(value) => setForm({ ...form, closingTime: value })} placeholder="Ex: 02:00" />
+    <AdminPresetSelect label="Horaires" value={form.closingTime} onChange={(value) => setForm({ ...form, closingTime: value })} options={CLOSING_TIME_PRESETS} />
     <AdminInput label="Accès métro" value={form.metroAccess} onChange={(value) => setForm({ ...form, metroAccess: value })} placeholder="Ex: George V, ligne 1" />
     <AdminMediaField
       title="Image principale"
@@ -1275,11 +1332,19 @@ const VenueForm = ({
     <AdminTextarea label="Accroche" value={form.tagline} onChange={(value) => setForm({ ...form, tagline: value })} />
     <AdminTextarea label="Description" value={form.description} onChange={(value) => setForm({ ...form, description: value })} />
     <AdminTextarea label="Catégories d'événements" hint="Sépare par virgule ou ligne." value={form.eventCategories} onChange={(value) => setForm({ ...form, eventCategories: value })} />
-    <AdminTextarea label="Services" hint="Sépare par virgule ou ligne." value={form.services} onChange={(value) => setForm({ ...form, services: value })} />
+    <AdminMultiSelect label="Type de lieu" value={form.venueTypes} onChange={(value) => setForm({ ...form, venueTypes: value })} options={VENUE_TYPES} />
+    <AdminMultiSelect label="Équipements & services" value={form.services} onChange={(value) => setForm({ ...form, services: value })} options={SERVICES} />
     <AdminTextarea label="Types d'ambiance" hint={`Ex: ${AMBIANCE_TYPES.join(", ")}`} value={form.ambianceTypes} onChange={(value) => setForm({ ...form, ambianceTypes: value })} />
-    <AdminTextarea label="Personnalisation externe" hint={`Ex: ${EXTERNAL_OPTIONS.join(", ")}`} value={form.externalOptions} onChange={(value) => setForm({ ...form, externalOptions: value })} />
-    <ReservationOptionsField value={form.spaces} onChange={(value) => setForm({ ...form, spaces: value })} />
-    <AdminTextarea label="Accès" value={form.accessDetails} onChange={(value) => setForm({ ...form, accessDetails: value })} />
+    <AdminMultiSelect label="Nourriture & boissons externes" value={form.externalOptions} onChange={(value) => setForm({ ...form, externalOptions: value })} options={EXTERNAL_OPTIONS} />
+    <AdminMultiSelect label="Types de privatisation" value={form.privatizationTypes} onChange={(value) => setForm({ ...form, privatizationTypes: value })} options={PRIVATIZATION_TYPES} />
+    <AdminMultiSelect label="Disposition des invités" value={form.guestDispositions} onChange={(value) => setForm({ ...form, guestDispositions: value })} options={GUEST_DISPOSITIONS} />
+    <AdminMultiSelect label="Options du lieu" value={form.optionFeatures} onChange={(value) => setForm({ ...form, optionFeatures: value })} options={OPTION_FEATURES} />
+    <ReservationOptionsField
+      value={form.spaces}
+      onChange={(value) => setForm({ ...form, spaces: value })}
+      onOptionImageSelected={onOptionImageSelected}
+      uploadingImages={uploadingImages}
+    />
     <AdminTextarea label="Informations utiles" value={form.usefulInformation} onChange={(value) => setForm({ ...form, usefulInformation: value })} />
     <AdminInput label="Début vidéo en secondes" value={form.videoStartSeconds} onChange={(value) => setForm({ ...form, videoStartSeconds: value })} />
     <AdminInput label="Fin vidéo en secondes" value={form.videoEndSeconds} onChange={(value) => setForm({ ...form, videoEndSeconds: value })} />
@@ -1318,7 +1383,17 @@ const BlogForm = ({ form, setForm, saving, editing, onSubmit, onFilesSelected, u
   </form>
 );
 
-const ReservationOptionsField = ({ value, onChange }: { value: string; onChange: (value: string) => void }) => {
+const ReservationOptionsField = ({
+  value,
+  onChange,
+  onOptionImageSelected,
+  uploadingImages,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  onOptionImageSelected: (index: number, files: FileList | null) => void;
+  uploadingImages: boolean;
+}) => {
   const options = parseReservationOptions(value);
 
   const updateOption = (index: number, patch: Partial<ReservationOptionForm>) => {
@@ -1329,12 +1404,12 @@ const ReservationOptionsField = ({ value, onChange }: { value: string; onChange:
   };
 
   const addOption = () => {
-    onChange(serializeReservationOptions([...options, { name: "", capacity: "", description: "" }]));
+    onChange(serializeReservationOptions([...options, { name: "", capacity: "", description: "", imageUrl: "" }]));
   };
 
   const removeOption = (index: number) => {
     const nextOptions = options.filter((_option, optionIndex) => optionIndex !== index);
-    onChange(serializeReservationOptions(nextOptions.length ? nextOptions : [{ name: "", capacity: "", description: "" }]));
+    onChange(serializeReservationOptions(nextOptions.length ? nextOptions : [{ name: "", capacity: "", description: "", imageUrl: "" }]));
   };
 
   return (
@@ -1373,7 +1448,33 @@ const ReservationOptionsField = ({ value, onChange }: { value: string; onChange:
                 Supprimer
               </button>
             </div>
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_8rem]">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-[10rem_minmax(0,1fr)_8rem]">
+              <div className="md:row-span-2">
+                <span className="mb-2 block text-xs font-body font-semibold text-muted-foreground">Photo</span>
+                <div className="overflow-hidden rounded-lg border border-border bg-card">
+                  {option.imageUrl ? (
+                    <img src={option.imageUrl} alt={option.name || `Option ${index + 1}`} className="h-28 w-full object-cover" />
+                  ) : (
+                    <div className="flex h-28 w-full items-center justify-center bg-secondary text-muted-foreground">
+                      <Image className="h-5 w-5" />
+                    </div>
+                  )}
+                </div>
+                <label className="mt-2 inline-flex h-9 w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-border bg-card px-3 text-xs font-body font-semibold transition-colors hover:border-primary/40">
+                  {uploadingImages ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
+                  {uploadingImages ? "Import..." : "Importer"}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    disabled={uploadingImages}
+                    onChange={(event) => {
+                      onOptionImageSelected(index, event.target.files);
+                      event.currentTarget.value = "";
+                    }}
+                    className="hidden"
+                  />
+                </label>
+              </div>
               <label>
                 <span className="mb-2 block text-xs font-body font-semibold text-muted-foreground">Nom</span>
                 <input
@@ -1401,6 +1502,15 @@ const ReservationOptionsField = ({ value, onChange }: { value: string; onChange:
                   rows={3}
                   placeholder="Espace principal modulable, idéal pour cocktails, dîners et soirées privées."
                   className="w-full rounded-lg border border-border bg-card px-3 py-3 text-sm font-body leading-relaxed outline-none focus:border-primary"
+                />
+              </label>
+              <label className="md:col-span-3">
+                <span className="mb-2 block text-xs font-body font-semibold text-muted-foreground">URL photo de l'option</span>
+                <input
+                  value={option.imageUrl}
+                  onChange={(event) => updateOption(index, { imageUrl: event.target.value })}
+                  placeholder={`Upload dans venues/nom-de-la-salle/options/option-${index + 1}/`}
+                  className="h-11 w-full rounded-lg border border-border bg-card px-3 text-sm font-body outline-none focus:border-primary"
                 />
               </label>
             </div>
@@ -1512,6 +1622,72 @@ const AdminSelect = ({ label, value, onChange, options }: { label: string; value
     </select>
   </label>
 );
+
+const AdminPresetSelect = ({
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: readonly { label: string; value: string }[];
+}) => (
+  <label className="block rounded-lg border border-border bg-card p-4">
+    <span className="mb-2 block text-sm font-body font-semibold">{label}</span>
+    <select value={value} onChange={(event) => onChange(event.target.value)} className="h-11 w-full rounded-lg border border-border bg-background px-3 text-sm font-body outline-none focus:border-primary">
+      <option value="">Non renseigné</option>
+      {options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+    </select>
+  </label>
+);
+
+const AdminMultiSelect = ({
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: readonly string[];
+}) => {
+  const values = toList(value);
+  const toggle = (option: string) => {
+    const nextValues = values.includes(option)
+      ? values.filter((item) => item !== option)
+      : [...values, option];
+    onChange(nextValues.join(", "));
+  };
+
+  return (
+    <section className="rounded-lg border border-border bg-card p-4">
+      <span className="mb-3 block text-sm font-body font-semibold">{label}</span>
+      <div className="flex flex-wrap gap-2">
+        {options.map((option) => {
+          const selected = values.includes(option);
+
+          return (
+            <button
+              key={option}
+              type="button"
+              onClick={() => toggle(option)}
+              className={`rounded-lg border px-3 py-2 text-xs font-body font-semibold transition-colors ${
+                selected
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-border bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground"
+              }`}
+            >
+              {option}
+            </button>
+          );
+        })}
+      </div>
+    </section>
+  );
+};
 
 const AdminTextarea = ({ label, value, onChange, hint, rows = 5 }: FieldProps) => (
   <label className="block rounded-lg border border-border bg-card p-4">

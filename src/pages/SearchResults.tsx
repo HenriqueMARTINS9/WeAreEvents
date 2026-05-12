@@ -3,7 +3,17 @@ import { useQuery } from "@tanstack/react-query";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { Building2, CalendarDays, FileText, Home, Map as MapIcon, MapPin, Menu, Search, SlidersHorizontal, Sparkles, Users, X } from "lucide-react";
 import { fetchVenues, filterVenues, findVenueByCode, getVenueLocationSuggestionsFromVenues } from "@/lib/supabase-data";
-import { EVENT_TYPES } from "@/types/venue";
+import {
+  CLOSING_TIME_OPTIONS,
+  EVENT_TYPES,
+  EXTERNAL_OPTIONS,
+  GUEST_DISPOSITIONS,
+  OPTION_FEATURES,
+  PRICE_TIERS,
+  PRIVATIZATION_TYPES,
+  SERVICES,
+  VENUE_TYPES,
+} from "@/types/venue";
 import MobileHeader from "@/components/MobileHeader";
 import FilterSelect from "@/components/FilterSelect";
 import LocationAutocomplete from "@/components/LocationAutocomplete";
@@ -16,15 +26,8 @@ import logoBlack from "@/assets/logo-black.svg";
 import { useEstablishmentReferralModal } from "@/lib/establishment-referral-modal";
 import Seo, { siteUrl } from "@/components/Seo";
 
-const PRICE_FILTERS = ["€", "€€", "€€€", "€€€€"] as const;
-const VENUE_TYPE_FILTERS = ["Bar", "Restaurant", "Salle"] as const;
 const AMBIANCE_FILTERS = ["Calme", "Animée", "Festive"] as const;
-const PRIVATIZATION_FILTERS = ["Quelques tables", "Espace clos"] as const;
 const OFFER_FILTERS = ["Promotions exclusives", "Happy Hours"] as const;
-const HOUR_FILTERS = ["Ouvert après minuit", "Ouvert après 2h"] as const;
-const OPTION_FILTERS = ["Mettre ma musique", "Possibilité de danser", "Apporter mon gâteau", "Matériel de projection", "Jeux (baby-foot, ping-pong, ...)"] as const;
-const EQUIPMENT_FILTERS = ["Matériel de karaoké", "Terrasse"] as const;
-const FOOD_FILTERS = ["Planches et tapas"] as const;
 
 type FilterGroupProps = {
   title: string;
@@ -71,12 +74,12 @@ const SearchResults = () => {
   const [priceTier, setPriceTier] = useState(searchParams.get("price") || "");
   const [closingFilter, setClosingFilter] = useState(searchParams.get("closing") || "");
   const [ambianceType, setAmbianceType] = useState(searchParams.get("ambiance") || "");
-  const [venueType, setVenueType] = useState("");
-  const [privatizationType, setPrivatizationType] = useState("");
+  const [venueTypes, setVenueTypes] = useState<string[]>([]);
+  const [privatizationTypes, setPrivatizationTypes] = useState<string[]>([]);
   const [offerType, setOfferType] = useState("");
   const [optionFilters, setOptionFilters] = useState<string[]>([]);
   const [equipmentFilters, setEquipmentFilters] = useState<string[]>([]);
-  const [foodFilter, setFoodFilter] = useState("");
+  const [guestDispositions, setGuestDispositions] = useState<string[]>([]);
   const [showAllFilters, setShowAllFilters] = useState(false);
   const [showCodeSearch, setShowCodeSearch] = useState(false);
   const [desktopMenuOpen, setDesktopMenuOpen] = useState(false);
@@ -104,17 +107,16 @@ const SearchResults = () => {
       eventType: eventType || undefined,
       minGuests: guests ? parseInt(guests, 10) : undefined,
       priceTier: priceTier || undefined,
-      closesAfterTwo: closingFilter === "Après 2h",
-      closesAfterMidnight: closingFilter === "Après minuit",
+      closingTimeFilter: closingFilter || undefined,
       ambianceType: ambianceType || undefined,
-      venueType: venueType || undefined,
-      privatizationType: privatizationType || undefined,
+      venueTypes,
+      privatizationTypes,
       offerType: offerType || undefined,
       optionFilters,
       equipmentFilters,
-      foodFilter: foodFilter || undefined,
+      guestDispositions,
     });
-  }, [locationQuery, eventType, guests, priceTier, closingFilter, ambianceType, venueType, privatizationType, offerType, optionFilters, equipmentFilters, foodFilter, venues]);
+  }, [locationQuery, eventType, guests, priceTier, closingFilter, ambianceType, venueTypes, privatizationTypes, offerType, optionFilters, equipmentFilters, guestDispositions, venues]);
 
   useEffect(() => {
     setVisibleVenueIds(null);
@@ -169,13 +171,13 @@ const SearchResults = () => {
   const isMapZoneFilteringActive =
     !isMobile && visibleVenueIds !== null && results.length !== filteredResults.length;
   const activeAdvancedFilterCount = [
-    venueType,
+    ...venueTypes,
     priceTier,
     ambianceType,
-    privatizationType,
+    ...privatizationTypes,
     offerType,
     closingFilter,
-    foodFilter,
+    ...guestDispositions,
     ...optionFilters,
     ...equipmentFilters,
   ].filter(Boolean).length;
@@ -186,21 +188,30 @@ const SearchResults = () => {
     eventType || "Type d'événement",
   ].join(" · ");
   const resetAdvancedFilters = () => {
-    setVenueType("");
+    setVenueTypes([]);
     setPriceTier("");
     setAmbianceType("");
-    setPrivatizationType("");
+    setPrivatizationTypes([]);
     setOfferType("");
     setClosingFilter("");
     setOptionFilters([]);
     setEquipmentFilters([]);
-    setFoodFilter("");
+    setGuestDispositions([]);
+  };
+  const toggleVenueType = (value: string) => {
+    setVenueTypes((current) => toggleValue(current, value));
+  };
+  const togglePrivatizationType = (value: string) => {
+    setPrivatizationTypes((current) => toggleValue(current, value));
   };
   const toggleOptionFilter = (value: string) => {
     setOptionFilters((current) => toggleValue(current, value));
   };
   const toggleEquipmentFilter = (value: string) => {
     setEquipmentFilters((current) => toggleValue(current, value));
+  };
+  const toggleGuestDisposition = (value: string) => {
+    setGuestDispositions((current) => toggleValue(current, value));
   };
 
   const FilterGroup = ({ title, options, value, values, onSelect, onToggle }: FilterGroupProps) => (
@@ -637,15 +648,15 @@ const SearchResults = () => {
             </div>
 
             <div className="grid flex-1 gap-8 overflow-y-auto p-5 md:grid-cols-2">
-              <FilterGroup title="Type de lieu" options={VENUE_TYPE_FILTERS} value={venueType} onSelect={setVenueType} />
-              <FilterGroup title="Prix" options={PRICE_FILTERS} value={priceTier} onSelect={setPriceTier} />
+              <FilterGroup title="Type de lieu" options={VENUE_TYPES} values={venueTypes} onToggle={toggleVenueType} />
+              <FilterGroup title="Prix" options={PRICE_TIERS} value={priceTier} onSelect={setPriceTier} />
               <FilterGroup title="Ambiance" options={AMBIANCE_FILTERS} value={ambianceType} onSelect={setAmbianceType} />
-              <FilterGroup title="Type de privatisation" options={PRIVATIZATION_FILTERS} value={privatizationType} onSelect={setPrivatizationType} />
+              <FilterGroup title="Type de privatisation" options={PRIVATIZATION_TYPES} values={privatizationTypes} onToggle={togglePrivatizationType} />
               <FilterGroup title="Offres" options={OFFER_FILTERS} value={offerType} onSelect={setOfferType} />
-              <FilterGroup title="Horaire" options={HOUR_FILTERS} value={closingFilter === "Après minuit" ? "Ouvert après minuit" : closingFilter === "Après 2h" ? "Ouvert après 2h" : ""} onSelect={(value) => setClosingFilter(value === "Ouvert après minuit" ? "Après minuit" : value === "Ouvert après 2h" ? "Après 2h" : "")} />
-              <FilterGroup title="Options" options={OPTION_FILTERS} values={optionFilters} onToggle={toggleOptionFilter} />
-              <FilterGroup title="Équipements" options={EQUIPMENT_FILTERS} values={equipmentFilters} onToggle={toggleEquipmentFilter} />
-              <FilterGroup title="Nourriture" options={FOOD_FILTERS} value={foodFilter} onSelect={setFoodFilter} />
+              <FilterGroup title="Horaires" options={CLOSING_TIME_OPTIONS} value={closingFilter} onSelect={setClosingFilter} />
+              <FilterGroup title="Options" options={[...EXTERNAL_OPTIONS, ...OPTION_FEATURES]} values={optionFilters} onToggle={toggleOptionFilter} />
+              <FilterGroup title="Disposition des invités" options={GUEST_DISPOSITIONS} values={guestDispositions} onToggle={toggleGuestDisposition} />
+              <FilterGroup title="Équipements & services" options={SERVICES} values={equipmentFilters} onToggle={toggleEquipmentFilter} />
             </div>
 
             <div className="flex flex-col gap-3 border-t border-border p-5 sm:flex-row sm:items-center sm:justify-between">

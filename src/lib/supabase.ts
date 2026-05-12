@@ -12,8 +12,9 @@ export type VenueInsert = {
   min_capacity: number;
   max_capacity: number;
   event_categories: string[];
+  venue_types: string[];
   services: string[];
-  spaces: Array<{ id: string; name: string; capacity: number; description: string }>;
+  spaces: Array<{ id: string; name: string; capacity: number; description: string; imageUrl?: string }>;
   access_details: string[];
   useful_information: string[];
   pricing_text: string;
@@ -28,6 +29,9 @@ export type VenueInsert = {
   closing_time: string;
   ambiance_types: string[];
   external_options: string[];
+  privatization_types: string[];
+  guest_dispositions: string[];
+  option_features: string[];
   metro_access?: string | null;
   featured: boolean;
   active: boolean;

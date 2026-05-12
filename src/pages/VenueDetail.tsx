@@ -274,19 +274,26 @@ const VenueDetail = () => {
                       key={space.id}
                       type="button"
                       onClick={() => setBookingOpen(true)}
-                      className="group rounded-lg border border-border bg-card p-5 text-left transition-colors hover:border-primary/50"
+                      className="group overflow-hidden rounded-lg border border-border bg-card text-left transition-colors hover:border-primary/50"
                     >
-                      <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <h3 className="font-heading text-2xl font-semibold">{space.name}</h3>
-                          <p className="mt-2 text-sm font-body leading-relaxed text-muted-foreground">{space.description}</p>
-                          <div className="mt-4 flex flex-wrap gap-2">
-                            <span className="rounded-lg bg-secondary px-3 py-1.5 text-xs font-body font-semibold text-secondary-foreground">{space.capacity} pers.</span>
-                            <span className="rounded-lg bg-secondary px-3 py-1.5 text-xs font-body font-semibold text-secondary-foreground">{Math.max(20, Math.round(space.capacity * 1.8))} m² estimés</span>
-                            <span className="rounded-lg bg-secondary px-3 py-1.5 text-xs font-body font-semibold text-secondary-foreground">Disponibilité sur demande</span>
+                      <div className={`grid grid-cols-1 ${space.imageUrl ? "md:grid-cols-[13rem_minmax(0,1fr)]" : ""}`}>
+                        {space.imageUrl && (
+                          <div className="h-44 md:h-full">
+                            <img src={space.imageUrl} alt={space.name} className="h-full w-full object-cover image-grade-luxe" loading="lazy" />
                           </div>
+                        )}
+                        <div className="flex items-start justify-between gap-4 p-5">
+                          <div>
+                            <h3 className="font-heading text-2xl font-semibold">{space.name}</h3>
+                            <p className="mt-2 text-sm font-body leading-relaxed text-muted-foreground">{space.description}</p>
+                            <div className="mt-4 flex flex-wrap gap-2">
+                              <span className="rounded-lg bg-secondary px-3 py-1.5 text-xs font-body font-semibold text-secondary-foreground">{space.capacity} pers.</span>
+                              <span className="rounded-lg bg-secondary px-3 py-1.5 text-xs font-body font-semibold text-secondary-foreground">{Math.max(20, Math.round(space.capacity * 1.8))} m² estimés</span>
+                              <span className="rounded-lg bg-secondary px-3 py-1.5 text-xs font-body font-semibold text-secondary-foreground">Disponibilité sur demande</span>
+                            </div>
+                          </div>
+                          <ArrowRight className="mt-1 h-5 w-5 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-primary" />
                         </div>
-                        <ArrowRight className="mt-1 h-5 w-5 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-primary" />
                       </div>
                     </button>
                   ))}

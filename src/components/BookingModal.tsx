@@ -390,6 +390,11 @@ const BookingModal = ({ venue, onClose }: BookingModalProps) => {
                     }`}
                   >
                     <div className={`absolute inset-x-0 top-0 h-1 ${selected ? "bg-primary-foreground/35" : "bg-transparent"}`} />
+                    {space.imageUrl && (
+                      <div className="-mx-4 -mt-4 mb-4 h-28 overflow-hidden">
+                        <img src={space.imageUrl} alt={space.name} className="h-full w-full object-cover image-grade-luxe" loading="lazy" />
+                      </div>
+                    )}
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
