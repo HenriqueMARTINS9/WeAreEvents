@@ -203,7 +203,6 @@ export const PRIVATIZATION_TYPES = [
 export const GUEST_DISPOSITIONS = [
   "Debout",
   "Assis",
-  "Les deux",
 ] as const;
 
 export const SPACE_TYPES = [

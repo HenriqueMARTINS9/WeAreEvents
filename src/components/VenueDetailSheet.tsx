@@ -25,6 +25,15 @@ const serviceIcons: Record<string, React.ReactNode> = {
   "Vestiaire": <ShirtIcon className="w-4 h-4" />,
 };
 
+const formatClosingLabel = (value: string) => {
+  if (!value) return "Sur demande";
+
+  const [hours = "", minutes = ""] = value.split(":");
+  const hourLabel = Number.isFinite(Number(hours)) ? String(Number(hours)) : hours;
+
+  return `Jusqu'à ${hourLabel}h${minutes && minutes !== "00" ? minutes : ""}`;
+};
+
 const VenueDetailSheet = ({ venue, onClose, onBooking }: VenueDetailSheetProps) => {
   const [activeMediaIndex, setActiveMediaIndex] = useState<number | null>(null);
   const reviews = getReviewsByVenueId(venue.id);
@@ -44,6 +53,7 @@ const VenueDetailSheet = ({ venue, onClose, onBooking }: VenueDetailSheetProps) 
     })),
   ];
   const imageMediaOffset = venue.videoUrl ? 1 : 0;
+  const closingLabel = formatClosingLabel(venue.closingTime);
 
   return (
     <div className="fixed inset-0 z-[2000] overflow-x-hidden overflow-y-auto bg-background animate-slide-up">
@@ -148,6 +158,27 @@ const VenueDetailSheet = ({ venue, onClose, onBooking }: VenueDetailSheetProps) 
         </p>
         </div>
 
+        <MobileChipSection
+          title="Profil du lieu"
+          groups={[
+            { label: "Type de lieu", items: venue.venueTypes },
+            { label: "Événements", items: venue.eventCategories },
+            { label: "Ambiances", items: venue.ambianceTypes },
+            { label: "Type d'espace", items: venue.spaceTypes },
+          ]}
+        />
+
+        <MobileChipSection
+          title="Conditions & options"
+          groups={[
+            { label: "Horaires", items: [closingLabel] },
+            { label: "Privatisation", items: venue.privatizationTypes },
+            { label: "Disposition", items: venue.guestDispositions },
+            { label: "Options du lieu", items: venue.optionFeatures },
+            { label: "Apports possibles", items: venue.externalOptions },
+          ]}
+        />
+
         <h3 className="font-heading text-lg font-semibold mb-3">Espaces disponibles</h3>
         <div className="space-y-2 mb-6">
           {venue.spaces.map((space) => (
@@ -200,16 +231,6 @@ const VenueDetailSheet = ({ venue, onClose, onBooking }: VenueDetailSheetProps) 
               <Info className="w-4 h-4 mt-0.5 text-primary" />
               <p className="min-w-0 break-words text-sm font-body text-foreground/75">{detail}</p>
             </div>
-          ))}
-        </div>
-
-        {/* Event types */}
-        <h3 className="font-heading text-lg font-semibold mb-3">Types d'événements</h3>
-        <div className="flex flex-wrap gap-2 mb-6">
-          {venue.eventCategories.map((cat) => (
-            <span key={cat} className="px-3 py-1.5 rounded-lg bg-secondary text-secondary-foreground text-xs font-body font-medium">
-              {cat}
-            </span>
           ))}
         </div>
 
@@ -282,5 +303,37 @@ const VenueDetailSheet = ({ venue, onClose, onBooking }: VenueDetailSheetProps) 
     </div>
   );
 };
+
+const MobileChipSection = ({
+  title,
+  groups,
+}: {
+  title: string;
+  groups: Array<{ label: string; items: string[] }>;
+}) => (
+  <section className="mb-6 rounded-lg border border-border bg-background p-4">
+    <h3 className="font-heading text-lg font-semibold">{title}</h3>
+    <div className="mt-4 space-y-4">
+      {groups.map((group) => (
+        <div key={group.label}>
+          <p className="mb-2 text-xs font-body font-semibold uppercase tracking-[0.08em] text-muted-foreground">{group.label}</p>
+          <div className="flex flex-wrap gap-2">
+            {group.items.length > 0 ? (
+              group.items.map((item) => (
+                <span key={item} className="rounded-lg bg-secondary px-3 py-1.5 text-xs font-body font-semibold text-secondary-foreground">
+                  {item}
+                </span>
+              ))
+            ) : (
+              <span className="rounded-lg bg-secondary px-3 py-1.5 text-xs font-body font-semibold text-secondary-foreground">
+                Sur demande
+              </span>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  </section>
+);
 
 export default VenueDetailSheet;

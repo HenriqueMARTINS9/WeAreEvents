@@ -2,7 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getReviewsByVenueId } from "@/data/venues";
 import { fetchVenues } from "@/lib/supabase-data";
-import { ArrowRight, Cake, Clock3, Euro, ExternalLink, Images, MapPin, Music2, Play, Route, ShieldCheck, Star, Tag, UtensilsCrossed, Users } from "lucide-react";
+import { ArrowRight, Building2, Cake, Clock3, Euro, ExternalLink, Images, MapPin, Music2, Play, Route, ShieldCheck, Sparkles, Star, Tag, UtensilsCrossed, Users } from "lucide-react";
 import { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import DesktopNav from "@/components/DesktopNav";
@@ -11,6 +11,15 @@ import SiteFooter from "@/components/SiteFooter";
 import VenueDetailSheet from "@/components/VenueDetailSheet";
 import VenueMediaLightbox, { type VenueMediaItem } from "@/components/VenueMediaLightbox";
 import Seo, { siteUrl } from "@/components/Seo";
+
+const formatClosingLabel = (value: string) => {
+  if (!value) return "Sur demande";
+
+  const [hours = "", minutes = ""] = value.split(":");
+  const hourLabel = Number.isFinite(Number(hours)) ? String(Number(hours)) : hours;
+
+  return `Jusqu'à ${hourLabel}h${minutes && minutes !== "00" ? minutes : ""}`;
+};
 
 const VenueDetail = () => {
   const { slug } = useParams();
@@ -74,6 +83,7 @@ const VenueDetail = () => {
   const imageMediaOffset = venue.videoUrl ? 1 : 0;
   const primarySpaces = venue.spaces.slice(0, 3);
   const averageCapacity = `${venue.minCapacity}–${venue.maxCapacity} pers.`;
+  const closingLabel = formatClosingLabel(venue.closingTime);
   const scrollToSection = (sectionId: string) => {
     const section = document.getElementById(sectionId);
     if (!section) return;
@@ -215,6 +225,7 @@ const VenueDetail = () => {
             <nav className="mt-6 flex flex-wrap gap-2 border-b border-border pb-4 text-sm font-body font-semibold text-muted-foreground">
               {[
                 ["#presentation", "Présentation"],
+                ["#details", "Détails"],
                 ["#options", "Options"],
                 ["#ambiance", "Ambiance"],
                 ["#infos", "Informations utiles"],
@@ -246,7 +257,7 @@ const VenueDetail = () => {
                   <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
                   {[
                     { icon: <Users className="h-4 w-4" />, label: "Capacité max", value: averageCapacity },
-                    { icon: <Clock3 className="h-4 w-4" />, label: "Jusqu'à", value: venue.closingTime || "Sur demande" },
+                    { icon: <Clock3 className="h-4 w-4" />, label: "Horaires", value: closingLabel },
                     { icon: <Euro className="h-4 w-4" />, label: "Gamme de prix", value: venue.priceTier },
                     { icon: <ShieldCheck className="h-4 w-4" />, label: "Statut", value: "Lieu vérifié" },
                   ].map((item) => (
@@ -262,6 +273,21 @@ const VenueDetail = () => {
                 <div className="mt-8 rounded-lg border border-border bg-background p-7">
                   <p className="font-heading text-3xl italic text-primary">"{venue.tagline}"</p>
                   <p className="mt-5 max-w-3xl font-body text-lg leading-relaxed text-foreground/80">{venue.description}</p>
+                </div>
+              </section>
+
+              <section id="details" className="scroll-mt-28 rounded-lg border border-border bg-background p-6">
+                <h2 className="font-heading text-3xl font-semibold">Détails du lieu</h2>
+                <p className="mt-2 max-w-2xl text-sm font-body leading-relaxed text-muted-foreground">
+                  Les informations clés pour vérifier rapidement si le lieu correspond au format de votre événement.
+                </p>
+                <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <InfoBlock icon={<Building2 className="h-4 w-4" />} title="Type de lieu" items={venue.venueTypes} />
+                  <InfoBlock icon={<ShieldCheck className="h-4 w-4" />} title="Type d'espace" items={venue.spaceTypes} />
+                  <InfoBlock icon={<Euro className="h-4 w-4" />} title="Type de privatisation" items={venue.privatizationTypes} />
+                  <InfoBlock icon={<Users className="h-4 w-4" />} title="Disposition des invités" items={venue.guestDispositions} />
+                  <InfoBlock icon={<Clock3 className="h-4 w-4" />} title="Horaires" items={[closingLabel]} />
+                  <InfoBlock icon={<Sparkles className="h-4 w-4" />} title="Options du lieu" items={venue.optionFeatures} />
                 </div>
               </section>
 
@@ -395,7 +421,7 @@ const VenueDetail = () => {
                   </div>
                   <div className="rounded-lg bg-secondary p-3">
                     <p className="text-xs font-body text-muted-foreground">Fermeture</p>
-                    <p className="font-body text-sm font-semibold">{venue.closingTime || "Sur demande"}</p>
+                    <p className="font-body text-sm font-semibold">{closingLabel}</p>
                   </div>
                 </div>
                 <button
