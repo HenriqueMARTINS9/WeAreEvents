@@ -17,9 +17,9 @@ export const mockVenues: Venue[] = [
     venueTypes: ["Rooftop", "Salle de réception"],
     services: ["Wi-Fi", "Climatisation", "Terrasse", "Système son", "Mobilier", "Parking"],
     spaces: [
-      { id: "roof-main", name: "Terrasse principale", capacity: 180, description: "Vue panoramique sur Paris, idéale pour cocktail et dîner assis." },
-      { id: "roof-lounge", name: "Salon verrière", capacity: 70, description: "Espace couvert pour accueil, cocktail ou repli météo." },
-      { id: "roof-vip", name: "Suite privée", capacity: 30, description: "Petit espace confidentiel pour VIP, préparation ou rendez-vous presse." },
+      { id: "roof-main", name: "Terrasse principale", capacity: 180, description: "Vue panoramique sur Paris, idéale pour cocktail et dîner assis.", imageUrl: "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=900&q=80" },
+      { id: "roof-lounge", name: "Salon verrière", capacity: 70, description: "Espace couvert pour accueil, cocktail ou repli météo.", imageUrl: "https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=900&q=80" },
+      { id: "roof-vip", name: "Suite privée", capacity: 30, description: "Petit espace confidentiel pour VIP, préparation ou rendez-vous presse.", imageUrl: "https://images.unsplash.com/photo-1505236858219-8359eb29e329?w=900&q=80" },
     ],
     accessDetails: [
       "Métro George V à 4 minutes à pied.",
@@ -75,9 +75,9 @@ export const mockVenues: Venue[] = [
     venueTypes: ["Villa", "Espace extérieur"],
     services: ["Wi-Fi", "Terrasse", "Mobilier", "Parking", "Climatisation"],
     spaces: [
-      { id: "villa-garden", name: "Jardins et piscine", capacity: 120, description: "Espace extérieur pour cérémonie, cocktail et brunch." },
-      { id: "villa-salon", name: "Grand salon", capacity: 60, description: "Salon intérieur avec vue mer pour dîner ou réunion." },
-      { id: "villa-deck", name: "Deck sunset", capacity: 40, description: "Terrasse intime pour apéritif privé ou prise de parole." },
+      { id: "villa-garden", name: "Jardins et piscine", capacity: 120, description: "Espace extérieur pour cérémonie, cocktail et brunch.", imageUrl: "https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=900&q=80" },
+      { id: "villa-salon", name: "Grand salon", capacity: 60, description: "Salon intérieur avec vue mer pour dîner ou réunion.", imageUrl: "https://images.unsplash.com/photo-1510076857177-7470076d4098?w=900&q=80" },
+      { id: "villa-deck", name: "Deck sunset", capacity: 40, description: "Terrasse intime pour apéritif privé ou prise de parole.", imageUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=900&q=80" },
     ],
     accessDetails: [
       "Accès en voiture en 15 minutes depuis la gare Saint-Charles.",
@@ -131,9 +131,9 @@ export const mockVenues: Venue[] = [
     venueTypes: ["Loft", "Salle de réception"],
     services: ["Projecteur", "Wi-Fi", "Climatisation", "Système son", "Micro", "Parking"],
     spaces: [
-      { id: "atelier-hall", name: "Grande nef", capacity: 320, description: "Volume principal pour lancement, gala ou conférence." },
-      { id: "atelier-mezzanine", name: "Mezzanine networking", capacity: 90, description: "Vue plongeante pour accueil VIP et networking." },
-      { id: "atelier-studio", name: "Studio contenus", capacity: 45, description: "Pièce isolée pour interviews, showroom ou coulisses." },
+      { id: "atelier-hall", name: "Grande nef", capacity: 320, description: "Volume principal pour lancement, gala ou conférence.", imageUrl: "https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=900&q=80" },
+      { id: "atelier-mezzanine", name: "Mezzanine networking", capacity: 90, description: "Vue plongeante pour accueil VIP et networking.", imageUrl: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=900&q=80" },
+      { id: "atelier-studio", name: "Studio contenus", capacity: 45, description: "Pièce isolée pour interviews, showroom ou coulisses.", imageUrl: "https://images.unsplash.com/photo-1497215842964-222b430dc094?w=900&q=80" },
     ],
     accessDetails: [
       "Tramway Hôtel de Région à 6 minutes à pied.",
@@ -184,9 +184,9 @@ export const mockVenues: Venue[] = [
     venueTypes: ["Salle de réception", "Espace extérieur"],
     services: ["Terrasse", "Mobilier", "Parking", "Système son"],
     spaces: [
-      { id: "chateau-orangerie", name: "Orangerie", capacity: 220, description: "Réception principale pour dîner, bal ou conférence." },
-      { id: "chateau-salons", name: "Salons d'apparat", capacity: 90, description: "Enfilade de salons pour cocktail, cérémonie ou conférences de presse." },
-      { id: "chateau-parc", name: "Parc et parvis", capacity: 400, description: "Grand extérieur pour cérémonie, garden party ou feu d'artifice." },
+      { id: "chateau-orangerie", name: "Orangerie", capacity: 220, description: "Réception principale pour dîner, bal ou conférence.", imageUrl: "https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=900&q=80" },
+      { id: "chateau-salons", name: "Salons d'apparat", capacity: 90, description: "Enfilade de salons pour cocktail, cérémonie ou conférences de presse.", imageUrl: "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=900&q=80" },
+      { id: "chateau-parc", name: "Parc et parvis", capacity: 400, description: "Grand extérieur pour cérémonie, garden party ou feu d'artifice.", imageUrl: "https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=900&q=80" },
     ],
     accessDetails: [
       "Accès en 20 minutes depuis la gare de Tours.",
@@ -236,9 +236,9 @@ export const mockVenues: Venue[] = [
     venueTypes: ["Espace extérieur", "Restaurant"],
     services: ["Terrasse", "Wi-Fi", "Climatisation", "Mobilier"],
     spaces: [
-      { id: "jardin-terrasses", name: "Terrasses cascades", capacity: 80, description: "Extérieurs végétalisés pour cocktail et cérémonie intime." },
-      { id: "jardin-salon", name: "Salon verrière", capacity: 45, description: "Espace intérieur lumineux pour dîner ou discours." },
-      { id: "jardin-bar", name: "Bar secret", capacity: 25, description: "Petit espace signature pour dégustation ou after privé." },
+      { id: "jardin-terrasses", name: "Terrasses cascades", capacity: 80, description: "Extérieurs végétalisés pour cocktail et cérémonie intime.", imageUrl: "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=900&q=80" },
+      { id: "jardin-salon", name: "Salon verrière", capacity: 45, description: "Espace intérieur lumineux pour dîner ou discours.", imageUrl: "https://images.unsplash.com/photo-1510076857177-7470076d4098?w=900&q=80" },
+      { id: "jardin-bar", name: "Bar secret", capacity: 25, description: "Petit espace signature pour dégustation ou after privé.", imageUrl: "https://images.unsplash.com/photo-1505236858219-8359eb29e329?w=900&q=80" },
     ],
     accessDetails: [
       "Tram B Grand Théâtre à 5 minutes à pied.",
@@ -288,9 +288,9 @@ export const mockVenues: Venue[] = [
     venueTypes: ["Loft", "Rooftop", "Appartement"],
     services: ["Terrasse", "Parking", "Wi-Fi", "Climatisation", "Système son", "Mobilier"],
     spaces: [
-      { id: "riviera-terrace", name: "Terrasse panoramique", capacity: 70, description: "Vue mer pour cocktail, sunset session ou prise de parole." },
-      { id: "riviera-loft", name: "Loft principal", capacity: 45, description: "Pièce de réception intérieure pour dîner ou lancement presse." },
-      { id: "riviera-suite", name: "Suite signature", capacity: 18, description: "Espace confidentiel pour comité, talents ou VIP." },
+      { id: "riviera-terrace", name: "Terrasse panoramique", capacity: 70, description: "Vue mer pour cocktail, sunset session ou prise de parole.", imageUrl: "https://images.unsplash.com/photo-1505236858219-8359eb29e329?w=900&q=80" },
+      { id: "riviera-loft", name: "Loft principal", capacity: 45, description: "Pièce de réception intérieure pour dîner ou lancement presse.", imageUrl: "https://images.unsplash.com/photo-1497215842964-222b430dc094?w=900&q=80" },
+      { id: "riviera-suite", name: "Suite signature", capacity: 18, description: "Espace confidentiel pour comité, talents ou VIP.", imageUrl: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=900&q=80" },
     ],
     accessDetails: [
       "Accès en 15 minutes depuis l'aéroport Nice Côte d'Azur.",
