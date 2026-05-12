@@ -40,6 +40,7 @@ create table if not exists public.venues (
   external_options text[] not null default '{}',
   privatization_types text[] not null default '{}',
   guest_dispositions text[] not null default '{}',
+  space_types text[] not null default '{}',
   option_features text[] not null default '{}',
   metro_access text,
   featured boolean not null default false,
@@ -60,6 +61,7 @@ alter table public.venues add column if not exists external_options text[] not n
 alter table public.venues add column if not exists venue_types text[] not null default '{}';
 alter table public.venues add column if not exists privatization_types text[] not null default '{}';
 alter table public.venues add column if not exists guest_dispositions text[] not null default '{}';
+alter table public.venues add column if not exists space_types text[] not null default '{}';
 alter table public.venues add column if not exists option_features text[] not null default '{}';
 alter table public.venues add column if not exists metro_access text;
 

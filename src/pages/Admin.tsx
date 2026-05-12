@@ -24,6 +24,7 @@ import {
   PRICE_TIERS,
   PRIVATIZATION_TYPES,
   SERVICES,
+  SPACE_TYPES,
   VENUE_TYPES,
 } from "@/types/venue";
 import { isSupabaseConfigured, supabase, type BlogPostInsert, type VenueInsert } from "@/lib/supabase";
@@ -475,6 +476,7 @@ const createEmptyVenueForm = () => ({
   externalOptions: EXTERNAL_OPTIONS.slice(0, 1).join(", "),
   privatizationTypes: PRIVATIZATION_TYPES.slice(0, 1).join(", "),
   guestDispositions: GUEST_DISPOSITIONS.slice(0, 1).join(", "),
+  spaceTypes: SPACE_TYPES.slice(0, 1).join(", "),
   optionFeatures: OPTION_FEATURES.slice(0, 1).join(", "),
   metroAccess: "",
   featured: true,
@@ -817,6 +819,7 @@ const Admin = () => {
         external_options: toList(venueForm.externalOptions),
         privatization_types: toList(venueForm.privatizationTypes),
         guest_dispositions: toList(venueForm.guestDispositions),
+        space_types: toList(venueForm.spaceTypes),
         option_features: toList(venueForm.optionFeatures),
         metro_access: venueForm.metroAccess.trim() || null,
         featured: venueForm.featured,
@@ -936,7 +939,8 @@ const Admin = () => {
       externalOptions: (venue.external_options ?? []).join(", "),
       privatizationTypes: (venue.privatization_types ?? []).join(", "),
       guestDispositions: (venue.guest_dispositions ?? []).join(", "),
-      optionFeatures: (venue.option_features ?? []).join(", "),
+      spaceTypes: ((venue.space_types ?? []).length ? venue.space_types : (venue.option_features ?? []).filter((option: string) => SPACE_TYPES.includes(option as typeof SPACE_TYPES[number]))).join(", "),
+      optionFeatures: (venue.option_features ?? []).filter((option: string) => !SPACE_TYPES.includes(option as typeof SPACE_TYPES[number])).join(", "),
       metroAccess: venue.metro_access ?? "",
       featured: Boolean(venue.featured),
       active: Boolean(venue.active),
@@ -1331,13 +1335,14 @@ const VenueForm = ({
     />
     <AdminTextarea label="Accroche" value={form.tagline} onChange={(value) => setForm({ ...form, tagline: value })} />
     <AdminTextarea label="Description" value={form.description} onChange={(value) => setForm({ ...form, description: value })} />
-    <AdminTextarea label="Catégories d'événements" hint="Sépare par virgule ou ligne." value={form.eventCategories} onChange={(value) => setForm({ ...form, eventCategories: value })} />
+    <AdminMultiSelect label="Catégories d'événements" value={form.eventCategories} onChange={(value) => setForm({ ...form, eventCategories: value })} options={EVENT_TYPES} />
     <AdminMultiSelect label="Type de lieu" value={form.venueTypes} onChange={(value) => setForm({ ...form, venueTypes: value })} options={VENUE_TYPES} />
     <AdminMultiSelect label="Équipements & services" value={form.services} onChange={(value) => setForm({ ...form, services: value })} options={SERVICES} />
-    <AdminTextarea label="Types d'ambiance" hint={`Ex: ${AMBIANCE_TYPES.join(", ")}`} value={form.ambianceTypes} onChange={(value) => setForm({ ...form, ambianceTypes: value })} />
+    <AdminMultiSelect label="Types d'ambiance" value={form.ambianceTypes} onChange={(value) => setForm({ ...form, ambianceTypes: value })} options={AMBIANCE_TYPES} />
     <AdminMultiSelect label="Nourriture & boissons externes" value={form.externalOptions} onChange={(value) => setForm({ ...form, externalOptions: value })} options={EXTERNAL_OPTIONS} />
     <AdminMultiSelect label="Types de privatisation" value={form.privatizationTypes} onChange={(value) => setForm({ ...form, privatizationTypes: value })} options={PRIVATIZATION_TYPES} />
     <AdminMultiSelect label="Disposition des invités" value={form.guestDispositions} onChange={(value) => setForm({ ...form, guestDispositions: value })} options={GUEST_DISPOSITIONS} />
+    <AdminMultiSelect label="Type d'espace" value={form.spaceTypes} onChange={(value) => setForm({ ...form, spaceTypes: value })} options={SPACE_TYPES} />
     <AdminMultiSelect label="Options du lieu" value={form.optionFeatures} onChange={(value) => setForm({ ...form, optionFeatures: value })} options={OPTION_FEATURES} />
     <ReservationOptionsField
       value={form.spaces}

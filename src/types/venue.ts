@@ -43,6 +43,7 @@ export interface Venue {
   externalOptions: string[];
   privatizationTypes: string[];
   guestDispositions: string[];
+  spaceTypes: string[];
   optionFeatures: string[];
   metroAccess?: string;
   featured: boolean;
@@ -113,6 +114,16 @@ export const EVENT_TYPES = [
   "Séminaire",
   "Cocktail",
   "Lancement",
+  "Afterwork",
+  "EVJF / EVG",
+  "Baptême",
+  "Bar mitzvah",
+  "Remise de diplôme",
+  "Team building",
+  "Conférence",
+  "Formation",
+  "Dîner d'affaires",
+  "Shooting / tournage",
 ] as const;
 
 export const VENUE_TYPES = [
@@ -126,6 +137,11 @@ export const VENUE_TYPES = [
   "Loft",
   "Villa",
   "Restaurant",
+  "Château",
+  "Domaine",
+  "Hôtel",
+  "Jardin",
+  "Showroom",
 ] as const;
 
 export const SERVICES = [
@@ -140,6 +156,14 @@ export const SERVICES = [
   "Mobilier",
   "Table de mixage",
   "Parking",
+  "Vestiaire",
+  "Cuisine équipée",
+  "Bar équipé",
+  "Lumières",
+  "Scène",
+  "Personnel sur place",
+  "Sécurité",
+  "Hébergement",
 ] as const;
 
 export const PRICE_TIERS = ["€", "€€", "€€€", "€€€€"] as const;
@@ -151,6 +175,18 @@ export const AMBIANCE_TYPES = [
   "Élégant",
   "Corporate",
   "Intimiste",
+  "Atypique",
+  "Chic",
+  "Convivial",
+  "Lounge",
+  "Premium",
+  "Décontracté",
+  "Bohème",
+  "Moderne",
+  "Industriel",
+  "Romantique",
+  "Rooftop",
+  "Club",
 ] as const;
 
 export const EXTERNAL_OPTIONS = [
@@ -170,9 +206,17 @@ export const GUEST_DISPOSITIONS = [
   "Les deux",
 ] as const;
 
+export const SPACE_TYPES = [
+  "Espace clos",
+  "Espace ouvert",
+] as const;
+
 export const OPTION_FEATURES = [
   "Possibilité de mettre sa musique",
-  "Espace clos",
+  "Possibilité de danser",
+  "Décoration personnalisable",
+  "Jeux (baby-foot, ping-pong, ...)",
+  "Heures supplémentaires possibles",
 ] as const;
 
 export const CLOSING_TIME_OPTIONS = [

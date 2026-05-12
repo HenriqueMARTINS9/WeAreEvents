@@ -4,6 +4,7 @@ import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { Building2, CalendarDays, FileText, Home, Map as MapIcon, MapPin, Menu, Search, SlidersHorizontal, Sparkles, Users, X } from "lucide-react";
 import { fetchVenues, filterVenues, findVenueByCode, getVenueLocationSuggestionsFromVenues } from "@/lib/supabase-data";
 import {
+  AMBIANCE_TYPES,
   CLOSING_TIME_OPTIONS,
   EVENT_TYPES,
   EXTERNAL_OPTIONS,
@@ -12,6 +13,7 @@ import {
   PRICE_TIERS,
   PRIVATIZATION_TYPES,
   SERVICES,
+  SPACE_TYPES,
   VENUE_TYPES,
 } from "@/types/venue";
 import MobileHeader from "@/components/MobileHeader";
@@ -26,7 +28,6 @@ import logoBlack from "@/assets/logo-black.svg";
 import { useEstablishmentReferralModal } from "@/lib/establishment-referral-modal";
 import Seo, { siteUrl } from "@/components/Seo";
 
-const AMBIANCE_FILTERS = ["Calme", "Animée", "Festive"] as const;
 const OFFER_FILTERS = ["Promotions exclusives", "Happy Hours"] as const;
 
 type FilterGroupProps = {
@@ -73,13 +74,15 @@ const SearchResults = () => {
   const [guests, setGuests] = useState(searchParams.get("guests") || "");
   const [priceTier, setPriceTier] = useState(searchParams.get("price") || "");
   const [closingFilter, setClosingFilter] = useState(searchParams.get("closing") || "");
-  const [ambianceType, setAmbianceType] = useState(searchParams.get("ambiance") || "");
+  const [eventCategoryFilters, setEventCategoryFilters] = useState<string[]>([]);
+  const [ambianceFilters, setAmbianceFilters] = useState<string[]>(searchParams.get("ambiance") ? [searchParams.get("ambiance") as string] : []);
   const [venueTypes, setVenueTypes] = useState<string[]>([]);
   const [privatizationTypes, setPrivatizationTypes] = useState<string[]>([]);
   const [offerType, setOfferType] = useState("");
   const [optionFilters, setOptionFilters] = useState<string[]>([]);
   const [equipmentFilters, setEquipmentFilters] = useState<string[]>([]);
   const [guestDispositions, setGuestDispositions] = useState<string[]>([]);
+  const [spaceTypes, setSpaceTypes] = useState<string[]>([]);
   const [showAllFilters, setShowAllFilters] = useState(false);
   const [showCodeSearch, setShowCodeSearch] = useState(false);
   const [desktopMenuOpen, setDesktopMenuOpen] = useState(false);
@@ -105,18 +108,20 @@ const SearchResults = () => {
     return filterVenues(venues, {
       locationQuery: locationQuery || undefined,
       eventType: eventType || undefined,
+      eventTypes: eventCategoryFilters,
       minGuests: guests ? parseInt(guests, 10) : undefined,
       priceTier: priceTier || undefined,
       closingTimeFilter: closingFilter || undefined,
-      ambianceType: ambianceType || undefined,
+      ambianceTypes: ambianceFilters,
       venueTypes,
       privatizationTypes,
+      spaceTypes,
       offerType: offerType || undefined,
       optionFilters,
       equipmentFilters,
       guestDispositions,
     });
-  }, [locationQuery, eventType, guests, priceTier, closingFilter, ambianceType, venueTypes, privatizationTypes, offerType, optionFilters, equipmentFilters, guestDispositions, venues]);
+  }, [locationQuery, eventType, eventCategoryFilters, guests, priceTier, closingFilter, ambianceFilters, venueTypes, privatizationTypes, spaceTypes, offerType, optionFilters, equipmentFilters, guestDispositions, venues]);
 
   useEffect(() => {
     setVisibleVenueIds(null);
@@ -171,12 +176,14 @@ const SearchResults = () => {
   const isMapZoneFilteringActive =
     !isMobile && visibleVenueIds !== null && results.length !== filteredResults.length;
   const activeAdvancedFilterCount = [
+    ...eventCategoryFilters,
     ...venueTypes,
     priceTier,
-    ambianceType,
+    ...ambianceFilters,
     ...privatizationTypes,
     offerType,
     closingFilter,
+    ...spaceTypes,
     ...guestDispositions,
     ...optionFilters,
     ...equipmentFilters,
@@ -188,12 +195,14 @@ const SearchResults = () => {
     eventType || "Type d'événement",
   ].join(" · ");
   const resetAdvancedFilters = () => {
+    setEventCategoryFilters([]);
     setVenueTypes([]);
     setPriceTier("");
-    setAmbianceType("");
+    setAmbianceFilters([]);
     setPrivatizationTypes([]);
     setOfferType("");
     setClosingFilter("");
+    setSpaceTypes([]);
     setOptionFilters([]);
     setEquipmentFilters([]);
     setGuestDispositions([]);
@@ -201,11 +210,20 @@ const SearchResults = () => {
   const toggleVenueType = (value: string) => {
     setVenueTypes((current) => toggleValue(current, value));
   };
+  const toggleEventCategoryFilter = (value: string) => {
+    setEventCategoryFilters((current) => toggleValue(current, value));
+  };
+  const toggleAmbianceFilter = (value: string) => {
+    setAmbianceFilters((current) => toggleValue(current, value));
+  };
   const togglePrivatizationType = (value: string) => {
     setPrivatizationTypes((current) => toggleValue(current, value));
   };
   const toggleOptionFilter = (value: string) => {
     setOptionFilters((current) => toggleValue(current, value));
+  };
+  const toggleSpaceType = (value: string) => {
+    setSpaceTypes((current) => toggleValue(current, value));
   };
   const toggleEquipmentFilter = (value: string) => {
     setEquipmentFilters((current) => toggleValue(current, value));
@@ -648,12 +666,14 @@ const SearchResults = () => {
             </div>
 
             <div className="grid flex-1 gap-8 overflow-y-auto p-5 md:grid-cols-2">
+              <FilterGroup title="Catégories d'événements" options={EVENT_TYPES} values={eventCategoryFilters} onToggle={toggleEventCategoryFilter} />
               <FilterGroup title="Type de lieu" options={VENUE_TYPES} values={venueTypes} onToggle={toggleVenueType} />
               <FilterGroup title="Prix" options={PRICE_TIERS} value={priceTier} onSelect={setPriceTier} />
-              <FilterGroup title="Ambiance" options={AMBIANCE_FILTERS} value={ambianceType} onSelect={setAmbianceType} />
+              <FilterGroup title="Ambiances" options={AMBIANCE_TYPES} values={ambianceFilters} onToggle={toggleAmbianceFilter} />
               <FilterGroup title="Type de privatisation" options={PRIVATIZATION_TYPES} values={privatizationTypes} onToggle={togglePrivatizationType} />
               <FilterGroup title="Offres" options={OFFER_FILTERS} value={offerType} onSelect={setOfferType} />
               <FilterGroup title="Horaires" options={CLOSING_TIME_OPTIONS} value={closingFilter} onSelect={setClosingFilter} />
+              <FilterGroup title="Type d'espace" options={SPACE_TYPES} values={spaceTypes} onToggle={toggleSpaceType} />
               <FilterGroup title="Options" options={[...EXTERNAL_OPTIONS, ...OPTION_FEATURES]} values={optionFilters} onToggle={toggleOptionFilter} />
               <FilterGroup title="Disposition des invités" options={GUEST_DISPOSITIONS} values={guestDispositions} onToggle={toggleGuestDisposition} />
               <FilterGroup title="Équipements & services" options={SERVICES} values={equipmentFilters} onToggle={toggleEquipmentFilter} />

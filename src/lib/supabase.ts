@@ -31,6 +31,7 @@ export type VenueInsert = {
   external_options: string[];
   privatization_types: string[];
   guest_dispositions: string[];
+  space_types: string[];
   option_features: string[];
   metro_access?: string | null;
   featured: boolean;

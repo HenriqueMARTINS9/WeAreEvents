@@ -80,6 +80,7 @@ const toVenueRow = (venue) => ({
   external_options: venue.externalOptions,
   privatization_types: venue.privatizationTypes ?? [],
   guest_dispositions: venue.guestDispositions ?? [],
+  space_types: venue.spaceTypes ?? [],
   option_features: venue.optionFeatures ?? [],
   metro_access: venue.metroAccess ?? null,
   featured: venue.featured,
