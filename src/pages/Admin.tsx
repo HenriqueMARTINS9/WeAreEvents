@@ -39,6 +39,15 @@ const slugify = (value: string) =>
     .replace(/^-+|-+$/g, "");
 
 const toList = (value: string) => value.split(/\n|,/).map((item) => item.trim()).filter(Boolean);
+const toPresetList = (value: string, options: readonly string[]) => {
+  const trimmedValue = value.trim();
+  if (!trimmedValue) return [];
+
+  const lineValues = trimmedValue.split("\n").map((item) => item.trim()).filter(Boolean);
+  const selectedOptions = options.filter((option) => lineValues.includes(option) || trimmedValue.includes(option));
+
+  return selectedOptions.length ? selectedOptions : toList(value).filter((item) => options.includes(item));
+};
 const toNumber = (value: string, fallback = 0) => {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
@@ -47,6 +56,7 @@ const toNumber = (value: string, fallback = 0) => {
 type ReservationOptionForm = {
   name: string;
   capacity: string;
+  squareMeters: string;
   description: string;
   imageUrl: string;
 };
@@ -56,31 +66,32 @@ const isNumericText = (value: string) => /^\d+$/.test(value.trim());
 const normalizeReservationOption = (option: ReservationOptionForm): ReservationOptionForm => {
   const name = option.name.trim();
   const capacity = option.capacity.trim();
+  const squareMeters = option.squareMeters.trim();
   const description = option.description.trim();
   const imageUrl = option.imageUrl.trim();
 
   if (isNumericText(name) && capacity && !isNumericText(capacity)) {
-    return { name: capacity, capacity: name, description, imageUrl };
+    return { name: capacity, capacity: name, squareMeters, description, imageUrl };
   }
 
-  return { name, capacity, description, imageUrl };
+  return { name, capacity, squareMeters, description, imageUrl };
 };
 
 const parseReservationOptions = (value: string): ReservationOptionForm[] => {
   const options = value
     .split("\n")
     .map((line) => {
-      const [name = "", capacity = "", description = "", imageUrl = ""] = line.split("|").map((part) => part.trim());
-      return normalizeReservationOption({ name, capacity, description, imageUrl });
+      const [name = "", capacity = "", description = "", imageUrl = "", squareMeters = ""] = line.split("|").map((part) => part.trim());
+      return normalizeReservationOption({ name, capacity, squareMeters, description, imageUrl });
     });
 
-  return options.length ? options : [{ name: "", capacity: "", description: "", imageUrl: "" }];
+  return options.length ? options : [{ name: "", capacity: "", squareMeters: "", description: "", imageUrl: "" }];
 };
 
 const serializeReservationOptions = (options: ReservationOptionForm[]) =>
   options
     .map(normalizeReservationOption)
-    .map((option) => [option.name, option.capacity, option.description, option.imageUrl].map((part) => part.trim()).join(" | "))
+    .map((option) => [option.name, option.capacity, option.description, option.imageUrl, option.squareMeters].map((part) => part.trim()).join(" | "))
     .join("\n");
 
 const imageBucket = "wearevents-images";
@@ -456,9 +467,9 @@ const createEmptyVenueForm = () => ({
   venueCode: "",
   minCapacity: "",
   maxCapacity: "",
-  eventCategories: EVENT_TYPES.slice(0, 2).join(", "),
-  venueTypes: VENUE_TYPES.slice(0, 1).join(", "),
-  services: SERVICES.slice(0, 4).join(", "),
+  eventCategories: EVENT_TYPES.slice(0, 2).join("\n"),
+  venueTypes: VENUE_TYPES.slice(0, 1).join("\n"),
+  services: SERVICES.slice(0, 4).join("\n"),
   spaces: "Salle principale | 120 | Espace principal modulable",
   accessDetails: "",
   usefulInformation: "",
@@ -472,12 +483,12 @@ const createEmptyVenueForm = () => ({
   googleReviewUrl: "",
   priceTier: "€€",
   closingTime: "02:00",
-  ambianceTypes: AMBIANCE_TYPES.slice(0, 2).join(", "),
-  externalOptions: EXTERNAL_OPTIONS.slice(0, 1).join(", "),
-  privatizationTypes: PRIVATIZATION_TYPES.slice(0, 1).join(", "),
-  guestDispositions: GUEST_DISPOSITIONS.slice(0, 1).join(", "),
-  spaceTypes: SPACE_TYPES.slice(0, 1).join(", "),
-  optionFeatures: OPTION_FEATURES.slice(0, 1).join(", "),
+  ambianceTypes: AMBIANCE_TYPES.slice(0, 2).join("\n"),
+  externalOptions: EXTERNAL_OPTIONS.slice(0, 1).join("\n"),
+  privatizationTypes: PRIVATIZATION_TYPES.slice(0, 1).join("\n"),
+  guestDispositions: GUEST_DISPOSITIONS.slice(0, 1).join("\n"),
+  spaceTypes: SPACE_TYPES.slice(0, 1).join("\n"),
+  optionFeatures: OPTION_FEATURES.slice(0, 1).join("\n"),
   metroAccess: "",
   featured: true,
   active: true,
@@ -782,6 +793,7 @@ const Admin = () => {
             id: slugify(normalizedOption.name) || `space-${index + 1}`,
             name: normalizedOption.name,
             capacity: toNumber(normalizedOption.capacity),
+            squareMeters: normalizedOption.squareMeters ? toNumber(normalizedOption.squareMeters) : undefined,
             description: normalizedOption.description,
             imageUrl: normalizedOption.imageUrl || undefined,
           };
@@ -799,9 +811,9 @@ const Admin = () => {
         venue_code: venueForm.venueCode.replace(/\D/g, "").slice(0, 4),
         min_capacity: toNumber(venueForm.minCapacity),
         max_capacity: toNumber(venueForm.maxCapacity),
-        event_categories: toList(venueForm.eventCategories),
-        venue_types: toList(venueForm.venueTypes),
-        services: toList(venueForm.services),
+        event_categories: toPresetList(venueForm.eventCategories, EVENT_TYPES),
+        venue_types: toPresetList(venueForm.venueTypes, VENUE_TYPES),
+        services: toPresetList(venueForm.services, SERVICES),
         spaces,
         access_details: toList(venueForm.accessDetails),
         useful_information: toList(venueForm.usefulInformation),
@@ -815,12 +827,12 @@ const Admin = () => {
         google_review_url: venueForm.googleReviewUrl,
         price_tier: venueForm.priceTier as "€" | "€€" | "€€€" | "€€€€",
         closing_time: venueForm.closingTime,
-        ambiance_types: toList(venueForm.ambianceTypes),
-        external_options: toList(venueForm.externalOptions),
-        privatization_types: toList(venueForm.privatizationTypes),
-        guest_dispositions: toList(venueForm.guestDispositions),
-        space_types: toList(venueForm.spaceTypes),
-        option_features: toList(venueForm.optionFeatures),
+        ambiance_types: toPresetList(venueForm.ambianceTypes, AMBIANCE_TYPES),
+        external_options: toPresetList(venueForm.externalOptions, EXTERNAL_OPTIONS),
+        privatization_types: toPresetList(venueForm.privatizationTypes, PRIVATIZATION_TYPES),
+        guest_dispositions: toPresetList(venueForm.guestDispositions, GUEST_DISPOSITIONS),
+        space_types: toPresetList(venueForm.spaceTypes, SPACE_TYPES),
+        option_features: toPresetList(venueForm.optionFeatures, OPTION_FEATURES),
         metro_access: venueForm.metroAccess.trim() || null,
         featured: venueForm.featured,
         active: venueForm.active,
@@ -912,13 +924,14 @@ const Admin = () => {
       venueCode: venue.venue_code ?? "",
       minCapacity: String(venue.min_capacity ?? ""),
       maxCapacity: String(venue.max_capacity ?? ""),
-      eventCategories: (venue.event_categories ?? []).join(", "),
-      venueTypes: (venue.venue_types ?? []).join(", "),
-      services: (venue.services ?? []).join(", "),
+      eventCategories: (venue.event_categories ?? []).join("\n"),
+      venueTypes: (venue.venue_types ?? []).join("\n"),
+      services: (venue.services ?? []).join("\n"),
       spaces: serializeReservationOptions(
         (venue.spaces ?? []).map((space: any) => ({
           name: String(space.name ?? ""),
           capacity: String(space.capacity ?? ""),
+          squareMeters: String(space.squareMeters ?? ""),
           description: String(space.description ?? ""),
           imageUrl: String(space.imageUrl ?? ""),
         })),
@@ -935,12 +948,12 @@ const Admin = () => {
       googleReviewUrl: venue.google_review_url ?? "",
       priceTier: venue.price_tier ?? "€€",
       closingTime: venue.closing_time ?? "",
-      ambianceTypes: (venue.ambiance_types ?? []).join(", "),
-      externalOptions: (venue.external_options ?? []).join(", "),
-      privatizationTypes: (venue.privatization_types ?? []).join(", "),
-      guestDispositions: (venue.guest_dispositions ?? []).join(", "),
-      spaceTypes: ((venue.space_types ?? []).length ? venue.space_types : (venue.option_features ?? []).filter((option: string) => SPACE_TYPES.includes(option as typeof SPACE_TYPES[number]))).join(", "),
-      optionFeatures: (venue.option_features ?? []).filter((option: string) => !SPACE_TYPES.includes(option as typeof SPACE_TYPES[number])).join(", "),
+      ambianceTypes: (venue.ambiance_types ?? []).join("\n"),
+      externalOptions: (venue.external_options ?? []).join("\n"),
+      privatizationTypes: (venue.privatization_types ?? []).join("\n"),
+      guestDispositions: (venue.guest_dispositions ?? []).join("\n"),
+      spaceTypes: ((venue.space_types ?? []).length ? venue.space_types : (venue.option_features ?? []).filter((option: string) => SPACE_TYPES.includes(option as typeof SPACE_TYPES[number]))).join("\n"),
+      optionFeatures: (venue.option_features ?? []).filter((option: string) => !SPACE_TYPES.includes(option as typeof SPACE_TYPES[number])).join("\n"),
       metroAccess: venue.metro_access ?? "",
       featured: Boolean(venue.featured),
       active: Boolean(venue.active),
@@ -1409,12 +1422,12 @@ const ReservationOptionsField = ({
   };
 
   const addOption = () => {
-    onChange(serializeReservationOptions([...options, { name: "", capacity: "", description: "", imageUrl: "" }]));
+    onChange(serializeReservationOptions([...options, { name: "", capacity: "", squareMeters: "", description: "", imageUrl: "" }]));
   };
 
   const removeOption = (index: number) => {
     const nextOptions = options.filter((_option, optionIndex) => optionIndex !== index);
-    onChange(serializeReservationOptions(nextOptions.length ? nextOptions : [{ name: "", capacity: "", description: "", imageUrl: "" }]));
+    onChange(serializeReservationOptions(nextOptions.length ? nextOptions : [{ name: "", capacity: "", squareMeters: "", description: "", imageUrl: "" }]));
   };
 
   return (
@@ -1426,7 +1439,7 @@ const ReservationOptionsField = ({
             Créez les espaces sélectionnables dans la demande de disponibilité : salle principale, salle secondaire, annexe, terrasse...
           </p>
           <p className="mt-1 text-xs font-body leading-relaxed text-muted-foreground">
-            Le champ Nom est affiché sur la carte de réservation. La capacité apparaît dans la petite pastille à droite.
+            Le champ Nom est affiché sur la carte de réservation. La capacité et la surface apparaissent seulement si elles sont renseignées.
           </p>
         </div>
         <button
@@ -1453,7 +1466,7 @@ const ReservationOptionsField = ({
                 Supprimer
               </button>
             </div>
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-[10rem_minmax(0,1fr)_8rem]">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-[10rem_minmax(0,1fr)_8rem_8rem]">
               <div className="md:row-span-2">
                 <span className="mb-2 block text-xs font-body font-semibold text-muted-foreground">Photo</span>
                 <div className="overflow-hidden rounded-lg border border-border bg-card">
@@ -1499,7 +1512,17 @@ const ReservationOptionsField = ({
                   className="h-11 w-full rounded-lg border border-border bg-card px-3 text-sm font-body outline-none focus:border-primary"
                 />
               </label>
-              <label className="md:col-span-2">
+              <label>
+                <span className="mb-2 block text-xs font-body font-semibold text-muted-foreground">Surface m²</span>
+                <input
+                  type="number"
+                  value={option.squareMeters}
+                  onChange={(event) => updateOption(index, { squareMeters: event.target.value })}
+                  placeholder="180"
+                  className="h-11 w-full rounded-lg border border-border bg-card px-3 text-sm font-body outline-none focus:border-primary"
+                />
+              </label>
+              <label className="md:col-span-3">
                 <span className="mb-2 block text-xs font-body font-semibold text-muted-foreground">Description</span>
                 <textarea
                   value={option.description}
@@ -1509,7 +1532,7 @@ const ReservationOptionsField = ({
                   className="w-full rounded-lg border border-border bg-card px-3 py-3 text-sm font-body leading-relaxed outline-none focus:border-primary"
                 />
               </label>
-              <label className="md:col-span-3">
+              <label className="md:col-span-4">
                 <span className="mb-2 block text-xs font-body font-semibold text-muted-foreground">URL photo de l'option</span>
                 <input
                   value={option.imageUrl}
@@ -1659,12 +1682,12 @@ const AdminMultiSelect = ({
   onChange: (value: string) => void;
   options: readonly string[];
 }) => {
-  const values = toList(value);
+  const values = toPresetList(value, options);
   const toggle = (option: string) => {
     const nextValues = values.includes(option)
       ? values.filter((item) => item !== option)
       : [...values, option];
-    onChange(nextValues.join(", "));
+    onChange(nextValues.join("\n"));
   };
 
   return (

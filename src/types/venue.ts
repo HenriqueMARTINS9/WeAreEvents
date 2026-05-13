@@ -2,6 +2,7 @@ export interface VenueSpace {
   id: string;
   name: string;
   capacity: number;
+  squareMeters?: number;
   description: string;
   imageUrl?: string;
 }
@@ -214,7 +215,7 @@ export const OPTION_FEATURES = [
   "Possibilité de mettre sa musique",
   "Possibilité de danser",
   "Décoration personnalisable",
-  "Jeux (baby-foot, ping-pong, ...)",
+  "Jeux (baby-foot / ping-pong / etc.)",
   "Heures supplémentaires possibles",
 ] as const;
 

@@ -12,6 +12,9 @@ import VenueDetailSheet from "@/components/VenueDetailSheet";
 import VenueMediaLightbox, { type VenueMediaItem } from "@/components/VenueMediaLightbox";
 import Seo, { siteUrl } from "@/components/Seo";
 
+const filledItems = (items: Array<string | null | undefined>) => items.filter((item): item is string => Boolean(item?.trim()));
+const hasItems = (items: Array<string | null | undefined>) => filledItems(items).length > 0;
+
 const formatClosingLabel = (value: string) => {
   if (!value) return "Sur demande";
 
@@ -84,6 +87,9 @@ const VenueDetail = () => {
   const primarySpaces = venue.spaces.slice(0, 3);
   const averageCapacity = `${venue.minCapacity}–${venue.maxCapacity} pers.`;
   const closingLabel = formatClosingLabel(venue.closingTime);
+  const hasAmbianceSection = hasItems(venue.ambianceTypes) || hasItems(venue.externalOptions);
+  const hasUsefulInformation = hasItems(venue.usefulInformation);
+  const hasUsefulInfoSection = hasItems(venue.services) || hasItems(venue.eventCategories) || hasUsefulInformation;
   const scrollToSection = (sectionId: string) => {
     const section = document.getElementById(sectionId);
     if (!section) return;
@@ -227,11 +233,11 @@ const VenueDetail = () => {
                 ["#presentation", "Présentation"],
                 ["#details", "Détails"],
                 ["#options", "Options"],
-                ["#ambiance", "Ambiance"],
-                ["#infos", "Informations utiles"],
-                ["#acces", "Accès"],
+                hasAmbianceSection ? ["#ambiance", "Ambiance"] : null,
+                hasUsefulInfoSection ? ["#infos", "Informations utiles"] : null,
+                ["#acces", "Se rendre"],
                 ["#avis", `Avis (${reviews.length})`],
-              ].map(([href, label]) => (
+              ].filter((item): item is [string, string] => Boolean(item)).map(([href, label]) => (
                 <a
                   key={href}
                   href={href}
@@ -286,7 +292,7 @@ const VenueDetail = () => {
                   <InfoBlock icon={<ShieldCheck className="h-4 w-4" />} title="Type d'espace" items={venue.spaceTypes} />
                   <InfoBlock icon={<Euro className="h-4 w-4" />} title="Type de privatisation" items={venue.privatizationTypes} />
                   <InfoBlock icon={<Users className="h-4 w-4" />} title="Disposition des invités" items={venue.guestDispositions} />
-                  <InfoBlock icon={<Clock3 className="h-4 w-4" />} title="Horaires" items={[closingLabel]} />
+                  <InfoBlock icon={<Clock3 className="h-4 w-4" />} title="Horaires" items={venue.closingTime ? [closingLabel] : []} />
                   <InfoBlock icon={<Sparkles className="h-4 w-4" />} title="Options du lieu" items={venue.optionFeatures} />
                 </div>
               </section>
@@ -314,7 +320,9 @@ const VenueDetail = () => {
                             <p className="mt-2 text-sm font-body leading-relaxed text-muted-foreground">{space.description}</p>
                             <div className="mt-4 flex flex-wrap gap-2">
                               <span className="rounded-lg bg-secondary px-3 py-1.5 text-xs font-body font-semibold text-secondary-foreground">{space.capacity} pers.</span>
-                              <span className="rounded-lg bg-secondary px-3 py-1.5 text-xs font-body font-semibold text-secondary-foreground">{Math.max(20, Math.round(space.capacity * 1.8))} m² estimés</span>
+                              {space.squareMeters && space.squareMeters > 0 && (
+                                <span className="rounded-lg bg-secondary px-3 py-1.5 text-xs font-body font-semibold text-secondary-foreground">{space.squareMeters} m²</span>
+                              )}
                               <span className="rounded-lg bg-secondary px-3 py-1.5 text-xs font-body font-semibold text-secondary-foreground">Disponibilité sur demande</span>
                             </div>
                           </div>
@@ -326,29 +334,35 @@ const VenueDetail = () => {
                 </div>
               </section>
 
-              <section id="ambiance" className="scroll-mt-28 rounded-lg border border-border bg-background p-6">
-                <h2 className="font-heading text-3xl font-semibold">Ambiance & activités</h2>
-                <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
-                  <InfoBlock icon={<Music2 className="h-4 w-4" />} title="Ambiance" items={venue.ambianceTypes} />
-                  <InfoBlock icon={<Cake className="h-4 w-4" />} title="Ce que vous pouvez apporter" items={venue.externalOptions} />
-                </div>
-              </section>
-
-              <section id="infos" className="scroll-mt-28 rounded-lg border border-border bg-background p-6">
-                <h2 className="font-heading text-3xl font-semibold">Informations utiles</h2>
-                <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
-                  <InfoBlock icon={<Tag className="h-4 w-4" />} title="Équipements & services" items={venue.services} />
-                  <InfoBlock icon={<UtensilsCrossed className="h-4 w-4" />} title="Parfait pour" items={venue.eventCategories} />
-                </div>
-                <div className="mt-4 rounded-lg border border-border bg-card p-5">
-                  <h3 className="font-body text-sm font-semibold text-primary">À savoir</h3>
-                  <div className="mt-4 space-y-3">
-                    {venue.usefulInformation.map((detail) => (
-                      <p key={detail} className="text-sm font-body leading-relaxed text-foreground/75">{detail}</p>
-                    ))}
+              {hasAmbianceSection && (
+                <section id="ambiance" className="scroll-mt-28 rounded-lg border border-border bg-background p-6">
+                  <h2 className="font-heading text-3xl font-semibold">Ambiance & activités</h2>
+                  <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <InfoBlock icon={<Music2 className="h-4 w-4" />} title="Ambiance" items={venue.ambianceTypes} />
+                    <InfoBlock icon={<Cake className="h-4 w-4" />} title="Ce que vous pouvez apporter" items={venue.externalOptions} />
                   </div>
-                </div>
-              </section>
+                </section>
+              )}
+
+              {hasUsefulInfoSection && (
+                <section id="infos" className="scroll-mt-28 rounded-lg border border-border bg-background p-6">
+                  <h2 className="font-heading text-3xl font-semibold">Informations utiles</h2>
+                  <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <InfoBlock icon={<Tag className="h-4 w-4" />} title="Équipements & services" items={venue.services} />
+                    <InfoBlock icon={<UtensilsCrossed className="h-4 w-4" />} title="Parfait pour" items={venue.eventCategories} />
+                  </div>
+                  {hasUsefulInformation && (
+                    <div className="mt-4 rounded-lg border border-border bg-card p-5">
+                      <h3 className="font-body text-sm font-semibold text-primary">À savoir</h3>
+                      <div className="mt-4 space-y-3">
+                        {filledItems(venue.usefulInformation).map((detail) => (
+                          <p key={detail} className="text-sm font-body leading-relaxed text-foreground/75">{detail}</p>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </section>
+              )}
 
               <section id="acces" className="scroll-mt-28 rounded-lg border border-border bg-background p-6">
                 <h2 className="font-heading text-3xl font-semibold">Se rendre au {venue.title}</h2>
@@ -359,11 +373,6 @@ const VenueDetail = () => {
                       <p className="font-body font-semibold">{venue.address}</p>
                       {venue.metroAccess && <p className="mt-2 text-sm font-body text-primary">{venue.metroAccess}</p>}
                     </div>
-                  </div>
-                  <div className="mt-5 space-y-3 border-t border-border pt-5">
-                    {venue.accessDetails.map((detail) => (
-                      <p key={detail} className="text-sm font-body leading-relaxed text-foreground/75">{detail}</p>
-                    ))}
                   </div>
                   <a
                     href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(venue.address)}`}
@@ -461,24 +470,26 @@ const VenueDetail = () => {
   );
 };
 
-const InfoBlock = ({ icon, title, items }: { icon: React.ReactNode; title: string; items: string[] }) => (
-  <div className="rounded-lg border border-border bg-card p-5">
-    <div className="mb-4 flex items-center gap-2">
-      <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-secondary text-primary">{icon}</span>
-      <h3 className="font-heading text-xl font-semibold">{title}</h3>
-    </div>
-    <div className="flex flex-wrap gap-2">
-      {items.length > 0 ? (
-        items.map((item) => (
+const InfoBlock = ({ icon, title, items }: { icon: React.ReactNode; title: string; items: string[] }) => {
+  const visibleItems = filledItems(items);
+
+  if (!visibleItems.length) return null;
+
+  return (
+    <div className="rounded-lg border border-border bg-card p-5">
+      <div className="mb-4 flex items-center gap-2">
+        <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-secondary text-primary">{icon}</span>
+        <h3 className="font-heading text-xl font-semibold">{title}</h3>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {visibleItems.map((item) => (
           <span key={item} className="rounded-lg bg-secondary px-3 py-1.5 text-xs font-body font-semibold text-secondary-foreground">
             {item}
           </span>
-        ))
-      ) : (
-        <p className="text-sm font-body text-muted-foreground">Sur demande</p>
-      )}
+        ))}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 export default VenueDetail;

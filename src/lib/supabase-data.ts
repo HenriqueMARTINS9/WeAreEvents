@@ -1,6 +1,6 @@
 import { blogPosts, type BlogPost } from "@/data/blog";
 import { mockVenues } from "@/data/venues";
-import type { Venue } from "@/types/venue";
+import { OPTION_FEATURES, SPACE_TYPES, type Venue } from "@/types/venue";
 import { supabase } from "@/lib/supabase";
 
 const normalizeVenueCode = (code: string) => code.trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
@@ -30,6 +30,10 @@ const closesAtOrAfter = (time: string, threshold: string) => {
 };
 const getLegacySpaceTypes = (options: string[] = []) =>
   options.filter((option) => ["Espace clos", "Espace ouvert"].includes(option));
+const normalizeKnownValues = (values: string[] = [], options: readonly string[]) => {
+  const joinedValues = values.join(", ");
+  return options.filter((option) => values.includes(option) || joinedValues.includes(option));
+};
 
 const mapVenue = (row: any): Venue => ({
   id: row.id,
@@ -63,8 +67,11 @@ const mapVenue = (row: any): Venue => ({
   externalOptions: row.external_options ?? [],
   privatizationTypes: row.privatization_types ?? [],
   guestDispositions: row.guest_dispositions ?? [],
-  spaceTypes: row.space_types?.length ? row.space_types : getLegacySpaceTypes(row.option_features ?? []),
-  optionFeatures: (row.option_features ?? []).filter((option: string) => !["Espace clos", "Espace ouvert"].includes(option)),
+  spaceTypes: row.space_types?.length ? normalizeKnownValues(row.space_types, SPACE_TYPES) : getLegacySpaceTypes(row.option_features ?? []),
+  optionFeatures: normalizeKnownValues(
+    (row.option_features ?? []).filter((option: string) => !["Espace clos", "Espace ouvert"].includes(option)),
+    OPTION_FEATURES,
+  ),
   metroAccess: row.metro_access ?? undefined,
   featured: row.featured ?? false,
   active: row.active ?? true,
@@ -182,7 +189,7 @@ export const filterVenues = (
     if (filters.optionFilters?.includes("Possibilité de ramener son gâteau") && !venue.externalOptions.includes("Possibilité de ramener son gâteau") && !hasText("gateau externe") && !hasText("gâteau externe")) return false;
     if (filters.optionFilters?.includes("Possibilité de danser") && !["festif", "anime", "animé", "dj", "musique"].some(hasText)) return false;
     if (filters.optionFilters?.includes("Matériel de projection") && !["projecteur", "projection"].some(hasText)) return false;
-    if (filters.optionFilters?.includes("Jeux (baby-foot, ping-pong, ...)") && !["jeu", "baby-foot", "ping-pong"].some(hasText)) return false;
+    if (filters.optionFilters?.includes("Jeux (baby-foot / ping-pong / etc.)") && !["jeu", "baby-foot", "ping-pong"].some(hasText)) return false;
     if (filters.equipmentFilters?.some((item) => !hasText(item))) return false;
     return true;
   });

@@ -1,4 +1,4 @@
-import { X, Star, MapPin, Users, Tag, Wifi, Car, UtensilsCrossed, Music, Camera, TreePine, Waves, ChefHat, Snowflake, Projector, ShirtIcon, ShieldCheck, Route, Info, Play, Images } from "lucide-react";
+import { X, Star, MapPin, Users, Tag, Wifi, Car, UtensilsCrossed, Music, Camera, TreePine, Waves, ChefHat, Snowflake, Projector, ShirtIcon, ShieldCheck, ExternalLink, Play, Images } from "lucide-react";
 import { useState } from "react";
 import type { Venue } from "@/types/venue";
 import { getReviewsByVenueId } from "@/data/venues";
@@ -24,6 +24,8 @@ const serviceIcons: Record<string, React.ReactNode> = {
   "Projecteur": <Projector className="w-4 h-4" />,
   "Vestiaire": <ShirtIcon className="w-4 h-4" />,
 };
+
+const filledItems = (items: Array<string | null | undefined>) => items.filter((item): item is string => Boolean(item?.trim()));
 
 const formatClosingLabel = (value: string) => {
   if (!value) return "Sur demande";
@@ -54,6 +56,8 @@ const VenueDetailSheet = ({ venue, onClose, onBooking }: VenueDetailSheetProps) 
   ];
   const imageMediaOffset = venue.videoUrl ? 1 : 0;
   const closingLabel = formatClosingLabel(venue.closingTime);
+  const usefulInformation = filledItems(venue.usefulInformation);
+  const services = filledItems(venue.services);
 
   return (
     <div className="fixed inset-0 z-[2000] overflow-x-hidden overflow-y-auto bg-background animate-slide-up">
@@ -171,7 +175,7 @@ const VenueDetailSheet = ({ venue, onClose, onBooking }: VenueDetailSheetProps) 
         <MobileChipSection
           title="Conditions & options"
           groups={[
-            { label: "Horaires", items: [closingLabel] },
+            { label: "Horaires", items: venue.closingTime ? [closingLabel] : [] },
             { label: "Privatisation", items: venue.privatizationTypes },
             { label: "Disposition", items: venue.guestDispositions },
             { label: "Options du lieu", items: venue.optionFeatures },
@@ -196,6 +200,11 @@ const VenueDetailSheet = ({ venue, onClose, onBooking }: VenueDetailSheetProps) 
                     {space.capacity}
                   </span>
                 </div>
+                {space.squareMeters && space.squareMeters > 0 && (
+                  <span className="mt-3 inline-flex rounded-lg bg-secondary px-2.5 py-1 text-[11px] font-body font-semibold text-secondary-foreground">
+                    {space.squareMeters} m²
+                  </span>
+                )}
               </div>
             </div>
           ))}
@@ -210,47 +219,53 @@ const VenueDetailSheet = ({ venue, onClose, onBooking }: VenueDetailSheetProps) 
               {venue.metroAccess && (
                 <p className="mt-2 break-words text-sm font-body text-primary">Métro / accès : {venue.metroAccess}</p>
               )}
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(venue.address)}`}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-3 inline-flex items-center gap-2 text-sm font-body font-semibold text-primary"
+              >
+                Voir sur la carte
+                <ExternalLink className="h-4 w-4" />
+              </a>
             </div>
           </div>
         </div>
 
-        <h3 className="font-heading text-lg font-semibold mb-3">Comment y accéder</h3>
-        <div className="rounded-lg border border-border bg-background p-4 mb-6 space-y-3">
-          {venue.accessDetails.map((detail) => (
-            <div key={detail} className="flex items-start gap-3">
-              <Route className="w-4 h-4 mt-0.5 text-primary" />
-              <p className="min-w-0 break-words text-sm font-body text-foreground/75">{detail}</p>
+        {usefulInformation.length > 0 && (
+          <>
+            <h3 className="font-heading text-lg font-semibold mb-3">Informations utiles</h3>
+            <div className="rounded-lg border border-border bg-background p-4 mb-6 space-y-3">
+              {usefulInformation.map((detail) => (
+                <p key={detail} className="min-w-0 break-words text-sm font-body text-foreground/75">{detail}</p>
+              ))}
             </div>
-          ))}
-        </div>
-
-        <h3 className="font-heading text-lg font-semibold mb-3">Informations utiles</h3>
-        <div className="rounded-lg border border-border bg-background p-4 mb-6 space-y-3">
-          {venue.usefulInformation.map((detail) => (
-            <div key={detail} className="flex items-start gap-3">
-              <Info className="w-4 h-4 mt-0.5 text-primary" />
-              <p className="min-w-0 break-words text-sm font-body text-foreground/75">{detail}</p>
-            </div>
-          ))}
-        </div>
+          </>
+        )}
 
         {/* Services */}
-        <h3 className="font-heading text-lg font-semibold mb-3">Services & équipements</h3>
-        <div className="grid grid-cols-2 gap-2 mb-6">
-          {venue.services.map((svc) => (
-            <div key={svc} className="flex min-w-0 items-center gap-2 rounded-lg border border-border bg-background p-2.5 text-sm font-body">
-              {serviceIcons[svc] || <Tag className="w-4 h-4" />}
-              <span className="truncate">{svc}</span>
+        {services.length > 0 && (
+          <>
+            <h3 className="font-heading text-lg font-semibold mb-3">Services & équipements</h3>
+            <div className="grid grid-cols-2 gap-2 mb-6">
+              {services.map((svc) => (
+                <div key={svc} className="flex min-w-0 items-center gap-2 rounded-lg border border-border bg-background p-2.5 text-sm font-body">
+                  {serviceIcons[svc] || <Tag className="w-4 h-4" />}
+                  <span className="truncate">{svc}</span>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+          </>
+        )}
 
         {/* Pricing */}
-        <div className="p-4 rounded-lg bg-foreground text-primary-foreground mb-6">
-          <p className="text-xs text-primary-foreground/60 font-body mb-1">Tarif indicatif</p>
-          <p className="font-heading text-2xl font-semibold text-luxe-gold">{venue.pricingText}</p>
-          <p className="mt-2 text-xs font-body text-primary-foreground/60">Devis précis après validation de la date et du format.</p>
-        </div>
+        {venue.pricingText && (
+          <div className="p-4 rounded-lg bg-foreground text-primary-foreground mb-6">
+            <p className="text-xs text-primary-foreground/60 font-body mb-1">Tarif indicatif</p>
+            <p className="font-heading text-2xl font-semibold text-luxe-gold">{venue.pricingText}</p>
+            <p className="mt-2 text-xs font-body text-primary-foreground/60">Devis précis après validation de la date et du format.</p>
+          </div>
+        )}
 
         {/* Reviews */}
         <h3 className="font-heading text-lg font-semibold mb-3">
@@ -310,30 +325,32 @@ const MobileChipSection = ({
 }: {
   title: string;
   groups: Array<{ label: string; items: string[] }>;
-}) => (
-  <section className="mb-6 rounded-lg border border-border bg-background p-4">
-    <h3 className="font-heading text-lg font-semibold">{title}</h3>
-    <div className="mt-4 space-y-4">
-      {groups.map((group) => (
-        <div key={group.label}>
-          <p className="mb-2 text-xs font-body font-semibold uppercase tracking-[0.08em] text-muted-foreground">{group.label}</p>
-          <div className="flex flex-wrap gap-2">
-            {group.items.length > 0 ? (
-              group.items.map((item) => (
+}) => {
+  const visibleGroups = groups
+    .map((group) => ({ ...group, items: filledItems(group.items) }))
+    .filter((group) => group.items.length > 0);
+
+  if (!visibleGroups.length) return null;
+
+  return (
+    <section className="mb-6 rounded-lg border border-border bg-background p-4">
+      <h3 className="font-heading text-lg font-semibold">{title}</h3>
+      <div className="mt-4 space-y-4">
+        {visibleGroups.map((group) => (
+          <div key={group.label}>
+            <p className="mb-2 text-xs font-body font-semibold uppercase tracking-[0.08em] text-muted-foreground">{group.label}</p>
+            <div className="flex flex-wrap gap-2">
+              {group.items.map((item) => (
                 <span key={item} className="rounded-lg bg-secondary px-3 py-1.5 text-xs font-body font-semibold text-secondary-foreground">
                   {item}
                 </span>
-              ))
-            ) : (
-              <span className="rounded-lg bg-secondary px-3 py-1.5 text-xs font-body font-semibold text-secondary-foreground">
-                Sur demande
-              </span>
-            )}
+              ))}
+            </div>
           </div>
-        </div>
-      ))}
-    </div>
-  </section>
-);
+        ))}
+      </div>
+    </section>
+  );
+};
 
 export default VenueDetailSheet;

@@ -14,7 +14,7 @@ export type VenueInsert = {
   event_categories: string[];
   venue_types: string[];
   services: string[];
-  spaces: Array<{ id: string; name: string; capacity: number; description: string; imageUrl?: string }>;
+  spaces: Array<{ id: string; name: string; capacity: number; squareMeters?: number; description: string; imageUrl?: string }>;
   access_details: string[];
   useful_information: string[];
   pricing_text: string;
