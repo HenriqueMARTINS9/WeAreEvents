@@ -28,8 +28,6 @@ import logoBlack from "@/assets/logo-black.svg";
 import { useEstablishmentReferralModal } from "@/lib/establishment-referral-modal";
 import Seo, { siteUrl } from "@/components/Seo";
 
-const OFFER_FILTERS = ["Promotions exclusives", "Happy Hours"] as const;
-
 type FilterGroupProps = {
   title: string;
   options: readonly string[];
@@ -78,7 +76,6 @@ const SearchResults = () => {
   const [ambianceFilters, setAmbianceFilters] = useState<string[]>(searchParams.get("ambiance") ? [searchParams.get("ambiance") as string] : []);
   const [venueTypes, setVenueTypes] = useState<string[]>([]);
   const [privatizationTypes, setPrivatizationTypes] = useState<string[]>([]);
-  const [offerType, setOfferType] = useState("");
   const [optionFilters, setOptionFilters] = useState<string[]>([]);
   const [equipmentFilters, setEquipmentFilters] = useState<string[]>([]);
   const [guestDispositions, setGuestDispositions] = useState<string[]>([]);
@@ -116,12 +113,11 @@ const SearchResults = () => {
       venueTypes,
       privatizationTypes,
       spaceTypes,
-      offerType: offerType || undefined,
       optionFilters,
       equipmentFilters,
       guestDispositions,
     });
-  }, [locationQuery, eventType, eventCategoryFilters, guests, priceTier, closingFilter, ambianceFilters, venueTypes, privatizationTypes, spaceTypes, offerType, optionFilters, equipmentFilters, guestDispositions, venues]);
+  }, [locationQuery, eventType, eventCategoryFilters, guests, priceTier, closingFilter, ambianceFilters, venueTypes, privatizationTypes, spaceTypes, optionFilters, equipmentFilters, guestDispositions, venues]);
 
   useEffect(() => {
     setVisibleVenueIds(null);
@@ -181,7 +177,6 @@ const SearchResults = () => {
     priceTier,
     ...ambianceFilters,
     ...privatizationTypes,
-    offerType,
     closingFilter,
     ...spaceTypes,
     ...guestDispositions,
@@ -200,7 +195,6 @@ const SearchResults = () => {
     setPriceTier("");
     setAmbianceFilters([]);
     setPrivatizationTypes([]);
-    setOfferType("");
     setClosingFilter("");
     setSpaceTypes([]);
     setOptionFilters([]);
@@ -671,7 +665,6 @@ const SearchResults = () => {
               <FilterGroup title="Prix" options={PRICE_TIERS} value={priceTier} onSelect={setPriceTier} />
               <FilterGroup title="Ambiances" options={AMBIANCE_TYPES} values={ambianceFilters} onToggle={toggleAmbianceFilter} />
               <FilterGroup title="Type de privatisation" options={PRIVATIZATION_TYPES} values={privatizationTypes} onToggle={togglePrivatizationType} />
-              <FilterGroup title="Offres" options={OFFER_FILTERS} value={offerType} onSelect={setOfferType} />
               <FilterGroup title="Horaires" options={CLOSING_TIME_OPTIONS} value={closingFilter} onSelect={setClosingFilter} />
               <FilterGroup title="Type d'espace" options={SPACE_TYPES} values={spaceTypes} onToggle={toggleSpaceType} />
               <FilterGroup title="Options" options={[...EXTERNAL_OPTIONS, ...OPTION_FEATURES]} values={optionFilters} onToggle={toggleOptionFilter} />

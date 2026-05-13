@@ -108,7 +108,6 @@ export const filterVenues = (
     venueTypes?: string[];
     privatizationTypes?: string[];
     spaceTypes?: string[];
-    offerType?: string;
     optionFilters?: string[];
     equipmentFilters?: string[];
     guestDispositions?: string[];
@@ -180,8 +179,6 @@ export const filterVenues = (
     if (!hasAnyExactOrText(filters.privatizationTypes, venue.privatizationTypes)) return false;
     if (!hasAnyExactOrText(filters.guestDispositions, venue.guestDispositions)) return false;
     if (!hasAnyExactOrText(filters.spaceTypes, venue.spaceTypes)) return false;
-    if (filters.offerType === "Promotions exclusives" && !["promotion", "offre", "remise"].some(hasText)) return false;
-    if (filters.offerType === "Happy Hours" && !["happy hour", "bar", "cocktail"].some(hasText)) return false;
 
     if (filters.optionFilters?.includes("Possibilité de mettre sa musique") && !["dj", "musique"].some(hasText)) return false;
     if (filters.optionFilters?.includes("Possibilité de ramener sa nourriture") && !venue.externalOptions.includes("Possibilité de ramener sa nourriture") && !hasText("traiteur externe")) return false;
