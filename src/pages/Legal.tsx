@@ -6,7 +6,7 @@ import VenueCodeSearch from "@/components/VenueCodeSearch";
 import Seo from "@/components/Seo";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-type LegalPageKind = "mentions" | "cgu";
+type LegalPageKind = "mentions" | "cgu" | "privacy";
 
 type LegalSection = {
   title: string;
@@ -17,12 +17,16 @@ type LegalSection = {
 const lastUpdated = "16 mai 2026";
 
 const editorDetails = [
-  "Éditeur du site : Wearevents",
-  "Raison sociale : WEAREVENTS",
+  "Éditeur du site : Henrique MARTINS",
+  "Activité de l'éditeur : MyHextech",
+  "Site internet de l'éditeur : https://myhextech.com",
+  "Directeur de la publication : Henrique MARTINS",
+  "Service exploité pour : Wearevents",
+  "Raison sociale de l'exploitant : WEAREVENTS",
   "Forme juridique : SAS, société par actions simplifiée",
   "Capital social : 1 000 €",
   "Siège social : 49 rue Victor Hugo, 92800 Puteaux, France",
-  "Site internet : https://www.wearevents.fr",
+  "Site internet du service : https://www.wearevents.fr",
   "Email : contact@wearevents.fr",
   "SIREN : 898 845 151",
   "SIRET : 898 845 151 00023",
@@ -30,7 +34,6 @@ const editorDetails = [
   "Numéro de TVA intracommunautaire : FR67 898 845 151",
   "Code NAF / APE : 82.30Z - Organisation de foires, salons professionnels et congrès",
   "Président : AR INVEST",
-  "Directeur de la publication : AR INVEST, en qualité de président de Wearevents",
 ];
 
 const hostingDetails = [
@@ -167,6 +170,103 @@ const cguSections: LegalSection[] = [
   },
 ];
 
+const privacySections: LegalSection[] = [
+  {
+    title: "Pourquoi une politique de confidentialité ?",
+    paragraphs: [
+      "Même sans création de compte utilisateur, le site collecte des données personnelles lorsque vous remplissez un formulaire, envoyez une demande de disponibilité, référencez un établissement ou ajoutez un commentaire.",
+      "Cette page explique quelles données peuvent être collectées, pourquoi elles le sont, combien de temps elles sont conservées et comment exercer vos droits.",
+    ],
+  },
+  {
+    title: "Responsable du traitement",
+    items: [
+      "Responsable du traitement des données liées au service Wearevents : WEAREVENTS.",
+      "Contact pour toute question relative aux données personnelles : contact@wearevents.fr.",
+      "Éditeur du site : Henrique MARTINS, MyHextech.",
+    ],
+  },
+  {
+    title: "Données collectées",
+    items: [
+      "Demandes de disponibilité : prénom, nom, email, téléphone, date souhaitée, horaires, nombre d'invités, type d'événement, espace demandé et message libre.",
+      "Référencement d'un établissement : nom de l'établissement, ville, nom du contact, téléphone, email et message libre.",
+      "Commentaires mobiles : nom affiché, commentaire, date d'ajout et lieu concerné.",
+      "Back office : email de connexion, contenus saisis pour les salles, les blogs, les images, les vidéos et les options de réservation.",
+      "Données techniques : informations nécessaires au fonctionnement du site, au maintien de la sécurité et au diagnostic d'erreurs.",
+    ],
+  },
+  {
+    title: "Finalités de traitement",
+    items: [
+      "Traiter les demandes de disponibilité et recontacter les utilisateurs.",
+      "Transmettre les informations utiles à l'équipe Wearevents et, lorsque nécessaire, à l'établissement concerné afin de qualifier la demande.",
+      "Étudier les demandes de référencement d'établissements.",
+      "Administrer les contenus du site, les fiches établissements, les blogs et les médias.",
+      "Améliorer le fonctionnement du site, prévenir les abus et assurer la sécurité du service.",
+    ],
+  },
+  {
+    title: "Base légale",
+    paragraphs: [
+      "Les traitements sont fondés, selon les cas, sur l'exécution de mesures précontractuelles demandées par l'utilisateur, l'intérêt légitime de Wearevents à traiter les demandes reçues, et le consentement lorsque celui-ci est requis.",
+    ],
+  },
+  {
+    title: "Destinataires des données",
+    items: [
+      "L'équipe Wearevents chargée de traiter les demandes.",
+      "Les établissements concernés lorsqu'une demande de disponibilité doit être qualifiée ou confirmée.",
+      "Les prestataires techniques nécessaires au fonctionnement du site : Vercel pour l'hébergement, Supabase pour la base de données, le stockage et certains services backend, ainsi que les services d'envoi d'email utilisés par Wearevents.",
+    ],
+  },
+  {
+    title: "Hébergement et transferts",
+    paragraphs: [
+      "Le site est hébergé par Vercel. Les données applicatives et médias sont stockés via Supabase, avec un projet configuré en région France / Paris lorsque cette région est utilisée.",
+      "Certains prestataires techniques peuvent être situés hors de l'Union européenne. Dans ce cas, Wearevents veille à s'appuyer sur les garanties contractuelles et techniques prévues par la réglementation applicable.",
+    ],
+  },
+  {
+    title: "Durées de conservation",
+    items: [
+      "Demandes de disponibilité : durée nécessaire au traitement de la demande et au suivi commercial, puis archivage limité si nécessaire.",
+      "Demandes de référencement : durée nécessaire à l'étude du dossier et au suivi de la relation avec l'établissement.",
+      "Commentaires : conservation tant que le commentaire reste affiché ou jusqu'à demande de suppression.",
+      "Données d'administration : conservation tant que l'accès ou le contenu est nécessaire au fonctionnement du service.",
+      "Données techniques : durée strictement nécessaire au diagnostic, à la sécurité et au bon fonctionnement du site.",
+    ],
+  },
+  {
+    title: "Cookies et stockage local",
+    paragraphs: [
+      "Le site peut utiliser du stockage local, du stockage de session ou des cookies strictement nécessaires au fonctionnement de certaines interfaces, par exemple pour conserver un brouillon dans l'administration, mémoriser un affichage temporaire ou enregistrer des commentaires côté navigateur.",
+      "Si des outils de mesure d'audience ou de suivi nécessitant un consentement sont ajoutés ultérieurement, un mécanisme d'information et de choix sera mis en place.",
+    ],
+  },
+  {
+    title: "Vos droits",
+    paragraphs: [
+      "Vous disposez, dans les conditions prévues par la réglementation, d'un droit d'accès, de rectification, d'effacement, de limitation, d'opposition et de portabilité de vos données.",
+      "Vous pouvez exercer vos droits en écrivant à contact@wearevents.fr. Une pièce justificative d'identité peut être demandée uniquement lorsque cela est nécessaire pour confirmer votre identité.",
+      "Vous pouvez également introduire une réclamation auprès de la CNIL si vous estimez que vos droits ne sont pas respectés.",
+    ],
+  },
+  {
+    title: "Sécurité",
+    paragraphs: [
+      "Wearevents met en œuvre des mesures raisonnables pour protéger les données contre l'accès non autorisé, la perte, l'altération ou la divulgation.",
+      "Aucune transmission ou conservation de données sur internet ne peut toutefois être garantie comme absolument sécurisée.",
+    ],
+  },
+  {
+    title: "Mise à jour",
+    paragraphs: [
+      "La présente politique peut être mise à jour pour tenir compte de l'évolution du site, des services proposés ou de la réglementation.",
+    ],
+  },
+];
+
 const pageContent = {
   mentions: {
     title: "Mentions légales",
@@ -183,6 +283,14 @@ const pageContent = {
     seoTitle: "Conditions générales d'utilisation - Wearevents",
     path: "/cgu",
     sections: cguSections,
+  },
+  privacy: {
+    title: "Politique de confidentialité",
+    eyebrow: "Données personnelles",
+    description: "Informations sur la collecte, l'utilisation, la conservation et les droits liés aux données personnelles traitées sur Wearevents.",
+    seoTitle: "Politique de confidentialité - Wearevents",
+    path: "/politique-confidentialite",
+    sections: privacySections,
   },
 } satisfies Record<LegalPageKind, {
   title: string;

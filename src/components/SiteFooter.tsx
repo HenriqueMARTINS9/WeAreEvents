@@ -31,7 +31,7 @@ const SiteFooter = ({ variant = "light" }: SiteFooterProps) => {
           <div className={`space-y-2 text-sm font-body ${isDark ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
             <Link to="/mentions-legales" className={`block transition-colors ${isDark ? "hover:text-primary-foreground" : "hover:text-foreground"}`}>Mentions légales</Link>
             <Link to="/cgu" className={`block transition-colors ${isDark ? "hover:text-primary-foreground" : "hover:text-foreground"}`}>CGU</Link>
-            <p>Confidentialité</p>
+            <Link to="/politique-confidentialite" className={`block transition-colors ${isDark ? "hover:text-primary-foreground" : "hover:text-foreground"}`}>Confidentialité</Link>
           </div>
         </div>
         <div>
