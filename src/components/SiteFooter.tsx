@@ -14,7 +14,7 @@ const SiteFooter = ({ variant = "light" }: SiteFooterProps) => {
     <footer className={`py-12 px-6 ${isDark ? "bg-foreground text-primary-foreground" : "bg-background text-foreground"}`}>
       <div className="mx-auto grid max-w-7xl grid-cols-1 gap-8 md:grid-cols-4 xl:px-2">
         <div>
-          <img src={logoBlack} alt="wearevents" className={`mb-4 h-8 md:h-9 ${isDark ? "brightness-0 invert" : ""}`} />
+          <img src={logoBlack} alt="Wearevents" className={`mb-4 h-8 md:h-9 ${isDark ? "brightness-0 invert" : ""}`} />
         </div>
         <div>
           <h4 className="font-body font-semibold text-sm mb-3">Navigation</h4>
@@ -29,8 +29,8 @@ const SiteFooter = ({ variant = "light" }: SiteFooterProps) => {
         <div>
           <h4 className="font-body font-semibold text-sm mb-3">Légal</h4>
           <div className={`space-y-2 text-sm font-body ${isDark ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
-            <p>Mentions légales</p>
-            <p>CGU</p>
+            <Link to="/mentions-legales" className={`block transition-colors ${isDark ? "hover:text-primary-foreground" : "hover:text-foreground"}`}>Mentions légales</Link>
+            <Link to="/cgu" className={`block transition-colors ${isDark ? "hover:text-primary-foreground" : "hover:text-foreground"}`}>CGU</Link>
             <p>Confidentialité</p>
           </div>
         </div>
@@ -61,7 +61,7 @@ const SiteFooter = ({ variant = "light" }: SiteFooterProps) => {
       <div className={`mx-auto mt-8 max-w-7xl border-t pt-6 text-center text-xs font-body xl:px-2 ${
         isDark ? "border-primary-foreground/10 text-primary-foreground/40" : "border-border text-muted-foreground"
       }`}>
-        © 2026 wearevents. Tous droits réservés.
+        © 2026 Wearevents. Tous droits réservés.
       </div>
     </footer>
   );

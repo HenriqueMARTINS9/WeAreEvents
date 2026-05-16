@@ -65,7 +65,7 @@ Comparez rapidement les lieux visités pendant que vos impressions sont fraîche
   {
     slug: "referencer-etablissement",
     category: "Propriétaires",
-    title: "Pourquoi référencer son établissement sur wearevents",
+    title: "Pourquoi référencer son établissement sur Wearevents",
     excerpt:
       "Visibilité qualifiée, demandes mieux cadrées et mise en avant premium pour vos espaces événementiels.",
     content: `Référencer son établissement permet de recevoir des demandes plus qualifiées, mieux cadrées et plus faciles à transformer en réservation.

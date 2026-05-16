@@ -55,7 +55,7 @@ const DesktopNav = () => {
           <Link to="/" className="shrink-0">
             <img
               src={useLightChrome ? logoWhite : logoBlack}
-              alt="wearevents"
+              alt="Wearevents"
               className="h-8 transition-opacity duration-300 xl:h-9"
             />
           </Link>

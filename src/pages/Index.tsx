@@ -15,7 +15,7 @@ const Index = () => {
           "@context": "https://schema.org",
           "@type": "Organization",
           name: "Wearevents",
-          alternateName: "wearevents",
+          alternateName: "Wearevents",
           url: siteUrl,
           logo: `${siteUrl}/favicon.png`,
           email: "contact@wearevents.fr",
@@ -24,7 +24,7 @@ const Index = () => {
           "@context": "https://schema.org",
           "@type": "WebSite",
           name: "Wearevents",
-          alternateName: "wearevents",
+          alternateName: "Wearevents",
           url: siteUrl,
           potentialAction: {
             "@type": "SearchAction",

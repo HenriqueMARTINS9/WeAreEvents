@@ -90,7 +90,7 @@ const getEmailTheme = (kind: EmailKind) => {
       title: "Nouvelle demande reçue",
       description: "Merci de confirmer la disponibilité et les conditions applicables.",
       accent: "#D94F6D",
-      buttonLabel: "Voir wearevents",
+      buttonLabel: "Voir Wearevents",
       buttonUrl: getPublicSiteUrl(),
     };
   }
@@ -188,8 +188,8 @@ const buildBrandedEmailHtml = (
                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
                   <tr>
                     <td style="vertical-align:middle;">
-                      <img src="${logoUrl}" width="44" height="44" alt="wearevents" style="display:inline-block;border:0;border-radius:14px;vertical-align:middle;">
-                      <span style="display:inline-block;margin-left:12px;font-family:Arial,sans-serif;font-size:21px;font-weight:700;color:#171717;vertical-align:middle;">wearevents</span>
+                      <img src="${logoUrl}" width="44" height="44" alt="Wearevents" style="display:inline-block;border:0;border-radius:14px;vertical-align:middle;">
+                      <span style="display:inline-block;margin-left:12px;font-family:Arial,sans-serif;font-size:21px;font-weight:700;color:#171717;vertical-align:middle;">Wearevents</span>
                     </td>
                     <td align="right" style="font-family:Arial,sans-serif;font-size:12px;font-weight:700;color:#8B817B;vertical-align:middle;">
                       ${requestId ? `Réf. ${escapeHtml(requestId)}` : ""}
@@ -251,7 +251,7 @@ const buildBrandedEmailHtml = (
 
             <tr>
               <td style="padding:22px 8px 0;text-align:center;font-family:Arial,sans-serif;font-size:12px;line-height:1.6;color:#8B817B;">
-                wearevents accompagne les organisateurs et les lieux événementiels avec des demandes qualifiées, simples et sans engagement.
+                Wearevents accompagne les organisateurs et les lieux événementiels avec des demandes qualifiées, simples et sans engagement.
                 <br>
                 <a href="${siteUrl}" style="color:#D94F6D;text-decoration:none;">${siteUrl.replace(/^https?:\/\//, "")}</a>
               </td>

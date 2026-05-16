@@ -41,7 +41,7 @@ const Blog = () => {
           <div className="mx-auto max-w-7xl xl:px-2">
             <div className="grid grid-cols-1 gap-10 xl:grid-cols-[minmax(0,0.9fr)_minmax(420px,1.1fr)] xl:items-end">
               <div>
-                <p className="mb-3 font-body text-sm font-semibold text-primary">Blog wearevents</p>
+                <p className="mb-3 font-body text-sm font-semibold text-primary">Blog Wearevents</p>
                 <h1 className="font-heading text-5xl font-semibold leading-[0.98] xl:text-6xl">
                   Guides pratiques pour trouver le bon lieu pour vos événements.
                 </h1>

@@ -58,7 +58,7 @@ const MobileHeader = ({ onCodeSearch, withBackground = false }: MobileHeaderProp
         <Link to="/" className="min-w-0" aria-label="Retour à l'accueil">
           <img
             src={showLightChrome ? logoWhite : logoBlack}
-            alt="wearevents"
+            alt="Wearevents"
             className="h-8 drop-shadow transition-opacity duration-300"
           />
         </Link>
@@ -85,7 +85,7 @@ const MobileHeader = ({ onCodeSearch, withBackground = false }: MobileHeaderProp
           >
             <div className="bg-foreground px-5 pb-6 pt-[max(1.25rem,env(safe-area-inset-top))] text-primary-foreground">
             <div className="flex items-center justify-between">
-              <img src={logoWhite} alt="wearevents" className="h-8" />
+              <img src={logoWhite} alt="Wearevents" className="h-8" />
               <button
                 type="button"
                 onClick={() => setMenuOpen(false)}

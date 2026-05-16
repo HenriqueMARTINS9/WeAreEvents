@@ -999,7 +999,7 @@ const Admin = () => {
       <header className="border-b border-border bg-card px-6 py-5">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
           <div>
-            <p className="font-body text-sm font-semibold text-primary">wearevents</p>
+            <p className="font-body text-sm font-semibold text-primary">Wearevents</p>
             <h1 className="font-heading text-3xl font-semibold">Back office</h1>
           </div>
           {session && supabase && (

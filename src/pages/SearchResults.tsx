@@ -280,7 +280,7 @@ const SearchResults = () => {
         <header className="fixed inset-x-0 top-0 z-[1000] border-b border-border bg-background/95 backdrop-blur-xl">
           <div className="mx-auto grid h-20 max-w-7xl grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-4 xl:px-6">
             <Link to="/" className="shrink-0" aria-label="Retour à l'accueil">
-              <img src={logoBlack} alt="wearevents" className="h-7 xl:h-8" />
+              <img src={logoBlack} alt="Wearevents" className="h-7 xl:h-8" />
             </Link>
 
             <div className="mx-auto flex w-full max-w-4xl items-center justify-center gap-2">

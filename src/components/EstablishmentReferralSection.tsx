@@ -10,7 +10,7 @@ const EstablishmentReferralSection = () => {
         <div className="max-w-xl">
           <p className="font-body text-sm font-semibold text-primary mb-3">Vous gérez un lieu événementiel ?</p>
           <h2 className="font-heading text-3xl md:text-5xl font-semibold leading-tight mb-5">
-            Rejoignez wearevents et recevez des demandes qualifiées.
+            Rejoignez Wearevents et recevez des demandes qualifiées.
           </h2>
           <p className="mb-5 font-body leading-relaxed text-primary-foreground/72">
             Gagnez en visibilité auprès d'organisateurs réellement en recherche d'un lieu sérieux, disponible et simple à privatiser.

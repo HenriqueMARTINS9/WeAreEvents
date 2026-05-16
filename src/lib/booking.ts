@@ -201,7 +201,7 @@ et les éléments nécessaires à votre projet.
 
 Vous recevrez un retour personnalisé sous 24h ouvrées.
 
-— L'équipe wearevents`,
+— L'équipe Wearevents`,
     },
     adminNotification: {
       to: ADMIN_EMAIL,
@@ -241,7 +241,7 @@ et les conditions applicables.
 
 Nous restons disponibles si des précisions sont nécessaires.
 
-— L'équipe wearevents`,
+— L'équipe Wearevents`,
     },
     postEventReviewFollowUp: {
       to: request.email,

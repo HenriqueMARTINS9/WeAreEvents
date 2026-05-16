@@ -175,7 +175,7 @@ const DesktopHome = () => {
         <div className="max-w-7xl mx-auto xl:px-2">
           <div className="grid grid-cols-1 gap-8 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)] xl:items-end xl:gap-12">
             <div className="max-w-3xl">
-              <p className="font-body text-sm font-semibold text-primary mb-3">Pourquoi choisir wearevents</p>
+              <p className="font-body text-sm font-semibold text-primary mb-3">Pourquoi choisir Wearevents</p>
               <h2 className="font-heading text-4xl 2xl:text-5xl font-semibold leading-[1.02]">
                 Des lieux premium, sans perte de temps.
               </h2>
