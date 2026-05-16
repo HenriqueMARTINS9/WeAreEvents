@@ -17,6 +17,7 @@ const hasItems = (items: Array<string | null | undefined>) => filledItems(items)
 
 const formatClosingLabel = (value: string) => {
   if (!value) return "Sur demande";
+  if (value === "03:00") return "Après 2h";
 
   const [hours = "", minutes = ""] = value.split(":");
   const hourLabel = Number.isFinite(Number(hours)) ? String(Number(hours)) : hours;
