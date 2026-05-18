@@ -40,6 +40,17 @@ type FilterGroupProps = {
 const toggleValue = (values: string[], value: string) =>
   values.includes(value) ? values.filter((item) => item !== value) : [...values, value];
 
+const shuffleList = <T,>(items: T[]) => {
+  const shuffled = [...items];
+
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const randomIndex = Math.floor(Math.random() * (index + 1));
+    [shuffled[index], shuffled[randomIndex]] = [shuffled[randomIndex], shuffled[index]];
+  }
+
+  return shuffled;
+};
+
 const SearchMenuLink = ({ to, label, icon, onClick }: { to: string; label: string; icon: ReactNode; onClick: () => void }) => (
   <Link
     to={to}
@@ -118,6 +129,25 @@ const SearchResults = () => {
       guestDispositions,
     });
   }, [locationQuery, eventType, eventCategoryFilters, guests, priceTier, closingFilter, ambianceFilters, venueTypes, privatizationTypes, spaceTypes, optionFilters, equipmentFilters, guestDispositions, venues]);
+  const hasActiveVenueFilters = Boolean(
+    locationQuery.trim() ||
+      eventType ||
+      guests ||
+      priceTier ||
+      closingFilter ||
+      eventCategoryFilters.length ||
+      ambianceFilters.length ||
+      venueTypes.length ||
+      privatizationTypes.length ||
+      spaceTypes.length ||
+      optionFilters.length ||
+      equipmentFilters.length ||
+      guestDispositions.length,
+  );
+  const orderedFilteredResults = useMemo(
+    () => (hasActiveVenueFilters ? filteredResults : shuffleList(filteredResults)),
+    [filteredResults, hasActiveVenueFilters],
+  );
 
   useEffect(() => {
     setVisibleVenueIds(null);
@@ -163,11 +193,11 @@ const SearchResults = () => {
   }, [isMobile, mobileSearchOpen]);
 
   const results = useMemo(() => {
-    if (isMobile || visibleVenueIds === null) return filteredResults;
+    if (isMobile || visibleVenueIds === null) return orderedFilteredResults;
 
     const visibleSet = new Set(visibleVenueIds);
-    return filteredResults.filter((venue) => visibleSet.has(venue.id));
-  }, [filteredResults, isMobile, visibleVenueIds]);
+    return orderedFilteredResults.filter((venue) => visibleSet.has(venue.id));
+  }, [orderedFilteredResults, isMobile, visibleVenueIds]);
 
   const isMapZoneFilteringActive =
     !isMobile && visibleVenueIds !== null && results.length !== filteredResults.length;
