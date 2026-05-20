@@ -85,7 +85,7 @@ const VenueDetail = () => {
     })),
   ];
   const imageMediaOffset = venue.videoUrl ? 1 : 0;
-  const primarySpaces = venue.spaces.slice(0, 3);
+  const reservationSpaces = venue.spaces;
   const averageCapacity = `${venue.minCapacity}–${venue.maxCapacity} pers.`;
   const closingLabel = formatClosingLabel(venue.closingTime);
   const hasAmbianceSection = hasItems(venue.ambianceTypes) || hasItems(venue.externalOptions);
@@ -302,7 +302,7 @@ const VenueDetail = () => {
                 <h2 className="font-heading text-3xl font-semibold">Sélectionnez une option de réservation</h2>
                 <p className="mt-2 text-sm font-body text-muted-foreground">Chaque espace peut être demandé selon votre format, votre date et votre volume d'invités.</p>
                 <div className="mt-5 grid grid-cols-1 gap-4">
-                  {primarySpaces.map((space) => (
+                  {reservationSpaces.map((space) => (
                     <button
                       key={space.id}
                       type="button"
