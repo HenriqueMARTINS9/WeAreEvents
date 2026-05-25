@@ -212,7 +212,7 @@ const VenueCard = ({ venue, isActive, priority = false, allowVideo = false, onOp
           aria-label={`Contacter sur WhatsApp pour ${venue.title}`}
         >
           <span className="h-12 w-12 rounded-full shadow-lg">
-            <img src="/3670051.png" alt="" width={48} height={48} className="h-full w-full rounded-full object-contain" />
+            <img src="/whatsapp-96.png" alt="" width={48} height={48} className="h-full w-full rounded-full object-contain" />
           </span>
         </a>
 

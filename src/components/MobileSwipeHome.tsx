@@ -1,15 +1,15 @@
-import { useState, useRef, useCallback, useEffect, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { lazy, Suspense, useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { fetchVenues } from "@/lib/supabase-data";
+import { fetchPublicVenues } from "@/lib/public-venues";
 import VenueCard from "./VenueCard";
 import MobileHeader from "./MobileHeader";
-import VenueCodeSearch from "./VenueCodeSearch";
-import VenueDetailSheet from "./VenueDetailSheet";
-import BookingModal from "./BookingModal";
-import MobileCommentsSheet from "./MobileCommentsSheet";
 import type { Venue } from "@/types/venue";
 import { countMobileComments } from "@/lib/mobile-comments";
+
+const VenueCodeSearch = lazy(() => import("./VenueCodeSearch"));
+const VenueDetailSheet = lazy(() => import("./VenueDetailSheet"));
+const BookingModal = lazy(() => import("./BookingModal"));
+const MobileCommentsSheet = lazy(() => import("./MobileCommentsSheet"));
 
 const shuffleList = <T,>(items: T[]) => {
   const shuffled = [...items];
@@ -34,8 +34,8 @@ const MobileSwipeHome = () => {
   const [commentsVenue, setCommentsVenue] = useState<Venue | null>(null);
   const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
   const [allowVideoPreview, setAllowVideoPreview] = useState(false);
+  const [allVenues, setAllVenues] = useState<Venue[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
-  const { data: allVenues = [] } = useQuery({ queryKey: ["venues"], queryFn: fetchVenues });
   const venues = useMemo(() => shuffleList(allVenues.filter((v) => v.active)), [allVenues]);
   const entryPromptStorageKey = "wearevents-mobile-code-entry-seen";
 
@@ -56,6 +56,18 @@ const MobileSwipeHome = () => {
     }, 5200);
 
     return () => window.clearTimeout(timeout);
+  }, []);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    fetchPublicVenues().then((items) => {
+      if (!isCancelled) setAllVenues(items);
+    });
+
+    return () => {
+      isCancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -85,7 +97,8 @@ const MobileSwipeHome = () => {
         className="snap-container h-full w-full hide-scrollbar"
       >
         {venues.map((venue, index) => {
-          const shouldRenderCard = Math.abs(index - currentIndex) <= MOBILE_RENDER_RADIUS;
+          const renderRadius = allowVideoPreview ? MOBILE_RENDER_RADIUS : 0;
+          const shouldRenderCard = Math.abs(index - currentIndex) <= renderRadius;
 
           if (!shouldRenderCard) {
             return <div key={venue.id} className="snap-item h-screen w-full bg-foreground" aria-hidden="true" />;
@@ -107,52 +120,54 @@ const MobileSwipeHome = () => {
         })}
       </div>
 
-      {showEntryPrompt && (
-        <VenueCodeSearch
-          mode="entry"
-          onClose={dismissEntryPrompt}
-          onVenueFound={(venue) => {
-            dismissEntryPrompt();
-            navigate(`/salle/${venue.slug}`);
-          }}
-        />
-      )}
+      <Suspense fallback={null}>
+        {showEntryPrompt && (
+          <VenueCodeSearch
+            mode="entry"
+            onClose={dismissEntryPrompt}
+            onVenueFound={(venue) => {
+              dismissEntryPrompt();
+              navigate(`/salle/${venue.slug}`);
+            }}
+          />
+        )}
 
-      {showCodeSearch && (
-        <VenueCodeSearch
-          onClose={() => setShowCodeSearch(false)}
-          onVenueFound={(venue) => {
-            setShowCodeSearch(false);
-            navigate(`/salle/${venue.slug}`);
-          }}
-        />
-      )}
+        {showCodeSearch && (
+          <VenueCodeSearch
+            onClose={() => setShowCodeSearch(false)}
+            onVenueFound={(venue) => {
+              setShowCodeSearch(false);
+              navigate(`/salle/${venue.slug}`);
+            }}
+          />
+        )}
 
-      {selectedVenue && (
-        <VenueDetailSheet
-          venue={selectedVenue}
-          onClose={() => setSelectedVenue(null)}
-          onBooking={() => {
-            setBookingVenue(selectedVenue);
-            setSelectedVenue(null);
-          }}
-        />
-      )}
+        {selectedVenue && (
+          <VenueDetailSheet
+            venue={selectedVenue}
+            onClose={() => setSelectedVenue(null)}
+            onBooking={() => {
+              setBookingVenue(selectedVenue);
+              setSelectedVenue(null);
+            }}
+          />
+        )}
 
-      {bookingVenue && (
-        <BookingModal
-          venue={bookingVenue}
-          onClose={() => setBookingVenue(null)}
-        />
-      )}
+        {bookingVenue && (
+          <BookingModal
+            venue={bookingVenue}
+            onClose={() => setBookingVenue(null)}
+          />
+        )}
 
-      {commentsVenue && (
-        <MobileCommentsSheet
-          venue={commentsVenue}
-          onClose={() => setCommentsVenue(null)}
-          onCommentsChange={(count) => setCommentCounts((current) => ({ ...current, [commentsVenue.id]: count }))}
-        />
-      )}
+        {commentsVenue && (
+          <MobileCommentsSheet
+            venue={commentsVenue}
+            onClose={() => setCommentsVenue(null)}
+            onCommentsChange={(count) => setCommentCounts((current) => ({ ...current, [commentsVenue.id]: count }))}
+          />
+        )}
+      </Suspense>
     </main>
   );
 };

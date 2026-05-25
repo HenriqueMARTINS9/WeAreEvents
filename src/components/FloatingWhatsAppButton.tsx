@@ -18,7 +18,7 @@ const FloatingWhatsAppButton = () => {
       className="fixed bottom-5 right-5 z-[900] inline-flex h-14 w-14 items-center justify-center rounded-full shadow-2xl transition-transform hover:scale-105 active:scale-[0.98]"
       aria-label="Contacter Wearevents sur WhatsApp"
     >
-      <img src="/3670051.png" alt="" width={56} height={56} className="h-full w-full rounded-full object-contain" />
+      <img src="/whatsapp-96.png" alt="" width={56} height={56} className="h-full w-full rounded-full object-contain" />
     </a>
   );
 };
