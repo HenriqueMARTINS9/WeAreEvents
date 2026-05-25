@@ -28,6 +28,9 @@ const VenueGridCard = ({ venue, size = "default", variant = "default" }: VenueGr
     event.stopPropagation();
     setActiveImageIndex((current) => (current + 1) % images.length);
   };
+  const openVenueDetailInNewTab = () => {
+    window.open(`/salle/${venue.slug}`, "_blank", "noopener,noreferrer");
+  };
 
   if (variant === "mobile") {
     return (
@@ -96,7 +99,7 @@ const VenueGridCard = ({ venue, size = "default", variant = "default" }: VenueGr
 
   return (
     <div
-      onClick={() => navigate(`/salle/${venue.slug}`)}
+      onClick={openVenueDetailInNewTab}
       className={`group flex h-full cursor-pointer flex-col overflow-hidden rounded-lg border border-border bg-card transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 ${
         isSearch ? "shadow-sm hover:shadow-xl" : "luxury-shadow"
       }`}
