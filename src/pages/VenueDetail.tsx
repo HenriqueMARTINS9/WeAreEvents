@@ -14,6 +14,13 @@ import Seo, { siteUrl } from "@/components/Seo";
 
 const filledItems = (items: Array<string | null | undefined>) => items.filter((item): item is string => Boolean(item?.trim()));
 const hasItems = (items: Array<string | null | undefined>) => filledItems(items).length > 0;
+const getVenueSeoTitle = (title: string) => `${title} | Réservez rapidement`;
+const getVenueSeoDescription = (venue: { address: string; city: string; maxCapacity: number }) => {
+  const address = venue.address || venue.city;
+  const capacity = venue.maxCapacity > 0 ? `Jusqu'à ${venue.maxCapacity} personnes.` : "Capacité sur demande.";
+
+  return `${address}. ${capacity} Retrouvez le reste des informations utiles sur la page de l'établissement.`;
+};
 
 const formatClosingLabel = (value: string) => {
   if (!value) return "Sur demande";
@@ -53,12 +60,15 @@ const VenueDetail = () => {
     );
   }
 
+  const seoTitle = getVenueSeoTitle(venue.title);
+  const seoDescription = getVenueSeoDescription(venue);
+
   if (isMobile) {
     return (
       <>
         <Seo
-          title={`${venue.title} à ${venue.city} - Salle événementielle`}
-          description={`${venue.tagline || venue.description} Capacité ${venue.minCapacity} à ${venue.maxCapacity} personnes. Demande de disponibilité gratuite.`}
+          title={seoTitle}
+          description={seoDescription}
           path={`/salle/${venue.slug}`}
           image={venue.coverImage}
         />
@@ -103,8 +113,8 @@ const VenueDetail = () => {
   return (
     <div className="min-h-screen">
       <Seo
-        title={`${venue.title} à ${venue.city} - Salle événementielle`}
-        description={`${venue.tagline || venue.description} Capacité ${venue.minCapacity} à ${venue.maxCapacity} personnes. Demande de disponibilité gratuite.`}
+        title={seoTitle}
+        description={seoDescription}
         path={`/salle/${venue.slug}`}
         image={venue.coverImage}
         jsonLd={{

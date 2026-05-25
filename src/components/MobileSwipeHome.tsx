@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { fetchVenues } from "@/lib/supabase-data";
@@ -11,6 +11,17 @@ import MobileCommentsSheet from "./MobileCommentsSheet";
 import type { Venue } from "@/types/venue";
 import { countMobileComments } from "@/lib/mobile-comments";
 
+const shuffleList = <T,>(items: T[]) => {
+  const shuffled = [...items];
+
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const randomIndex = Math.floor(Math.random() * (index + 1));
+    [shuffled[index], shuffled[randomIndex]] = [shuffled[randomIndex], shuffled[index]];
+  }
+
+  return shuffled;
+};
+
 const MobileSwipeHome = () => {
   const navigate = useNavigate();
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -22,14 +33,14 @@ const MobileSwipeHome = () => {
   const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
   const containerRef = useRef<HTMLDivElement>(null);
   const { data: allVenues = [] } = useQuery({ queryKey: ["venues"], queryFn: fetchVenues });
-  const venues = allVenues.filter((v) => v.active);
+  const venues = useMemo(() => shuffleList(allVenues.filter((v) => v.active)), [allVenues]);
   const entryPromptStorageKey = "wearevents-mobile-code-entry-seen";
 
   const handleScroll = useCallback(() => {
     const container = containerRef.current;
     if (!container) return;
     const idx = Math.round(container.scrollTop / container.clientHeight);
-    setCurrentIndex(Math.min(idx, venues.length - 1));
+    setCurrentIndex(venues.length ? Math.min(idx, venues.length - 1) : 0);
   }, [venues.length]);
 
   useEffect(() => {
@@ -77,18 +88,6 @@ const MobileSwipeHome = () => {
             onBooking={() => setBookingVenue(venue)}
             onComments={() => setCommentsVenue(venue)}
             commentsCount={commentCounts[venue.id] ?? 0}
-          />
-        ))}
-      </div>
-
-      {/* Dot indicator */}
-      <div className="fixed right-2 top-1/2 -translate-y-1/2 z-30 flex flex-col gap-1.5">
-        {venues.map((_, i) => (
-          <div
-            key={i}
-            className={`w-1.5 rounded-full transition-all duration-300 ${
-              i === currentIndex ? "h-7 bg-accent" : "h-1.5 bg-primary-foreground/40"
-            }`}
           />
         ))}
       </div>
