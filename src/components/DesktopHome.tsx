@@ -80,6 +80,7 @@ const DesktopHome = () => {
     <div className="min-h-screen bg-background text-foreground">
       <DesktopNav />
 
+      <main>
       <section data-header-theme="light" className="relative h-screen min-h-[620px] overflow-visible bg-foreground">
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
           <div className="absolute inset-0 bg-foreground" />
@@ -96,6 +97,7 @@ const DesktopHome = () => {
             }`}
           >
             <source src={HERO_BACKGROUND_VIDEO} type="video/mp4" />
+            <track kind="captions" src="/captions-empty.vtt" srcLang="fr" label="Français" />
           </video>
           <div className="absolute inset-0 bg-gradient-to-r from-foreground/90 via-foreground/50 to-foreground/20" />
           <div className="absolute inset-0 bg-gradient-to-t from-foreground/90 via-transparent to-foreground/40" />
@@ -196,7 +198,7 @@ const DesktopHome = () => {
                   <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-foreground text-primary-foreground">
                     {step.icon}
                   </div>
-                  <span className="font-heading text-3xl text-muted-foreground/30">0{i + 1}</span>
+                  <span className="font-heading text-3xl text-muted-foreground">0{i + 1}</span>
                 </div>
                 <h3 className="font-heading text-xl font-semibold mb-3">{step.title}</h3>
                 <p className="text-muted-foreground text-sm font-body leading-relaxed">{step.desc}</p>
@@ -300,6 +302,7 @@ const DesktopHome = () => {
       </section>
 
       <EstablishmentReferralSection />
+      </main>
 
       <SiteFooter />
     </div>

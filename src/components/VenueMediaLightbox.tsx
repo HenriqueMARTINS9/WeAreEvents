@@ -82,7 +82,9 @@ const VenueMediaLightbox = ({ items, activeIndex, onChange, onClose }: VenueMedi
             }}
             onTimeUpdate={handleTimeUpdate}
             className="h-auto w-auto max-h-full max-w-full rounded-2xl object-contain"
-          />
+          >
+            <track kind="captions" src="/captions-empty.vtt" srcLang="fr" label="Français" />
+          </video>
         ) : (
           <img
             src={activeItem.src}
@@ -125,7 +127,9 @@ const VenueMediaLightbox = ({ items, activeIndex, onChange, onClose }: VenueMedi
             }`}
           >
             {item.type === "video" ? (
-              <video src={item.src} muted className="h-full w-full object-cover" />
+              <video src={item.src} muted className="h-full w-full object-cover">
+                <track kind="captions" src="/captions-empty.vtt" srcLang="fr" label="Français" />
+              </video>
             ) : (
               <img src={item.src} alt="" className="h-full w-full object-cover" />
             )}

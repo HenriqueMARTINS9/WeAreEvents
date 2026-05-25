@@ -69,7 +69,7 @@ const MobileSwipeHome = () => {
   };
 
   return (
-    <div data-header-theme="light" className="fixed inset-0 overflow-x-hidden bg-foreground">
+    <main data-header-theme="light" className="fixed inset-0 overflow-x-hidden bg-foreground">
       <MobileHeader
         onCodeSearch={() => setShowCodeSearch(true)}
       />
@@ -138,7 +138,7 @@ const MobileSwipeHome = () => {
           onCommentsChange={(count) => setCommentCounts((current) => ({ ...current, [commentsVenue.id]: count }))}
         />
       )}
-    </div>
+    </main>
   );
 };
 

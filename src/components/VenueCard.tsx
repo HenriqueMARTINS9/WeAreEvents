@@ -111,7 +111,9 @@ const VenueCard = ({ venue, isActive, onOpenDetail, onBooking, onComments, comme
           className={`absolute inset-0 w-full h-full object-cover image-grade-luxe transition-opacity duration-700 ${
             showVideo ? "opacity-100" : "opacity-0"
           }`}
-        />
+        >
+          <track kind="captions" src="/captions-empty.vtt" srcLang="fr" label="Français" />
+        </video>
       )}
 
       {/* Progress bar for video transition */}
