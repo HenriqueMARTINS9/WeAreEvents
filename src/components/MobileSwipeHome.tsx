@@ -22,6 +22,8 @@ const shuffleList = <T,>(items: T[]) => {
   return shuffled;
 };
 
+const MOBILE_RENDER_RADIUS = 2;
+
 const MobileSwipeHome = () => {
   const navigate = useNavigate();
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -31,6 +33,7 @@ const MobileSwipeHome = () => {
   const [bookingVenue, setBookingVenue] = useState<Venue | null>(null);
   const [commentsVenue, setCommentsVenue] = useState<Venue | null>(null);
   const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
+  const [allowVideoPreview, setAllowVideoPreview] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const { data: allVenues = [] } = useQuery({ queryKey: ["venues"], queryFn: fetchVenues });
   const venues = useMemo(() => shuffleList(allVenues.filter((v) => v.active)), [allVenues]);
@@ -40,6 +43,7 @@ const MobileSwipeHome = () => {
     const container = containerRef.current;
     if (!container) return;
     const idx = Math.round(container.scrollTop / container.clientHeight);
+    if (container.scrollTop > 12) setAllowVideoPreview(true);
     setCurrentIndex(venues.length ? Math.min(idx, venues.length - 1) : 0);
   }, [venues.length]);
 
@@ -49,7 +53,7 @@ const MobileSwipeHome = () => {
 
     const timeout = window.setTimeout(() => {
       setShowEntryPrompt(true);
-    }, 320);
+    }, 5200);
 
     return () => window.clearTimeout(timeout);
   }, []);
@@ -77,19 +81,30 @@ const MobileSwipeHome = () => {
       <div
         ref={containerRef}
         onScroll={handleScroll}
+        onPointerDown={() => setAllowVideoPreview(true)}
         className="snap-container h-full w-full hide-scrollbar"
       >
-        {venues.map((venue, index) => (
-          <VenueCard
-            key={venue.id}
-            venue={venue}
-            isActive={index === currentIndex}
-            onOpenDetail={() => setSelectedVenue(venue)}
-            onBooking={() => setBookingVenue(venue)}
-            onComments={() => setCommentsVenue(venue)}
-            commentsCount={commentCounts[venue.id] ?? 0}
-          />
-        ))}
+        {venues.map((venue, index) => {
+          const shouldRenderCard = Math.abs(index - currentIndex) <= MOBILE_RENDER_RADIUS;
+
+          if (!shouldRenderCard) {
+            return <div key={venue.id} className="snap-item h-screen w-full bg-foreground" aria-hidden="true" />;
+          }
+
+          return (
+            <VenueCard
+              key={venue.id}
+              venue={venue}
+              isActive={index === currentIndex}
+              priority={index === currentIndex}
+              allowVideo={allowVideoPreview && index === currentIndex}
+              onOpenDetail={() => setSelectedVenue(venue)}
+              onBooking={() => setBookingVenue(venue)}
+              onComments={() => setCommentsVenue(venue)}
+              commentsCount={commentCounts[venue.id] ?? 0}
+            />
+          );
+        })}
       </div>
 
       {showEntryPrompt && (

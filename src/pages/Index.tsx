@@ -1,7 +1,9 @@
+import { lazy, Suspense } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import MobileSwipeHome from "@/components/MobileSwipeHome";
-import DesktopHome from "@/components/DesktopHome";
 import Seo, { defaultDescription, siteUrl } from "@/components/Seo";
+
+const MobileSwipeHome = lazy(() => import("@/components/MobileSwipeHome"));
+const DesktopHome = lazy(() => import("@/components/DesktopHome"));
 
 const Index = () => {
   const isMobile = useIsMobile();
@@ -40,7 +42,9 @@ const Index = () => {
     return (
       <>
         {seo}
-        <MobileSwipeHome />
+        <Suspense fallback={<main className="min-h-screen bg-foreground" />}>
+          <MobileSwipeHome />
+        </Suspense>
       </>
     );
   }
@@ -48,7 +52,9 @@ const Index = () => {
   return (
     <>
       {seo}
-      <DesktopHome />
+      <Suspense fallback={<main className="min-h-screen bg-background" />}>
+        <DesktopHome />
+      </Suspense>
     </>
   );
 };

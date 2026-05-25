@@ -59,6 +59,8 @@ const MobileHeader = ({ onCodeSearch, withBackground = false }: MobileHeaderProp
           <img
             src={showLightChrome ? logoWhite : logoBlack}
             alt="Wearevents"
+            width={148}
+            height={32}
             className="h-8 drop-shadow transition-opacity duration-300"
           />
         </Link>
@@ -85,7 +87,7 @@ const MobileHeader = ({ onCodeSearch, withBackground = false }: MobileHeaderProp
           >
             <div className="bg-foreground px-5 pb-6 pt-[max(1.25rem,env(safe-area-inset-top))] text-primary-foreground">
             <div className="flex items-center justify-between">
-              <img src={logoWhite} alt="Wearevents" className="h-8" />
+              <img src={logoWhite} alt="Wearevents" width={148} height={32} className="h-8" />
               <button
                 type="button"
                 onClick={() => setMenuOpen(false)}
@@ -98,7 +100,7 @@ const MobileHeader = ({ onCodeSearch, withBackground = false }: MobileHeaderProp
               <p className="mt-6 max-w-xs font-heading text-3xl font-semibold leading-tight">
                 Trouvez un lieu, réservez sans perdre de temps.
               </p>
-              <p className="mt-3 text-sm font-body leading-relaxed text-primary-foreground/68">
+              <p className="mt-3 text-sm font-body leading-relaxed text-primary-foreground/85">
                 Des salles vérifiées, des demandes simples et des réponses rapides.
               </p>
             </div>
@@ -140,10 +142,10 @@ const MobileHeader = ({ onCodeSearch, withBackground = false }: MobileHeaderProp
                   </span>
                   <span>
                     <span className="block text-sm font-body font-semibold">Code lieu</span>
-                    <span className="mt-0.5 block text-xs font-body text-primary-foreground/60">Accéder à une salle vue sur mobile</span>
+                    <span className="mt-0.5 block text-xs font-body text-primary-foreground/85">Accéder à une salle vue sur mobile</span>
                   </span>
                 </span>
-                <ArrowRight className="h-4 w-4 text-primary-foreground/50 transition-transform group-hover:translate-x-1" />
+                <ArrowRight className="h-4 w-4 text-primary-foreground/80 transition-transform group-hover:translate-x-1" />
               </button>
             </div>
           </div>

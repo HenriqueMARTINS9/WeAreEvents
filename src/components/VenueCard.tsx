@@ -8,13 +8,15 @@ import { countMobileComments } from "@/lib/mobile-comments";
 interface VenueCardProps {
   venue: Venue;
   isActive: boolean;
+  priority?: boolean;
+  allowVideo?: boolean;
   onOpenDetail: () => void;
   onBooking: () => void;
   onComments: () => void;
   commentsCount?: number;
 }
 
-const VenueCard = ({ venue, isActive, onOpenDetail, onBooking, onComments, commentsCount }: VenueCardProps) => {
+const VenueCard = ({ venue, isActive, priority = false, allowVideo = false, onOpenDetail, onBooking, onComments, commentsCount }: VenueCardProps) => {
   const [showVideo, setShowVideo] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout>>();
@@ -56,7 +58,7 @@ const VenueCard = ({ venue, isActive, onOpenDetail, onBooking, onComments, comme
   };
 
   useEffect(() => {
-    if (isActive && venue.videoUrl) {
+    if (isActive && allowVideo && venue.videoUrl) {
       timerRef.current = setTimeout(() => setShowVideo(true), 3000);
     } else {
       setShowVideo(false);
@@ -66,7 +68,7 @@ const VenueCard = ({ venue, isActive, onOpenDetail, onBooking, onComments, comme
       }
     }
     return () => clearTimeout(timerRef.current);
-  }, [isActive, venue.videoUrl]);
+  }, [allowVideo, isActive, venue.videoUrl, videoStart]);
 
   useEffect(() => {
     if (showVideo && videoRef.current) {
@@ -90,20 +92,25 @@ const VenueCard = ({ venue, isActive, onOpenDetail, onBooking, onComments, comme
       <img
         src={venue.coverImage}
         alt={venue.title}
+        width={1080}
+        height={1920}
         className={`absolute inset-0 w-full h-full object-cover image-grade-luxe transition-opacity duration-700 ${
           showVideo ? "opacity-0" : "opacity-100"
         }`}
-        loading="lazy"
+        loading={priority ? "eager" : "lazy"}
+        fetchPriority={priority ? "high" : "auto"}
+        decoding={priority ? "sync" : "async"}
       />
 
       {/* Video */}
-      {venue.videoUrl && (
+      {allowVideo && showVideo && venue.videoUrl && (
         <video
           ref={videoRef}
           src={venue.videoUrl}
           muted
           loop
           playsInline
+          preload="metadata"
           onLoadedMetadata={() => {
             if (videoRef.current) videoRef.current.currentTime = videoStart;
           }}
@@ -117,15 +124,9 @@ const VenueCard = ({ venue, isActive, onOpenDetail, onBooking, onComments, comme
       )}
 
       {/* Progress bar for video transition */}
-      {isActive && venue.videoUrl && !showVideo && (
+      {allowVideo && isActive && venue.videoUrl && !showVideo && (
         <div className="absolute top-0 left-0 right-0 z-20 h-0.5 bg-primary-foreground/20">
-          <div
-            className="h-full bg-accent"
-            style={{ animation: "progress 3s linear forwards" }}
-          />
-          <style>{`
-            @keyframes progress { from { width: 0%; } to { width: 100%; } }
-          `}</style>
+          <div className="mobile-video-progress h-full bg-accent" />
         </div>
       )}
 
@@ -148,11 +149,11 @@ const VenueCard = ({ venue, isActive, onOpenDetail, onBooking, onComments, comme
             <span className="px-2 py-1 rounded-lg border border-primary-foreground/20 bg-primary-foreground/10 text-primary-foreground text-[11px] font-body font-semibold">
               Code TikTok · {venue.venueCode}
             </span>
-            <span className="flex items-center gap-1 text-primary-foreground/80 text-xs font-body">
+            <span className="flex items-center gap-1 text-primary-foreground/90 text-xs font-body">
               <MapPin className="w-3 h-3" />
               {venue.city}
             </span>
-            <span className="flex items-center gap-1 text-primary-foreground/80 text-xs font-body">
+            <span className="flex items-center gap-1 text-primary-foreground/90 text-xs font-body">
               <ShieldCheck className="w-3 h-3 text-luxe-gold" />
               Sélection validée
             </span>
@@ -165,7 +166,7 @@ const VenueCard = ({ venue, isActive, onOpenDetail, onBooking, onComments, comme
           <h2 className="font-heading text-[2rem] text-primary-foreground font-semibold leading-none mb-2">
             {venue.title}
           </h2>
-          <p className="text-primary-foreground/80 text-sm font-body leading-relaxed mb-4 line-clamp-2">
+          <p className="text-primary-foreground/90 text-sm font-body leading-relaxed mb-4 line-clamp-2">
             {venue.tagline}
           </p>
 
@@ -180,7 +181,7 @@ const VenueCard = ({ venue, isActive, onOpenDetail, onBooking, onComments, comme
             ))}
           </div>
 
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-primary-foreground/75 text-xs font-body">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-primary-foreground/90 text-xs font-body">
             <span className="flex items-center gap-1">
               <Users className="w-3.5 h-3.5" />
               {venue.minCapacity}–{venue.maxCapacity} pers.
@@ -198,6 +199,7 @@ const VenueCard = ({ venue, isActive, onOpenDetail, onBooking, onComments, comme
         <button
           onClick={onBooking}
           className="w-12 h-12 rounded-lg bg-primary flex items-center justify-center luxury-shadow active:scale-[0.96] transition-transform"
+          aria-label={`Demander une disponibilité pour ${venue.title}`}
         >
           <Tag className="w-5 h-5 text-primary-foreground" />
         </button>
@@ -210,7 +212,7 @@ const VenueCard = ({ venue, isActive, onOpenDetail, onBooking, onComments, comme
           aria-label={`Contacter sur WhatsApp pour ${venue.title}`}
         >
           <span className="h-12 w-12 rounded-full shadow-lg">
-            <img src="/3670051.png" alt="" className="h-full w-full rounded-full object-contain" />
+            <img src="/3670051.png" alt="" width={48} height={48} className="h-full w-full rounded-full object-contain" />
           </span>
         </a>
 
