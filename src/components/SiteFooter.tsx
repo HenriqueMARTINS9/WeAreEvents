@@ -21,6 +21,7 @@ const SiteFooter = ({ variant = "light" }: SiteFooterProps) => {
           <div className={`space-y-2 text-sm font-body ${isDark ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
             <Link to="/" className={`transition-colors ${isDark ? "hover:text-primary-foreground" : "hover:text-foreground"}`}>Accueil</Link>
             <Link to="/blog" className={`block transition-colors ${isDark ? "hover:text-primary-foreground" : "hover:text-foreground"}`}>Blog</Link>
+            <Link to="/faq" className={`block transition-colors ${isDark ? "hover:text-primary-foreground" : "hover:text-foreground"}`}>FAQ</Link>
             <button type="button" onClick={openModal} className={`block transition-colors ${isDark ? "hover:text-primary-foreground" : "hover:text-foreground"}`}>
               Référencer mon établissement
             </button>

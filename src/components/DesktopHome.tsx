@@ -18,6 +18,7 @@ import { EVENT_TYPES } from "@/types/venue";
 import { useNavigate } from "react-router-dom";
 import DesktopNav from "./DesktopNav";
 import EstablishmentReferralSection from "./EstablishmentReferralSection";
+import FaqSection from "./FaqSection";
 import FilterSelect from "./FilterSelect";
 import LocationAutocomplete from "./LocationAutocomplete";
 import SiteFooter from "./SiteFooter";
@@ -302,9 +303,10 @@ const DesktopHome = () => {
       </section>
 
       <EstablishmentReferralSection />
+      <FaqSection />
       </main>
 
-      <SiteFooter />
+      <SiteFooter variant="dark" />
     </div>
   );
 };

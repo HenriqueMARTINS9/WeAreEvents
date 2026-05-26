@@ -11,6 +11,7 @@ const VenueDetail = lazy(() => import("./pages/VenueDetail.tsx"));
 const SearchResults = lazy(() => import("./pages/SearchResults.tsx"));
 const Blog = lazy(() => import("./pages/Blog.tsx"));
 const BlogDetail = lazy(() => import("./pages/BlogDetail.tsx"));
+const Faq = lazy(() => import("./pages/Faq.tsx"));
 const Admin = lazy(() => import("./pages/Admin.tsx"));
 const Legal = lazy(() => import("./pages/Legal.tsx"));
 const NotFound = lazy(() => import("./pages/NotFound.tsx"));
@@ -30,6 +31,7 @@ const App = () => (
               <Route path="/recherche" element={<SearchResults />} />
               <Route path="/blog" element={<Blog />} />
               <Route path="/blog/:slug" element={<BlogDetail />} />
+              <Route path="/faq" element={<Faq />} />
               <Route path="/mentions-legales" element={<Legal kind="mentions" />} />
               <Route path="/cgu" element={<Legal kind="cgu" />} />
               <Route path="/politique-confidentialite" element={<Legal kind="privacy" />} />
