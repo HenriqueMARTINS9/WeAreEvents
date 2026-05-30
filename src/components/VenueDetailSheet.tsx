@@ -3,6 +3,7 @@ import { useState } from "react";
 import type { Venue } from "@/types/venue";
 import { getReviewsByVenueId } from "@/data/venues";
 import VenueMediaLightbox, { type VenueMediaItem } from "./VenueMediaLightbox";
+import VenueFaq from "./VenueFaq";
 
 interface VenueDetailSheetProps {
   venue: Venue;
@@ -296,6 +297,8 @@ const VenueDetailSheet = ({ venue, onClose, onBooking }: VenueDetailSheetProps) 
         ) : (
           <p className="text-sm text-muted-foreground font-body mb-6">Aucun avis pour le moment.</p>
         )}
+
+        <VenueFaq venue={venue} compact />
       </div>
 
       {/* Fixed bottom CTA */}

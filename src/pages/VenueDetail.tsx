@@ -9,6 +9,7 @@ import DesktopNav from "@/components/DesktopNav";
 import BookingModal from "@/components/BookingModal";
 import SiteFooter from "@/components/SiteFooter";
 import VenueDetailSheet from "@/components/VenueDetailSheet";
+import VenueFaq from "@/components/VenueFaq";
 import VenueMediaLightbox, { type VenueMediaItem } from "@/components/VenueMediaLightbox";
 import Seo, { siteUrl } from "@/components/Seo";
 
@@ -248,6 +249,7 @@ const VenueDetail = () => {
                 hasUsefulInfoSection ? ["#infos", "Informations utiles"] : null,
                 ["#acces", "Se rendre"],
                 ["#avis", `Avis (${reviews.length})`],
+                ["#faq", "FAQ"],
               ].filter((item): item is [string, string] => Boolean(item)).map(([href, label]) => (
                 <a
                   key={href}
@@ -427,6 +429,8 @@ const VenueDetail = () => {
                   )}
                 </div>
               </section>
+
+              <VenueFaq venue={venue} />
             </div>
 
             <aside className="lg:sticky lg:top-28 lg:self-start">
