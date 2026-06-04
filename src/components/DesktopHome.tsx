@@ -15,7 +15,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
 import { searchInspirationLinks } from "@/data/search-inspiration";
-import { buildSearchUrl } from "@/lib/search-links";
+import { getEventSeoPath, getLocationSeoPath } from "@/data/seo-landings";
 import { fetchBlogPosts, fetchVenues, getVenueLocationSuggestionsFromVenues } from "@/lib/supabase-data";
 import { EVENT_TYPES } from "@/types/venue";
 import DesktopNav from "./DesktopNav";
@@ -94,16 +94,23 @@ const DesktopHome = () => {
         }))
         .filter((item): item is { arrondissement: number; postalCode: string } => item.arrondissement !== null)
         .sort((a, b) => a.arrondissement - b.arrondissement)
-        .map(({ arrondissement, postalCode }) => ({
-          arrondissement,
-          city,
-          label: formatArrondissementLabel(city, arrondissement),
-          value: postalCode,
-        }));
+        .map(({ arrondissement, postalCode }) => {
+          const label = formatArrondissementLabel(city, arrondissement);
 
-      if (arrondissementLinks.length) return arrondissementLinks;
+          return {
+            arrondissement,
+            city,
+            href: getLocationSeoPath(label),
+            label,
+            value: postalCode,
+          };
+        });
 
-      return [{ arrondissement: 0, city, label: city, value: city }];
+      if (arrondissementLinks.length) {
+        return [{ arrondissement: 0, city, href: getLocationSeoPath(city), label: city, value: city }, ...arrondissementLinks];
+      }
+
+      return [{ arrondissement: 0, city, href: getLocationSeoPath(city), label: city, value: city }];
     });
 
     return Array.from(new Map(links.map((item) => [item.label.toLowerCase(), item])).values()).sort((a, b) => {
@@ -113,6 +120,8 @@ const DesktopHome = () => {
       return a.arrondissement - b.arrondissement || a.label.localeCompare(b.label, "fr", { numeric: true });
     });
   }, [locationOptions]);
+  const parisLocationSearchLinks = locationSearchLinks.filter((item) => normalizeLocationName(item.city) === "paris");
+  const otherLocationSearchLinks = locationSearchLinks.filter((item) => normalizeLocationName(item.city) !== "paris");
   const activeHero = HERO_MOMENTS[activeHeroIndex];
 
   useEffect(() => {
@@ -326,16 +335,44 @@ const DesktopHome = () => {
             <div className="mt-8 grid grid-cols-1 gap-6 border-t border-primary-foreground/10 pt-6 xl:grid-cols-2">
               <div>
                 <h4 className="font-body text-sm font-semibold text-primary-foreground">Par ville et arrondissement</h4>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {locationSearchLinks.map((item) => (
-                    <Link
-                      key={item.label}
-                      to={buildSearchUrl({ location: item.value })}
-                      className="rounded-full border border-primary-foreground/10 bg-primary-foreground/[0.06] px-3 py-1.5 font-body text-xs font-semibold text-primary-foreground/70 transition-colors hover:border-primary/50 hover:text-primary-foreground"
-                    >
-                      {item.label}
-                    </Link>
-                  ))}
+                <div className="mt-3 space-y-4">
+                  {parisLocationSearchLinks.length > 0 && (
+                    <div>
+                      <p className="mb-2 font-body text-xs font-semibold uppercase tracking-[0.08em] text-primary-foreground/45">
+                        Paris et ses arrondissements
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {parisLocationSearchLinks.map((item) => (
+                          <Link
+                            key={item.label}
+                            to={item.href}
+                            className="rounded-full border border-primary-foreground/10 bg-primary-foreground/[0.06] px-3 py-1.5 font-body text-xs font-semibold text-primary-foreground/70 transition-colors hover:border-primary/50 hover:text-primary-foreground"
+                          >
+                            {item.label}
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {otherLocationSearchLinks.length > 0 && (
+                    <div>
+                      <p className="mb-2 font-body text-xs font-semibold uppercase tracking-[0.08em] text-primary-foreground/45">
+                        Autres villes
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {otherLocationSearchLinks.map((item) => (
+                          <Link
+                            key={item.label}
+                            to={item.href}
+                            className="rounded-full border border-primary-foreground/10 bg-primary-foreground/[0.06] px-3 py-1.5 font-body text-xs font-semibold text-primary-foreground/70 transition-colors hover:border-primary/50 hover:text-primary-foreground"
+                          >
+                            {item.label}
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -345,7 +382,7 @@ const DesktopHome = () => {
                   {EVENT_TYPES.map((eventType) => (
                     <Link
                       key={eventType}
-                      to={buildSearchUrl({ type: eventType })}
+                      to={getEventSeoPath(eventType)}
                       className="rounded-full border border-primary-foreground/10 bg-primary-foreground/[0.06] px-3 py-1.5 font-body text-xs font-semibold text-primary-foreground/70 transition-colors hover:border-primary/50 hover:text-primary-foreground"
                     >
                       {eventType}

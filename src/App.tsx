@@ -13,6 +13,7 @@ const Blog = lazy(() => import("./pages/Blog.tsx"));
 const BlogDetail = lazy(() => import("./pages/BlogDetail.tsx"));
 const Faq = lazy(() => import("./pages/Faq.tsx"));
 const Socials = lazy(() => import("./pages/Socials.tsx"));
+const SeoLanding = lazy(() => import("./pages/SeoLanding.tsx"));
 const Admin = lazy(() => import("./pages/Admin.tsx"));
 const Legal = lazy(() => import("./pages/Legal.tsx"));
 const NotFound = lazy(() => import("./pages/NotFound.tsx"));
@@ -38,6 +39,7 @@ const App = () => (
               <Route path="/cgu" element={<Legal kind="cgu" />} />
               <Route path="/politique-confidentialite" element={<Legal kind="privacy" />} />
               <Route path="/admin" element={<Admin />} />
+              <Route path="/:seoSlug" element={<SeoLanding />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>

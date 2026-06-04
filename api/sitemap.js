@@ -1,3 +1,5 @@
+import { seoLandingPages } from "../src/data/seo-landings-data.js";
+
 const siteUrl = (process.env.VITE_SITE_URL || process.env.PUBLIC_SITE_URL || "https://www.wearevents.fr").replace(/\/$/, "");
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
 const supabaseKey = process.env.VITE_SUPABASE_PUBLISHABLE || process.env.SUPABASE_ANON_KEY;
@@ -12,6 +14,18 @@ const staticUrls = [
   { path: "/cgu", changefreq: "yearly", priority: "0.3" },
   { path: "/politique-confidentialite", changefreq: "yearly", priority: "0.3" },
 ];
+
+const getSeoPriority = (slug) => {
+  if (slug === "location-salle-paris") return "0.85";
+  if (slug.startsWith("location-salle-paris-")) return "0.75";
+  return "0.76";
+};
+
+const seoUrls = seoLandingPages.map((page) => ({
+  path: `/${page.slug}`,
+  changefreq: "weekly",
+  priority: getSeoPriority(page.slug),
+}));
 
 const escapeXml = (value) =>
   String(value)
@@ -117,5 +131,5 @@ export default async function handler(_request, response) {
 
   response.setHeader("Content-Type", "application/xml; charset=utf-8");
   response.setHeader("Cache-Control", "s-maxage=3600, stale-while-revalidate=86400");
-  response.status(200).send(buildSitemap([...staticUrls, ...dynamicUrls]));
+  response.status(200).send(buildSitemap([...staticUrls, ...seoUrls, ...dynamicUrls]));
 }
