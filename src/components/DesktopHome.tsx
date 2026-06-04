@@ -53,6 +53,12 @@ const ARRONDISSEMENT_CITY_PREFIXES: Record<string, string> = {
   paris: "750",
 };
 
+const ARRONDISSEMENT_CITY_LABELS: Record<string, string> = {
+  lyon: "Lyon",
+  marseille: "Marseille",
+  paris: "Paris",
+};
+
 const normalizeLocationName = (value: string) =>
   value
     .normalize("NFD")
@@ -71,6 +77,19 @@ const getArrondissementNumber = (city: string, postalCode: string) => {
 const formatArrondissementLabel = (city: string, arrondissement: number) =>
   `${city} ${arrondissement === 1 ? "1er" : `${arrondissement}e`}`;
 
+const getCanonicalLocationCity = (city: string, postalCodes: string[]) => {
+  const normalizedCity = normalizeLocationName(city);
+  const matchingCityKey = Object.entries(ARRONDISSEMENT_CITY_PREFIXES).find(([cityKey, postalPrefix]) => {
+    return (
+      normalizedCity === cityKey ||
+      normalizedCity.startsWith(`${cityKey} `) ||
+      postalCodes.some((postalCode) => postalCode.startsWith(postalPrefix))
+    );
+  })?.[0];
+
+  return matchingCityKey ? ARRONDISSEMENT_CITY_LABELS[matchingCityKey] : city;
+};
+
 const DesktopHome = () => {
   const navigate = useNavigate();
   const [searchLocation, setSearchLocation] = useState("");
@@ -87,19 +106,20 @@ const DesktopHome = () => {
   const locationOptions = useMemo(() => getVenueLocationSuggestionsFromVenues(venues), [venues]);
   const locationSearchLinks = useMemo(() => {
     const links = locationOptions.flatMap(({ city, postalCodes }) => {
+      const displayCity = getCanonicalLocationCity(city, postalCodes);
       const arrondissementLinks = postalCodes
         .map((postalCode) => ({
-          arrondissement: getArrondissementNumber(city, postalCode),
+          arrondissement: getArrondissementNumber(displayCity, postalCode),
           postalCode,
         }))
         .filter((item): item is { arrondissement: number; postalCode: string } => item.arrondissement !== null)
         .sort((a, b) => a.arrondissement - b.arrondissement)
         .map(({ arrondissement, postalCode }) => {
-          const label = formatArrondissementLabel(city, arrondissement);
+          const label = formatArrondissementLabel(displayCity, arrondissement);
 
           return {
             arrondissement,
-            city,
+            city: displayCity,
             href: getLocationSeoPath(label),
             label,
             value: postalCode,
@@ -107,10 +127,10 @@ const DesktopHome = () => {
         });
 
       if (arrondissementLinks.length) {
-        return [{ arrondissement: 0, city, href: getLocationSeoPath(city), label: city, value: city }, ...arrondissementLinks];
+        return [{ arrondissement: 0, city: displayCity, href: getLocationSeoPath(displayCity), label: displayCity, value: displayCity }, ...arrondissementLinks];
       }
 
-      return [{ arrondissement: 0, city, href: getLocationSeoPath(city), label: city, value: city }];
+      return [{ arrondissement: 0, city: displayCity, href: getLocationSeoPath(displayCity), label: displayCity, value: displayCity }];
     });
 
     return Array.from(new Map(links.map((item) => [item.label.toLowerCase(), item])).values()).sort((a, b) => {
