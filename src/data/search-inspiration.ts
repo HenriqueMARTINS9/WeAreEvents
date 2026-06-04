@@ -7,7 +7,6 @@ export const searchInspirationLinks = [
     href: buildSearchUrl({
       location: "Paris",
       type: "Anniversaire",
-      guests: 50,
       ambiance: ["Festif"],
       options: ["Possibilité de danser"],
     }),
@@ -18,7 +17,6 @@ export const searchInspirationLinks = [
     href: buildSearchUrl({
       location: "Paris",
       type: "Corporate",
-      guests: 80,
       privatization: ["Forfait consommation (budget par personne)"],
     }),
   },
@@ -37,7 +35,6 @@ export const searchInspirationLinks = [
     href: buildSearchUrl({
       location: "Paris",
       type: "Mariage",
-      guests: 120,
       venueTypes: ["Salle de réception"],
     }),
   },

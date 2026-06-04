@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Search,
   MapPin,
@@ -15,6 +15,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
 import { searchInspirationLinks } from "@/data/search-inspiration";
+import { buildSearchUrl } from "@/lib/search-links";
 import { fetchBlogPosts, fetchVenues, getVenueLocationSuggestionsFromVenues } from "@/lib/supabase-data";
 import { EVENT_TYPES } from "@/types/venue";
 import DesktopNav from "./DesktopNav";
@@ -59,7 +60,29 @@ const DesktopHome = () => {
     ...venues.filter((v) => v.featured && v.active),
     ...venues.filter((v) => !v.featured && v.active),
   ].slice(0, 6);
-  const locationOptions = getVenueLocationSuggestionsFromVenues(venues);
+  const locationOptions = useMemo(() => getVenueLocationSuggestionsFromVenues(venues), [venues]);
+  const locationSearchLinks = useMemo(() => {
+    const seen = new Set<string>();
+
+    return locationOptions
+      .flatMap(({ city, postalCodes }) => {
+        if (!postalCodes.length) {
+          return [{ label: city, value: city }];
+        }
+
+        return postalCodes.map((postalCode) => ({
+          label: `${city} ${postalCode}`,
+          value: postalCode,
+        }));
+      })
+      .filter((item) => {
+        const key = item.label.toLowerCase();
+        if (seen.has(key)) return false;
+
+        seen.add(key);
+        return true;
+      });
+  }, [locationOptions]);
   const activeHero = HERO_MOMENTS[activeHeroIndex];
 
   useEffect(() => {
@@ -240,7 +263,7 @@ const DesktopHome = () => {
           <div className="mt-12 rounded-2xl border border-primary-foreground/10 bg-primary-foreground/[0.04] p-5 backdrop-blur md:p-6">
             <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
               <div>
-                <p className="font-body text-sm font-semibold text-primary">Besoin d'inspi ?</p>
+                <p className="font-body text-sm font-semibold text-primary">Vous voulez une inspiration?</p>
                 <h3 className="mt-2 font-heading text-3xl font-semibold leading-tight">
                   Des recherches prêtes à lancer
                 </h3>
@@ -268,6 +291,38 @@ const DesktopHome = () => {
                   </div>
                 </Link>
               ))}
+            </div>
+
+            <div className="mt-8 grid grid-cols-1 gap-6 border-t border-primary-foreground/10 pt-6 xl:grid-cols-2">
+              <div>
+                <h4 className="font-body text-sm font-semibold text-primary-foreground">Par ville et arrondissement</h4>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {locationSearchLinks.map((item) => (
+                    <Link
+                      key={item.label}
+                      to={buildSearchUrl({ location: item.value })}
+                      className="rounded-full border border-primary-foreground/10 bg-primary-foreground/[0.06] px-3 py-1.5 font-body text-xs font-semibold text-primary-foreground/70 transition-colors hover:border-primary/50 hover:text-primary-foreground"
+                    >
+                      {item.label}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <h4 className="font-body text-sm font-semibold text-primary-foreground">Par type d'événement</h4>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {EVENT_TYPES.map((eventType) => (
+                    <Link
+                      key={eventType}
+                      to={buildSearchUrl({ type: eventType })}
+                      className="rounded-full border border-primary-foreground/10 bg-primary-foreground/[0.06] px-3 py-1.5 font-body text-xs font-semibold text-primary-foreground/70 transition-colors hover:border-primary/50 hover:text-primary-foreground"
+                    >
+                      {eventType}
+                    </Link>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
 
