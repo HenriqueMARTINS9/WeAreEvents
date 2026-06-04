@@ -1,4 +1,3 @@
-import { useState, useEffect, useRef } from "react";
 import { Share2, MessageCircle, Star, MapPin, Users, Tag, ShieldCheck } from "lucide-react";
 import type { Venue } from "@/types/venue";
 import { toast } from "sonner";
@@ -9,19 +8,13 @@ interface VenueCardProps {
   venue: Venue;
   isActive: boolean;
   priority?: boolean;
-  allowVideo?: boolean;
   onOpenDetail: () => void;
   onBooking: () => void;
   onComments: () => void;
   commentsCount?: number;
 }
 
-const VenueCard = ({ venue, isActive, priority = false, allowVideo = false, onOpenDetail, onBooking, onComments, commentsCount }: VenueCardProps) => {
-  const [showVideo, setShowVideo] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const timerRef = useRef<ReturnType<typeof setTimeout>>();
-  const videoStart = venue.videoStartSeconds ?? 0;
-  const videoEnd = venue.videoEndSeconds;
+const VenueCard = ({ venue, priority = false, onOpenDetail, onBooking, onComments, commentsCount }: VenueCardProps) => {
   const visibleCommentsCount = commentsCount ?? countMobileComments(venue.id);
 
   const handleShare = async () => {
@@ -57,35 +50,6 @@ const VenueCard = ({ venue, isActive, priority = false, allowVideo = false, onOp
     }
   };
 
-  useEffect(() => {
-    if (isActive && allowVideo && venue.videoUrl) {
-      timerRef.current = setTimeout(() => setShowVideo(true), 3000);
-    } else {
-      setShowVideo(false);
-      if (videoRef.current) {
-        videoRef.current.pause();
-        videoRef.current.currentTime = videoStart;
-      }
-    }
-    return () => clearTimeout(timerRef.current);
-  }, [allowVideo, isActive, venue.videoUrl, videoStart]);
-
-  useEffect(() => {
-    if (showVideo && videoRef.current) {
-      videoRef.current.currentTime = videoStart;
-      videoRef.current.play().catch(() => {});
-    }
-  }, [showVideo, videoStart]);
-
-  const handleVideoTimeUpdate = () => {
-    if (!videoRef.current || !videoEnd) return;
-
-    if (videoRef.current.currentTime >= videoEnd) {
-      videoRef.current.currentTime = videoStart;
-      videoRef.current.play().catch(() => {});
-    }
-  };
-
   return (
     <div className="snap-item h-screen w-full relative overflow-hidden bg-foreground">
       {/* Cover image */}
@@ -94,41 +58,11 @@ const VenueCard = ({ venue, isActive, priority = false, allowVideo = false, onOp
         alt={venue.title}
         width={1080}
         height={1920}
-        className={`absolute inset-0 w-full h-full object-cover image-grade-luxe transition-opacity duration-700 ${
-          showVideo ? "opacity-0" : "opacity-100"
-        }`}
+        className="absolute inset-0 h-full w-full object-cover image-grade-luxe"
         loading={priority ? "eager" : "lazy"}
         fetchPriority={priority ? "high" : "auto"}
         decoding={priority ? "sync" : "async"}
       />
-
-      {/* Video */}
-      {allowVideo && showVideo && venue.videoUrl && (
-        <video
-          ref={videoRef}
-          src={venue.videoUrl}
-          muted
-          loop
-          playsInline
-          preload="metadata"
-          onLoadedMetadata={() => {
-            if (videoRef.current) videoRef.current.currentTime = videoStart;
-          }}
-          onTimeUpdate={handleVideoTimeUpdate}
-          className={`absolute inset-0 w-full h-full object-cover image-grade-luxe transition-opacity duration-700 ${
-            showVideo ? "opacity-100" : "opacity-0"
-          }`}
-        >
-          <track kind="captions" src="/captions-empty.vtt" srcLang="fr" label="Français" />
-        </video>
-      )}
-
-      {/* Progress bar for video transition */}
-      {allowVideo && isActive && venue.videoUrl && !showVideo && (
-        <div className="absolute top-0 left-0 right-0 z-20 h-0.5 bg-primary-foreground/20">
-          <div className="mobile-video-progress h-full bg-accent" />
-        </div>
-      )}
 
       {/* Dark gradient overlay */}
       <div className="absolute inset-0 bg-gradient-dark z-10" />
