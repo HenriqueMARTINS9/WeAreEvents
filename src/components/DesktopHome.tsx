@@ -47,6 +47,30 @@ const HERO_MOMENTS = [
 
 const HERO_BACKGROUND_VIDEO = "https://www.pexels.com/fr-fr/download/video/3188991/";
 
+const ARRONDISSEMENT_CITY_PREFIXES: Record<string, string> = {
+  lyon: "690",
+  marseille: "130",
+  paris: "750",
+};
+
+const normalizeLocationName = (value: string) =>
+  value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+
+const getArrondissementNumber = (city: string, postalCode: string) => {
+  const prefix = ARRONDISSEMENT_CITY_PREFIXES[normalizeLocationName(city)];
+  if (!prefix || !postalCode.startsWith(prefix)) return null;
+
+  const arrondissement = Number(postalCode.slice(-2));
+  return arrondissement > 0 ? arrondissement : null;
+};
+
+const formatArrondissementLabel = (city: string, arrondissement: number) =>
+  `${city} ${arrondissement === 1 ? "1er" : `${arrondissement}e`}`;
+
 const DesktopHome = () => {
   const navigate = useNavigate();
   const [searchLocation, setSearchLocation] = useState("");
@@ -62,26 +86,32 @@ const DesktopHome = () => {
   ].slice(0, 6);
   const locationOptions = useMemo(() => getVenueLocationSuggestionsFromVenues(venues), [venues]);
   const locationSearchLinks = useMemo(() => {
-    const seen = new Set<string>();
-
-    return locationOptions
-      .flatMap(({ city, postalCodes }) => {
-        if (!postalCodes.length) {
-          return [{ label: city, value: city }];
-        }
-
-        return postalCodes.map((postalCode) => ({
-          label: `${city} ${postalCode}`,
+    const links = locationOptions.flatMap(({ city, postalCodes }) => {
+      const arrondissementLinks = postalCodes
+        .map((postalCode) => ({
+          arrondissement: getArrondissementNumber(city, postalCode),
+          postalCode,
+        }))
+        .filter((item): item is { arrondissement: number; postalCode: string } => item.arrondissement !== null)
+        .sort((a, b) => a.arrondissement - b.arrondissement)
+        .map(({ arrondissement, postalCode }) => ({
+          arrondissement,
+          city,
+          label: formatArrondissementLabel(city, arrondissement),
           value: postalCode,
         }));
-      })
-      .filter((item) => {
-        const key = item.label.toLowerCase();
-        if (seen.has(key)) return false;
 
-        seen.add(key);
-        return true;
-      });
+      if (arrondissementLinks.length) return arrondissementLinks;
+
+      return [{ arrondissement: 0, city, label: city, value: city }];
+    });
+
+    return Array.from(new Map(links.map((item) => [item.label.toLowerCase(), item])).values()).sort((a, b) => {
+      const cityOrder = a.city.localeCompare(b.city, "fr", { sensitivity: "base" });
+      if (cityOrder !== 0) return cityOrder;
+
+      return a.arrondissement - b.arrondissement || a.label.localeCompare(b.label, "fr", { numeric: true });
+    });
   }, [locationOptions]);
   const activeHero = HERO_MOMENTS[activeHeroIndex];
 
