@@ -73,24 +73,77 @@ const formatMobileDate = (value: string) => {
   return new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short" }).format(date);
 };
 
+const splitParamValues = (values: string[]) =>
+  Array.from(
+    new Set(
+      values
+        .flatMap((value) => value.split(","))
+        .map((value) => value.trim())
+        .filter(Boolean),
+    ),
+  );
+
+const getParamValue = (params: URLSearchParams, ...keys: string[]) => {
+  for (const key of keys) {
+    const value = params.get(key);
+    if (value) return value;
+  }
+
+  return "";
+};
+
+const getParamList = (params: URLSearchParams, ...keys: string[]) =>
+  splitParamValues(keys.flatMap((key) => params.getAll(key)));
+
+const readSearchFiltersFromParams = (params: URLSearchParams) => ({
+  locationQuery: getParamValue(params, "location", "city"),
+  eventType: getParamValue(params, "type", "event"),
+  eventDate: getParamValue(params, "date"),
+  guests: getParamValue(params, "guests"),
+  priceTier: getParamValue(params, "price"),
+  closingFilter: getParamValue(params, "closing"),
+  eventCategoryFilters: getParamList(params, "events", "eventTypes", "eventCategories"),
+  ambianceFilters: getParamList(params, "ambiance", "ambiences"),
+  venueTypes: getParamList(params, "venueTypes", "venueType", "venue"),
+  privatizationTypes: getParamList(params, "privatization", "privatizationTypes"),
+  optionFilters: getParamList(params, "options", "option"),
+  equipmentFilters: getParamList(params, "equipment", "services"),
+  guestDispositions: getParamList(params, "disposition", "guestDispositions"),
+  spaceTypes: getParamList(params, "space", "spaceTypes"),
+});
+
+const appendSearchParam = (params: URLSearchParams, key: string, value?: string | string[]) => {
+  if (!value) return;
+
+  const values = Array.isArray(value) ? value : [value];
+  values.forEach((item) => {
+    if (item) params.append(key, item);
+  });
+};
+
 const SearchResults = () => {
   const [searchParams] = useSearchParams();
+  const searchParamKey = searchParams.toString();
+  const parsedSearchFilters = useMemo(
+    () => readSearchFiltersFromParams(new URLSearchParams(searchParamKey)),
+    [searchParamKey],
+  );
   const navigate = useNavigate();
   const { openModal } = useEstablishmentReferralModal();
-  const [locationQuery, setLocationQuery] = useState(searchParams.get("location") || searchParams.get("city") || "");
-  const [eventType, setEventType] = useState(searchParams.get("type") || "");
-  const [eventDate, setEventDate] = useState(searchParams.get("date") || "");
-  const [guests, setGuests] = useState(searchParams.get("guests") || "");
-  const [priceTier, setPriceTier] = useState(searchParams.get("price") || "");
-  const [closingFilter, setClosingFilter] = useState(searchParams.get("closing") || "");
-  const [eventCategoryFilters, setEventCategoryFilters] = useState<string[]>([]);
-  const [ambianceFilters, setAmbianceFilters] = useState<string[]>(searchParams.get("ambiance") ? [searchParams.get("ambiance") as string] : []);
-  const [venueTypes, setVenueTypes] = useState<string[]>([]);
-  const [privatizationTypes, setPrivatizationTypes] = useState<string[]>([]);
-  const [optionFilters, setOptionFilters] = useState<string[]>([]);
-  const [equipmentFilters, setEquipmentFilters] = useState<string[]>([]);
-  const [guestDispositions, setGuestDispositions] = useState<string[]>([]);
-  const [spaceTypes, setSpaceTypes] = useState<string[]>([]);
+  const [locationQuery, setLocationQuery] = useState(parsedSearchFilters.locationQuery);
+  const [eventType, setEventType] = useState(parsedSearchFilters.eventType);
+  const [eventDate, setEventDate] = useState(parsedSearchFilters.eventDate);
+  const [guests, setGuests] = useState(parsedSearchFilters.guests);
+  const [priceTier, setPriceTier] = useState(parsedSearchFilters.priceTier);
+  const [closingFilter, setClosingFilter] = useState(parsedSearchFilters.closingFilter);
+  const [eventCategoryFilters, setEventCategoryFilters] = useState<string[]>(parsedSearchFilters.eventCategoryFilters);
+  const [ambianceFilters, setAmbianceFilters] = useState<string[]>(parsedSearchFilters.ambianceFilters);
+  const [venueTypes, setVenueTypes] = useState<string[]>(parsedSearchFilters.venueTypes);
+  const [privatizationTypes, setPrivatizationTypes] = useState<string[]>(parsedSearchFilters.privatizationTypes);
+  const [optionFilters, setOptionFilters] = useState<string[]>(parsedSearchFilters.optionFilters);
+  const [equipmentFilters, setEquipmentFilters] = useState<string[]>(parsedSearchFilters.equipmentFilters);
+  const [guestDispositions, setGuestDispositions] = useState<string[]>(parsedSearchFilters.guestDispositions);
+  const [spaceTypes, setSpaceTypes] = useState<string[]>(parsedSearchFilters.spaceTypes);
   const [showAllFilters, setShowAllFilters] = useState(false);
   const [showCodeSearch, setShowCodeSearch] = useState(false);
   const [desktopMenuOpen, setDesktopMenuOpen] = useState(false);
@@ -103,6 +156,23 @@ const SearchResults = () => {
   const locationOptions = getVenueLocationSuggestionsFromVenues(venues);
 
   useEffect(() => {
+    setLocationQuery(parsedSearchFilters.locationQuery);
+    setEventType(parsedSearchFilters.eventType);
+    setEventDate(parsedSearchFilters.eventDate);
+    setGuests(parsedSearchFilters.guests);
+    setPriceTier(parsedSearchFilters.priceTier);
+    setClosingFilter(parsedSearchFilters.closingFilter);
+    setEventCategoryFilters(parsedSearchFilters.eventCategoryFilters);
+    setAmbianceFilters(parsedSearchFilters.ambianceFilters);
+    setVenueTypes(parsedSearchFilters.venueTypes);
+    setPrivatizationTypes(parsedSearchFilters.privatizationTypes);
+    setOptionFilters(parsedSearchFilters.optionFilters);
+    setEquipmentFilters(parsedSearchFilters.equipmentFilters);
+    setGuestDispositions(parsedSearchFilters.guestDispositions);
+    setSpaceTypes(parsedSearchFilters.spaceTypes);
+  }, [parsedSearchFilters]);
+
+  useEffect(() => {
     if (codeParam) {
       findVenueByCode(codeParam).then((venue) => {
         if (venue) {
@@ -111,6 +181,56 @@ const SearchResults = () => {
       });
     }
   }, [codeParam, navigate]);
+
+  useEffect(() => {
+    if (codeParam) return;
+
+    const nextParams = new URLSearchParams();
+    appendSearchParam(nextParams, "location", locationQuery.trim());
+    appendSearchParam(nextParams, "type", eventType);
+    appendSearchParam(nextParams, "date", eventDate);
+    appendSearchParam(nextParams, "guests", guests);
+    appendSearchParam(nextParams, "price", priceTier);
+    appendSearchParam(nextParams, "closing", closingFilter);
+    appendSearchParam(nextParams, "events", eventCategoryFilters);
+    appendSearchParam(nextParams, "ambiance", ambianceFilters);
+    appendSearchParam(nextParams, "venueTypes", venueTypes);
+    appendSearchParam(nextParams, "privatization", privatizationTypes);
+    appendSearchParam(nextParams, "space", spaceTypes);
+    appendSearchParam(nextParams, "options", optionFilters);
+    appendSearchParam(nextParams, "equipment", equipmentFilters);
+    appendSearchParam(nextParams, "disposition", guestDispositions);
+
+    const nextSearch = nextParams.toString();
+    if (nextSearch === searchParamKey) return;
+
+    navigate(
+      {
+        pathname: "/recherche",
+        search: nextSearch ? `?${nextSearch}` : "",
+        hash: window.location.hash,
+      },
+      { replace: true },
+    );
+  }, [
+    ambianceFilters,
+    closingFilter,
+    codeParam,
+    equipmentFilters,
+    eventCategoryFilters,
+    eventDate,
+    eventType,
+    guestDispositions,
+    guests,
+    locationQuery,
+    navigate,
+    optionFilters,
+    priceTier,
+    privatizationTypes,
+    searchParamKey,
+    spaceTypes,
+    venueTypes,
+  ]);
 
   const filteredResults = useMemo(() => {
     return filterVenues(venues, {

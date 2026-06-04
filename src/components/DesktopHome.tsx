@@ -13,9 +13,10 @@ import {
   Zap,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { Link, useNavigate } from "react-router-dom";
+import { searchInspirationLinks } from "@/data/search-inspiration";
 import { fetchBlogPosts, fetchVenues, getVenueLocationSuggestionsFromVenues } from "@/lib/supabase-data";
 import { EVENT_TYPES } from "@/types/venue";
-import { useNavigate } from "react-router-dom";
 import DesktopNav from "./DesktopNav";
 import EstablishmentReferralSection from "./EstablishmentReferralSection";
 import FaqSection from "./FaqSection";
@@ -234,6 +235,40 @@ const DesktopHome = () => {
             {featured.map((venue) => (
               <VenueGridCard key={venue.id} venue={venue} />
             ))}
+          </div>
+
+          <div className="mt-12 rounded-2xl border border-primary-foreground/10 bg-primary-foreground/[0.04] p-5 backdrop-blur md:p-6">
+            <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+              <div>
+                <p className="font-body text-sm font-semibold text-primary">Besoin d'inspi ?</p>
+                <h3 className="mt-2 font-heading text-3xl font-semibold leading-tight">
+                  Des recherches prêtes à lancer
+                </h3>
+              </div>
+              <p className="max-w-xl font-body text-sm leading-relaxed text-primary-foreground/65">
+                Cliquez sur une idée pour ouvrir directement la recherche avec les filtres adaptés.
+              </p>
+            </div>
+
+            <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {searchInspirationLinks.map((item) => (
+                <Link
+                  key={item.title}
+                  to={item.href}
+                  className="group rounded-lg border border-primary-foreground/10 bg-primary-foreground/[0.06] p-4 transition-colors hover:border-primary/50 hover:bg-primary-foreground/[0.1]"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <h4 className="font-body text-sm font-semibold text-primary-foreground">{item.title}</h4>
+                      <p className="mt-2 font-body text-sm leading-relaxed text-primary-foreground/60">
+                        {item.description}
+                      </p>
+                    </div>
+                    <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-primary transition-transform group-hover:translate-x-1" />
+                  </div>
+                </Link>
+              ))}
+            </div>
           </div>
 
           <div className="mt-8 text-center xl:hidden">
