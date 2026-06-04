@@ -263,7 +263,7 @@ const DesktopHome = () => {
           <div className="mt-12 rounded-2xl border border-primary-foreground/10 bg-primary-foreground/[0.04] p-5 backdrop-blur md:p-6">
             <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
               <div>
-                <p className="font-body text-sm font-semibold text-primary">Vous voulez une inspiration?</p>
+                <p className="font-body text-sm font-semibold text-primary">Une inspiration ?</p>
                 <h3 className="mt-2 font-heading text-3xl font-semibold leading-tight">
                   Des recherches prêtes à lancer
                 </h3>
