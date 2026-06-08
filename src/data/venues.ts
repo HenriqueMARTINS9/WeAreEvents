@@ -1,4 +1,5 @@
 import type { Venue, Review, TikTokVenueCodeMapping } from "@/types/venue";
+import { venueCanHostGuestCount } from "@/lib/venue-capacity";
 
 export const mockVenues: Venue[] = [
   {
@@ -430,7 +431,7 @@ export function searchVenues(filters: {
       }
     }
     if (filters.eventType && !v.eventCategories.includes(filters.eventType)) return false;
-    if (filters.minGuests && v.maxCapacity < filters.minGuests) return false;
+    if (!venueCanHostGuestCount(v, filters.minGuests)) return false;
     return true;
   });
 }

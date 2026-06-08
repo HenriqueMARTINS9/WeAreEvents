@@ -48,11 +48,11 @@ export const searchInspirationLinks = [
     }),
   },
   {
-    title: "Péniche événementielle",
-    description: "Une sélection de lieux atypiques au bord de l'eau.",
+    title: "Loft événementiel",
+    description: "Des espaces modulables pour cocktails, soirées et lancements.",
     href: buildSearchUrl({
       location: "Paris",
-      venueTypes: ["Péniche"],
+      venueTypes: ["Loft"],
       ambiance: ["Atypique"],
     }),
   },

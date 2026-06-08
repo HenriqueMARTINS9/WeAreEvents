@@ -331,7 +331,7 @@ const DesktopHome = () => {
         </div>
       </section>
 
-      <section className="border-y border-border bg-secondary/45 px-6 py-20">
+      <section data-header-theme="dark" className="border-y border-border bg-background px-6 py-20">
         <div className="mx-auto max-w-7xl xl:px-2">
           <div className="grid grid-cols-1 gap-8 xl:grid-cols-[minmax(0,0.9fr)_minmax(420px,1.1fr)] xl:items-end">
             <div>
@@ -433,7 +433,7 @@ const DesktopHome = () => {
         </div>
       </section>
 
-      <section className="px-6 py-20">
+      <section data-header-theme="light" className="bg-foreground px-6 py-20 text-primary-foreground">
         <div className="max-w-7xl mx-auto xl:px-2">
           <div className="mb-10 flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
             <div>
@@ -441,13 +441,13 @@ const DesktopHome = () => {
               <h2 className="font-heading text-4xl 2xl:text-5xl font-semibold mb-3 leading-[1.02]">
                 Trouvez le bon lieu, mieux préparé.
               </h2>
-              <p className="text-muted-foreground font-body max-w-2xl">
+              <p className="max-w-2xl font-body text-primary-foreground/65">
                 Guides pratiques, checklists et conseils concrets pour choisir un lieu adapté à vos invités, votre style et votre budget.
               </p>
             </div>
             <button
               onClick={() => navigate("/blog")}
-              className="hidden xl:flex items-center gap-2 rounded-lg border border-border px-4 py-2.5 font-body text-sm font-semibold transition-colors hover:border-primary/40 hover:text-primary"
+              className="hidden items-center gap-2 rounded-lg border border-primary-foreground/20 px-4 py-2.5 font-body text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-foreground hover:text-foreground xl:flex"
             >
               Voir le blog
               <ChevronRight className="w-4 h-4" />
@@ -456,7 +456,7 @@ const DesktopHome = () => {
 
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
             {posts.map((post) => (
-              <article key={post.slug} className="overflow-hidden rounded-lg border border-border bg-card">
+              <article key={post.slug} className="overflow-hidden rounded-lg border border-primary-foreground/10 bg-primary-foreground text-foreground">
                 <img src={post.image} alt="" className="h-52 w-full object-cover image-grade-luxe" />
                 <div className="p-6">
                   <div className="mb-4 flex items-center justify-between gap-3 text-xs font-body font-semibold text-muted-foreground">
@@ -480,7 +480,7 @@ const DesktopHome = () => {
           <div className="mt-8 text-center xl:hidden">
             <button
               onClick={() => navigate("/blog")}
-              className="rounded-lg border border-border px-6 py-3 font-body text-sm font-semibold transition-colors hover:border-primary/40 hover:text-primary"
+              className="rounded-lg border border-primary-foreground/20 px-6 py-3 font-body text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-foreground hover:text-foreground"
             >
               Voir le blog
             </button>
@@ -488,11 +488,11 @@ const DesktopHome = () => {
         </div>
       </section>
 
-      <EstablishmentReferralSection />
-      <FaqSection />
+      <EstablishmentReferralSection variant="light" />
+      <FaqSection variant="dark" />
       </main>
 
-      <SiteFooter variant="dark" />
+      <SiteFooter variant="light" />
     </div>
   );
 };

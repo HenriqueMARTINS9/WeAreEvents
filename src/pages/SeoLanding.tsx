@@ -17,6 +17,17 @@ import {
 import { fetchVenues, filterVenues } from "@/lib/supabase-data";
 import { useIsMobile } from "@/hooks/use-mobile";
 
+const shuffleVenues = <T,>(items: T[]) => {
+  const shuffled = [...items];
+
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const randomIndex = Math.floor(Math.random() * (index + 1));
+    [shuffled[index], shuffled[randomIndex]] = [shuffled[randomIndex], shuffled[index]];
+  }
+
+  return shuffled;
+};
+
 const SeoLanding = () => {
   const { seoSlug } = useParams();
   const page = getSeoLandingPage(seoSlug);
@@ -44,12 +55,16 @@ const SeoLanding = () => {
 
     return filterVenues(venues, {
       locationQuery: page.locationLabel.startsWith("Paris") ? "Paris" : page.filters.locationQuery,
-    }).slice(0, 6);
+      minGuests: page.filters.minGuests,
+    });
   }, [matchingVenues.length, page, venues]);
 
-  if (!page) return <NotFound />;
+  const venuesToDisplay = useMemo(
+    () => shuffleVenues(matchingVenues.length ? matchingVenues : fallbackVenues).slice(0, 12),
+    [fallbackVenues, matchingVenues, page?.slug],
+  );
 
-  const venuesToDisplay = (matchingVenues.length ? matchingVenues : fallbackVenues).slice(0, 12);
+  if (!page) return <NotFound />;
   const relatedPages = getRelatedSeoLandingPages(page);
   const image = getPrimaryVenueImage(venuesToDisplay);
 

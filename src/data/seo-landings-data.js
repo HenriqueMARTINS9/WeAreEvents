@@ -107,7 +107,7 @@ const parisRelated = [
   "salle-mariage-paris",
   "bar-privatisable-paris",
   "rooftop-paris",
-  "peniche-evenement-paris",
+  "loft-evenement-paris",
 ];
 
 const parisMainPage = createPage({
@@ -116,7 +116,7 @@ const parisMainPage = createPage({
   intentLabel: "Location de salle",
   locationLabel: "Paris",
   filters: { locationQuery: "Paris" },
-  intro: "Paris concentre une grande diversité de lieux événementiels : bars privatisables, restaurants, rooftops, péniches, clubs, lofts et salles de réception. Wearevents vous aide à trouver rapidement une adresse adaptée à votre événement, votre nombre d'invités et votre budget.",
+  intro: "Paris concentre une grande diversité de lieux événementiels : bars privatisables, restaurants, rooftops, clubs, lofts et salles de réception. Wearevents vous aide à trouver rapidement une adresse adaptée à votre événement, votre nombre d'invités et votre budget.",
   relatedSlugs: parisRelated,
 });
 
@@ -185,13 +185,6 @@ const venueTypePages = [
     intentLabel: "Rooftop à privatiser",
     venueTypes: ["Rooftop"],
     intro: "Les rooftops parisiens sont recherchés pour les cocktails, soirées d'entreprise, anniversaires et événements premium. Wearevents vous aide à identifier les lieux avec vue, terrasse, capacité adaptée et conditions de privatisation.",
-  },
-  {
-    slug: "peniche-evenement-paris",
-    h1: "Péniche événementielle à Paris",
-    intentLabel: "Péniche événementielle",
-    venueTypes: ["Péniche"],
-    intro: "Une péniche à Paris apporte un cadre atypique pour un événement privé ou professionnel. Comparez les capacités, espaces extérieurs, formules de restauration et possibilités de privatisation.",
   },
   {
     slug: "discotheque-paris",

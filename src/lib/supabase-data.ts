@@ -2,6 +2,7 @@ import { blogPosts, type BlogPost } from "@/data/blog";
 import { mockVenues } from "@/data/venues";
 import { OPTION_FEATURES, SPACE_TYPES, type Venue } from "@/types/venue";
 import { supabase } from "@/lib/supabase";
+import { venueCanHostGuestCount } from "@/lib/venue-capacity";
 
 const normalizeVenueCode = (code: string) => code.trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
 const normalizeSearchValue = (value: string) =>
@@ -133,7 +134,7 @@ export const filterVenues = (
         venue.eventCategories.some((category) => normalizeSearchValue(category) === normalizeSearchValue(eventType ?? "")),
       )
     ) return false;
-    if (filters.minGuests && venue.maxCapacity < filters.minGuests) return false;
+    if (!venueCanHostGuestCount(venue, filters.minGuests)) return false;
     if (filters.priceTier && venue.priceTier !== filters.priceTier) return false;
     if (filters.closesAfterMidnight && (!venue.closingTime || !closesAtOrAfter(venue.closingTime, "00:00"))) return false;
     if (filters.closesAfterTwo && (!venue.closingTime || !closesAtOrAfter(venue.closingTime, "02:00"))) return false;

@@ -21,7 +21,7 @@ export const faqItems: FaqItem[] = [
   {
     question: "Quels types de lieux peut-on réserver ?",
     answer: [
-      "Nous proposons une large sélection de lieux pour tous types d'événements : bars, restaurants, clubs, rooftops, péniches, lofts, salles de réception, espaces extérieurs et lieux atypiques.",
+      "Nous proposons une large sélection de lieux pour tous types d'événements : bars, restaurants, clubs, rooftops, lofts, salles de réception, espaces extérieurs et lieux atypiques.",
       "Nos lieux sont adaptés aussi bien aux événements privés que professionnels.",
     ],
   },
