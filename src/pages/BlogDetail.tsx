@@ -199,15 +199,15 @@ const BlogDetail = () => {
                     className="group overflow-hidden rounded-lg border border-border bg-card transition-transform hover:-translate-y-1"
                   >
                     <img src={relatedPost.image} alt="" className="h-52 w-full object-cover image-grade-luxe" />
-                    <div className="p-6">
-                      <div className="mb-4 flex items-center justify-between gap-3 text-xs font-body font-semibold text-muted-foreground">
+                    <div className="px-5 pb-5 pt-4">
+                      <div className="mb-2.5 flex items-center justify-between gap-3 text-xs font-body font-semibold text-muted-foreground">
                         <span className="text-primary">{relatedPost.category}</span>
                         <span>{relatedPost.readTime}</span>
                       </div>
                       <h3 className="font-heading text-2xl font-semibold leading-tight group-hover:text-primary">
                         {relatedPost.title}
                       </h3>
-                      <p className="mt-3 text-sm font-body leading-relaxed text-muted-foreground">{relatedPost.excerpt}</p>
+                      <p className="mt-2 text-sm font-body leading-relaxed text-muted-foreground">{relatedPost.excerpt}</p>
                     </div>
                   </Link>
                 ))}

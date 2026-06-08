@@ -458,16 +458,16 @@ const DesktopHome = () => {
             {posts.map((post) => (
               <article key={post.slug} className="overflow-hidden rounded-lg border border-primary-foreground/10 bg-primary-foreground text-foreground">
                 <img src={post.image} alt="" className="h-52 w-full object-cover image-grade-luxe" />
-                <div className="p-6">
-                  <div className="mb-4 flex items-center justify-between gap-3 text-xs font-body font-semibold text-muted-foreground">
+                <div className="px-5 pb-5 pt-4">
+                  <div className="mb-2.5 flex items-center justify-between gap-3 text-xs font-body font-semibold text-muted-foreground">
                     <span className="text-primary">{post.category}</span>
                     <span>{post.readTime}</span>
                   </div>
                   <h3 className="font-heading text-2xl font-semibold leading-tight">{post.title}</h3>
-                  <p className="mt-3 text-sm font-body leading-relaxed text-muted-foreground">{post.excerpt}</p>
+                  <p className="mt-2 text-sm font-body leading-relaxed text-muted-foreground">{post.excerpt}</p>
                   <button
                     onClick={() => navigate(`/blog/${post.slug}`)}
-                    className="mt-5 inline-flex items-center gap-2 text-sm font-body font-semibold text-foreground transition-colors hover:text-primary"
+                    className="mt-4 inline-flex items-center gap-2 text-sm font-body font-semibold text-foreground transition-colors hover:text-primary"
                   >
                     Lire l'article
                     <ChevronRight className="w-4 h-4" />

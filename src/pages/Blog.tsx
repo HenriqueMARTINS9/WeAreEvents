@@ -59,8 +59,8 @@ const Blog = () => {
                   alt=""
                   className="h-80 w-full object-cover image-grade-luxe xl:h-full"
                 />
-                <div className="flex flex-col justify-center p-8 xl:p-10">
-                  <div className="mb-5 flex items-center gap-3 text-xs font-body font-semibold uppercase tracking-[0.14em] text-primary">
+                <div className="flex flex-col justify-center px-7 py-6 xl:px-9 xl:py-8">
+                  <div className="mb-3 flex items-center gap-3 text-xs font-body font-semibold uppercase tracking-[0.14em] text-primary">
                     <span>{heroPost.category}</span>
                     <span className="h-1 w-1 rounded-full bg-primary/50" />
                     <span className="inline-flex items-center gap-1 normal-case tracking-normal text-muted-foreground">
@@ -71,12 +71,12 @@ const Blog = () => {
                   <h2 className="font-heading text-3xl font-semibold leading-tight xl:text-4xl">
                     {heroPost.title}
                   </h2>
-                  <p className="mt-4 font-body leading-relaxed text-muted-foreground">
+                  <p className="mt-3 font-body leading-relaxed text-muted-foreground">
                     {heroPost.excerpt}
                   </p>
                   <Link
                     to={`/blog/${heroPost.slug}`}
-                    className="mt-7 inline-flex w-fit items-center gap-2 rounded-lg border border-border px-4 py-2.5 text-sm font-body font-semibold transition-colors hover:border-primary/40 hover:text-primary"
+                    className="mt-5 inline-flex w-fit items-center gap-2 rounded-lg border border-border px-4 py-2.5 text-sm font-body font-semibold transition-colors hover:border-primary/40 hover:text-primary"
                   >
                     Lire l'article
                     <ArrowRight className="h-4 w-4" />
@@ -93,8 +93,8 @@ const Blog = () => {
             {posts.slice(1).map((post) => (
               <Link key={post.slug} to={`/blog/${post.slug}`} className="group overflow-hidden rounded-lg border border-border bg-card transition-transform hover:-translate-y-1">
                 <img src={post.image} alt="" className="h-56 w-full object-cover image-grade-luxe" />
-                <div className="p-6">
-                  <div className="mb-4 flex items-center justify-between gap-3 text-xs font-body font-semibold text-muted-foreground">
+                <div className="px-5 pb-5 pt-4">
+                  <div className="mb-2.5 flex items-center justify-between gap-3 text-xs font-body font-semibold text-muted-foreground">
                     <span className="text-primary">{post.category}</span>
                     <span className="inline-flex items-center gap-1">
                       <Clock3 className="h-3.5 w-3.5" />
@@ -102,7 +102,7 @@ const Blog = () => {
                     </span>
                   </div>
                   <h2 className="font-heading text-2xl font-semibold leading-tight group-hover:text-primary">{post.title}</h2>
-                  <p className="mt-3 text-sm font-body leading-relaxed text-muted-foreground">{post.excerpt}</p>
+                  <p className="mt-2 text-sm font-body leading-relaxed text-muted-foreground">{post.excerpt}</p>
                 </div>
               </Link>
             ))}

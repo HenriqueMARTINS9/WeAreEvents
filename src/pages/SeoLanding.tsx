@@ -201,14 +201,14 @@ const SeoLanding = () => {
           </div>
         </section>
 
-        <section className="bg-card px-6 py-16">
+        <section data-header-theme="light" className="bg-foreground px-6 py-16 text-primary-foreground">
           <div className="mx-auto grid max-w-7xl grid-cols-1 gap-8 xl:grid-cols-[0.78fr_1.22fr] xl:px-2">
             <div>
               <p className="font-body text-sm font-semibold text-primary">Pourquoi passer par Wearevents ?</p>
               <h2 className="mt-3 font-heading text-4xl font-semibold leading-tight">
                 Une demande simple, un retour qualifié.
               </h2>
-              <p className="mt-5 font-body leading-relaxed text-muted-foreground">
+              <p className="mt-5 font-body leading-relaxed text-primary-foreground/65">
                 Nous centralisons les informations essentielles pour éviter les échanges inutiles : disponibilité, format, conditions de privatisation, horaires, restauration, musique et capacité.
               </p>
             </div>
@@ -218,9 +218,9 @@ const SeoLanding = () => {
                 "Lieux sélectionnés et informations vérifiées",
                 "Accompagnement jusqu'à la confirmation",
               ].map((item) => (
-                <div key={item} className="rounded-lg border border-border bg-background p-5">
+                <div key={item} className="rounded-lg border border-primary-foreground/10 bg-primary-foreground/[0.06] p-5">
                   <CheckCircle2 className="h-5 w-5 text-primary" />
-                  <p className="mt-4 font-body text-sm font-semibold leading-relaxed">{item}</p>
+                  <p className="mt-4 font-body text-sm font-semibold leading-relaxed text-primary-foreground">{item}</p>
                 </div>
               ))}
             </div>
@@ -264,7 +264,7 @@ const SeoLanding = () => {
         )}
       </main>
 
-      <SiteFooter variant="dark" />
+      <SiteFooter variant="light" />
       {showCodeSearch && (
         <VenueCodeSearch
           onClose={() => setShowCodeSearch(false)}
