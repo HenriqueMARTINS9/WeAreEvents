@@ -1,4 +1,36 @@
 {
+  "redirects": [
+    {
+      "source": "/location-salle-20-personnes-paris",
+      "destination": "/location-salle-20-50-personnes-paris",
+      "permanent": true
+    },
+    {
+      "source": "/location-salle-50-personnes-paris",
+      "destination": "/location-salle-20-50-personnes-paris",
+      "permanent": true
+    },
+    {
+      "source": "/location-salle-100-personnes-paris",
+      "destination": "/location-salle-50-100-personnes-paris",
+      "permanent": true
+    },
+    {
+      "source": "/location-salle-150-personnes-paris",
+      "destination": "/location-salle-100-150-personnes-paris",
+      "permanent": true
+    },
+    {
+      "source": "/location-salle-200-personnes-paris",
+      "destination": "/location-salle-150-200-personnes-paris",
+      "permanent": true
+    },
+    {
+      "source": "/location-salle-500-personnes-paris",
+      "destination": "/location-salle-200-500-personnes-paris",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     {
       "source": "/sitemap.xml",

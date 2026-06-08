@@ -15,7 +15,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
 import { searchInspirationLinks } from "@/data/search-inspiration";
-import { getCapacitySeoPath, getEventSeoPath, getLocationSeoPath } from "@/data/seo-landings";
+import { getCapacitySeoPath, getEventSeoPath, getLocationSeoPath, SEO_CAPACITY_RANGES } from "@/data/seo-landings";
 import { fetchBlogPosts, fetchVenues, getVenueLocationSuggestionsFromVenues } from "@/lib/supabase-data";
 import { EVENT_TYPES } from "@/types/venue";
 import DesktopNav from "./DesktopNav";
@@ -46,7 +46,6 @@ const HERO_MOMENTS = [
 ] as const;
 
 const HERO_BACKGROUND_VIDEO = "https://www.pexels.com/fr-fr/download/video/3188991/";
-const CAPACITY_SEARCHES = [20, 50, 100, 150, 200, 500];
 
 const ARRONDISSEMENT_CITY_PREFIXES: Record<string, string> = {
   lyon: "690",
@@ -368,16 +367,16 @@ const DesktopHome = () => {
 
           <div className="mt-12 border-t border-border pt-8">
             <h3 className="font-body text-sm font-semibold text-foreground">Par nombre de personnes</h3>
-            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
-              {CAPACITY_SEARCHES.map((capacity) => (
+            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-7">
+              {SEO_CAPACITY_RANGES.map((range) => (
                 <Link
-                  key={capacity}
-                  to={getCapacitySeoPath(capacity)}
+                  key={range.key}
+                  to={getCapacitySeoPath(range.key)}
                   className="group flex min-h-20 items-center justify-between rounded-lg border border-border bg-background px-4 py-3 transition-colors hover:border-primary/50"
                 >
                   <span>
-                    <span className="block font-heading text-2xl font-semibold text-foreground">{capacity}</span>
-                    <span className="font-body text-xs text-muted-foreground">personnes</span>
+                    <span className="block font-heading text-xl font-semibold leading-tight text-foreground">{range.label}</span>
+                    <span className="mt-1 block font-body text-xs text-muted-foreground">personnes</span>
                   </span>
                   <ChevronRight className="h-4 w-4 text-primary transition-transform group-hover:translate-x-1" />
                 </Link>
@@ -456,24 +455,27 @@ const DesktopHome = () => {
 
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
             {posts.map((post) => (
-              <article key={post.slug} className="overflow-hidden rounded-lg border border-primary-foreground/10 bg-primary-foreground text-foreground">
+              <Link
+                key={post.slug}
+                to={`/blog/${post.slug}`}
+                className="group flex h-full flex-col overflow-hidden rounded-lg border border-primary-foreground/10 bg-primary-foreground text-foreground transition-transform hover:-translate-y-1"
+              >
                 <img src={post.image} alt="" className="h-52 w-full object-cover image-grade-luxe" />
-                <div className="px-5 pb-5 pt-4">
+                <div className="flex flex-1 flex-col px-5 pb-5 pt-4">
                   <div className="mb-2.5 flex items-center justify-between gap-3 text-xs font-body font-semibold text-muted-foreground">
                     <span className="text-primary">{post.category}</span>
                     <span>{post.readTime}</span>
                   </div>
-                  <h3 className="font-heading text-2xl font-semibold leading-tight">{post.title}</h3>
+                  <h3 className="font-heading text-2xl font-semibold leading-tight transition-colors group-hover:text-primary">
+                    {post.title}
+                  </h3>
                   <p className="mt-2 text-sm font-body leading-relaxed text-muted-foreground">{post.excerpt}</p>
-                  <button
-                    onClick={() => navigate(`/blog/${post.slug}`)}
-                    className="mt-4 inline-flex items-center gap-2 text-sm font-body font-semibold text-foreground transition-colors hover:text-primary"
-                  >
+                  <span className="mt-auto inline-flex items-center gap-2 pt-5 text-sm font-body font-semibold text-foreground transition-colors group-hover:text-primary">
                     Lire l'article
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
+                    <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  </span>
                 </div>
-              </article>
+              </Link>
             ))}
           </div>
 

@@ -3,6 +3,7 @@ import {
   getCapacitySeoPath,
   getEventSeoPath,
   getLocationSeoPath,
+  SEO_CAPACITY_RANGES,
   seoLandingPageSlugs,
   seoLandingPages,
 } from "./seo-landings-data";
@@ -11,6 +12,8 @@ export type SeoLandingFilters = {
   locationQuery?: string;
   eventType?: string;
   minGuests?: number;
+  guestRangeMin?: number;
+  guestRangeMax?: number;
   venueTypes?: string[];
   ambianceTypes?: string[];
   privatizationTypes?: string[];
@@ -51,6 +54,7 @@ export {
   getCapacitySeoPath,
   getEventSeoPath,
   getLocationSeoPath,
+  SEO_CAPACITY_RANGES,
   getPrimaryVenueImage,
   getRelatedSeoLandingPages,
   getSeoLandingPage,

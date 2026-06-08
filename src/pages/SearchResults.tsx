@@ -100,6 +100,8 @@ const readSearchFiltersFromParams = (params: URLSearchParams) => ({
   eventType: getParamValue(params, "type", "event"),
   eventDate: getParamValue(params, "date"),
   guests: getParamValue(params, "guests"),
+  guestRangeMin: getParamValue(params, "guestsMin"),
+  guestRangeMax: getParamValue(params, "guestsMax"),
   priceTier: getParamValue(params, "price"),
   closingFilter: getParamValue(params, "closing"),
   eventCategoryFilters: getParamList(params, "events", "eventTypes", "eventCategories"),
@@ -134,6 +136,8 @@ const SearchResults = () => {
   const [eventType, setEventType] = useState(parsedSearchFilters.eventType);
   const [eventDate, setEventDate] = useState(parsedSearchFilters.eventDate);
   const [guests, setGuests] = useState(parsedSearchFilters.guests);
+  const [guestRangeMin, setGuestRangeMin] = useState(parsedSearchFilters.guestRangeMin);
+  const [guestRangeMax, setGuestRangeMax] = useState(parsedSearchFilters.guestRangeMax);
   const [priceTier, setPriceTier] = useState(parsedSearchFilters.priceTier);
   const [closingFilter, setClosingFilter] = useState(parsedSearchFilters.closingFilter);
   const [eventCategoryFilters, setEventCategoryFilters] = useState<string[]>(parsedSearchFilters.eventCategoryFilters);
@@ -160,6 +164,8 @@ const SearchResults = () => {
     setEventType(parsedSearchFilters.eventType);
     setEventDate(parsedSearchFilters.eventDate);
     setGuests(parsedSearchFilters.guests);
+    setGuestRangeMin(parsedSearchFilters.guestRangeMin);
+    setGuestRangeMax(parsedSearchFilters.guestRangeMax);
     setPriceTier(parsedSearchFilters.priceTier);
     setClosingFilter(parsedSearchFilters.closingFilter);
     setEventCategoryFilters(parsedSearchFilters.eventCategoryFilters);
@@ -190,6 +196,8 @@ const SearchResults = () => {
     appendSearchParam(nextParams, "type", eventType);
     appendSearchParam(nextParams, "date", eventDate);
     appendSearchParam(nextParams, "guests", guests);
+    appendSearchParam(nextParams, "guestsMin", guestRangeMin);
+    appendSearchParam(nextParams, "guestsMax", guestRangeMax);
     appendSearchParam(nextParams, "price", priceTier);
     appendSearchParam(nextParams, "closing", closingFilter);
     appendSearchParam(nextParams, "events", eventCategoryFilters);
@@ -222,6 +230,8 @@ const SearchResults = () => {
     eventType,
     guestDispositions,
     guests,
+    guestRangeMax,
+    guestRangeMin,
     locationQuery,
     navigate,
     optionFilters,
@@ -238,6 +248,8 @@ const SearchResults = () => {
       eventType: eventType || undefined,
       eventTypes: eventCategoryFilters,
       minGuests: guests ? parseInt(guests, 10) : undefined,
+      guestRangeMin: guestRangeMin ? parseInt(guestRangeMin, 10) : undefined,
+      guestRangeMax: guestRangeMax ? parseInt(guestRangeMax, 10) : undefined,
       priceTier: priceTier || undefined,
       closingTimeFilter: closingFilter || undefined,
       ambianceTypes: ambianceFilters,
@@ -248,11 +260,13 @@ const SearchResults = () => {
       equipmentFilters,
       guestDispositions,
     });
-  }, [locationQuery, eventType, eventCategoryFilters, guests, priceTier, closingFilter, ambianceFilters, venueTypes, privatizationTypes, spaceTypes, optionFilters, equipmentFilters, guestDispositions, venues]);
+  }, [locationQuery, eventType, eventCategoryFilters, guests, guestRangeMin, guestRangeMax, priceTier, closingFilter, ambianceFilters, venueTypes, privatizationTypes, spaceTypes, optionFilters, equipmentFilters, guestDispositions, venues]);
   const hasActiveVenueFilters = Boolean(
     locationQuery.trim() ||
       eventType ||
       guests ||
+      guestRangeMin ||
+      guestRangeMax ||
       priceTier ||
       closingFilter ||
       eventCategoryFilters.length ||
@@ -334,11 +348,24 @@ const SearchResults = () => {
     ...equipmentFilters,
   ].filter(Boolean).length;
   const mobileDateLabel = formatMobileDate(eventDate);
+  const guestRangeLabel =
+    guestRangeMin && guestRangeMax
+      ? `${guestRangeMin}–${guestRangeMax} invités`
+      : guestRangeMax
+        ? `Moins de ${Number(guestRangeMax) + 1} invités`
+        : guestRangeMin
+          ? `Plus de ${Number(guestRangeMin) - 1} invités`
+          : "";
   const mobileSearchSummary = [
     mobileDateLabel || "Date",
-    guests ? `${guests} invités` : "Invités",
+    guests ? `${guests} invités` : guestRangeLabel || "Invités",
     eventType || "Type d'événement",
   ].join(" · ");
+  const handleGuestsChange = (value: string) => {
+    setGuests(value);
+    setGuestRangeMin("");
+    setGuestRangeMax("");
+  };
   const resetAdvancedFilters = () => {
     setEventCategoryFilters([]);
     setVenueTypes([]);
@@ -479,8 +506,8 @@ const SearchResults = () => {
                       <input
                         type="number"
                         value={guests}
-                        onChange={(event) => setGuests(event.target.value)}
-                        placeholder="Nombre"
+                        onChange={(event) => handleGuestsChange(event.target.value)}
+                        placeholder={guestRangeLabel || "Nombre"}
                         className="min-w-0 flex-1 bg-transparent text-sm font-body outline-none placeholder:text-muted-foreground"
                       />
                     </div>
@@ -743,8 +770,8 @@ const SearchResults = () => {
                   <input
                     type="number"
                     value={guests}
-                    onChange={(event) => setGuests(event.target.value)}
-                    placeholder="Nombre d'invités"
+                    onChange={(event) => handleGuestsChange(event.target.value)}
+                    placeholder={guestRangeLabel || "Nombre d'invités"}
                     className="min-w-0 flex-1 bg-transparent text-sm font-body font-semibold focus:outline-none"
                   />
                 </div>

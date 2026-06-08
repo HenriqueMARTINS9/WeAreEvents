@@ -42,6 +42,8 @@ const SeoLanding = () => {
       locationQuery: page.filters.locationQuery,
       eventType: page.filters.eventType,
       minGuests: page.filters.minGuests,
+      guestRangeMin: page.filters.guestRangeMin,
+      guestRangeMax: page.filters.guestRangeMax,
       venueTypes: page.filters.venueTypes,
       ambianceTypes: page.filters.ambianceTypes,
       privatizationTypes: page.filters.privatizationTypes,
@@ -56,6 +58,8 @@ const SeoLanding = () => {
     return filterVenues(venues, {
       locationQuery: page.locationLabel.startsWith("Paris") ? "Paris" : page.filters.locationQuery,
       minGuests: page.filters.minGuests,
+      guestRangeMin: page.filters.guestRangeMin,
+      guestRangeMax: page.filters.guestRangeMax,
     });
   }, [matchingVenues.length, page, venues]);
 

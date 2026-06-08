@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { venueCanHostGuestCount } from "@/lib/venue-capacity";
+import { venueCanHostGuestCount, venueOverlapsGuestRange } from "@/lib/venue-capacity";
 
 describe("venue capacity filtering", () => {
   const venue = { minCapacity: 30, maxCapacity: 100 };
@@ -20,5 +20,17 @@ describe("venue capacity filtering", () => {
 
   it("does not apply a capacity constraint when no count is provided", () => {
     expect(venueCanHostGuestCount(venue)).toBe(true);
+  });
+
+  it("matches capacity ranges that overlap the venue range", () => {
+    expect(venueOverlapsGuestRange(venue, 20, 50)).toBe(true);
+    expect(venueOverlapsGuestRange(venue, 50, 100)).toBe(true);
+    expect(venueOverlapsGuestRange(venue, 101, 150)).toBe(false);
+  });
+
+  it("supports open-ended capacity ranges", () => {
+    expect(venueOverlapsGuestRange(venue, undefined, 20)).toBe(false);
+    expect(venueOverlapsGuestRange(venue, 80)).toBe(true);
+    expect(venueOverlapsGuestRange(venue, 500)).toBe(false);
   });
 });
