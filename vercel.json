@@ -29,6 +29,16 @@
       "source": "/location-salle-500-personnes-paris",
       "destination": "/location-salle-200-500-personnes-paris",
       "permanent": true
+    },
+    {
+      "source": "/rooftop-paris",
+      "destination": "/restaurant-privatisable-paris",
+      "permanent": true
+    },
+    {
+      "source": "/loft-evenement-paris",
+      "destination": "/discotheque-paris",
+      "permanent": true
     }
   ],
   "rewrites": [

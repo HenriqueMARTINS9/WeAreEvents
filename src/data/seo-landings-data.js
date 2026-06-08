@@ -118,8 +118,8 @@ const parisRelated = [
   "salle-anniversaire-paris",
   "salle-mariage-paris",
   "bar-privatisable-paris",
-  "rooftop-paris",
-  "loft-evenement-paris",
+  "restaurant-privatisable-paris",
+  "discotheque-paris",
 ];
 
 const parisMainPage = createPage({
@@ -128,7 +128,7 @@ const parisMainPage = createPage({
   intentLabel: "Location de salle",
   locationLabel: "Paris",
   filters: { locationQuery: "Paris" },
-  intro: "Paris concentre une grande diversité de lieux événementiels : bars privatisables, restaurants, rooftops, clubs, lofts et salles de réception. Wearevents vous aide à trouver rapidement une adresse adaptée à votre événement, votre nombre d'invités et votre budget.",
+  intro: "Paris concentre une grande diversité de lieux événementiels : bars privatisables, restaurants, clubs, lofts et salles de réception. Wearevents vous aide à trouver rapidement une adresse adaptée à votre événement, votre nombre d'invités et votre budget.",
   relatedSlugs: parisRelated,
 });
 
@@ -192,25 +192,11 @@ const venueTypePages = [
     intro: "Un restaurant privatisable à Paris est idéal pour un dîner d'entreprise, un anniversaire, un cocktail ou un repas de groupe. Retrouvez des adresses vérifiées avec espaces dédiés, menus, boissons et conditions de réservation.",
   },
   {
-    slug: "rooftop-paris",
-    h1: "Rooftop à privatiser à Paris",
-    intentLabel: "Rooftop à privatiser",
-    venueTypes: ["Rooftop"],
-    intro: "Les rooftops parisiens sont recherchés pour les cocktails, soirées d'entreprise, anniversaires et événements premium. Wearevents vous aide à identifier les lieux avec vue, terrasse, capacité adaptée et conditions de privatisation.",
-  },
-  {
     slug: "discotheque-paris",
     h1: "Discothèque à privatiser à Paris",
     intentLabel: "Discothèque à privatiser",
     venueTypes: ["Discothèque"],
     intro: "Pour une soirée festive, une remise de diplôme, un anniversaire ou un événement de nuit, une discothèque privatisable à Paris offre musique, piste de danse et horaires adaptés.",
-  },
-  {
-    slug: "loft-evenement-paris",
-    h1: "Loft événementiel à Paris",
-    intentLabel: "Loft événementiel",
-    venueTypes: ["Loft"],
-    intro: "Un loft événementiel à Paris permet d'organiser un format plus flexible : cocktail, shooting, lancement, dîner assis ou soirée privée. Wearevents vous accompagne dans la sélection du lieu le plus cohérent.",
   },
   {
     slug: "salle-reception-paris",

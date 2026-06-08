@@ -21,12 +21,11 @@ export const searchInspirationLinks = [
     }),
   },
   {
-    title: "Rooftop à privatiser",
-    description: "Adresses avec vue, terrasse ou ambiance premium.",
+    title: "Restaurant privatisable",
+    description: "Des adresses adaptées aux repas de groupe et soirées privées.",
     href: buildSearchUrl({
       location: "Paris",
-      venueTypes: ["Rooftop"],
-      space: ["Espace ouvert"],
+      venueTypes: ["Restaurant"],
     }),
   },
   {
@@ -48,12 +47,11 @@ export const searchInspirationLinks = [
     }),
   },
   {
-    title: "Loft événementiel",
-    description: "Des espaces modulables pour cocktails, soirées et lancements.",
+    title: "Discothèque à privatiser",
+    description: "Des lieux festifs avec piste de danse et horaires adaptés.",
     href: buildSearchUrl({
       location: "Paris",
-      venueTypes: ["Loft"],
-      ambiance: ["Atypique"],
+      venueTypes: ["Discothèque"],
     }),
   },
 ];
