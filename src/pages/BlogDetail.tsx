@@ -13,7 +13,7 @@ import { sanitizeBlogHtml } from "@/lib/blog-content";
 
 const BlogContent = ({ content }: { content: string }) => (
   <div
-    className="prose prose-neutral max-w-none font-body text-base leading-8 prose-headings:font-heading prose-headings:font-semibold prose-headings:leading-tight prose-h1:text-4xl prose-h2:mt-12 prose-h2:text-3xl prose-h3:mt-9 prose-h3:text-2xl prose-p:text-foreground/78 prose-a:text-primary prose-a:underline prose-a:underline-offset-4 prose-blockquote:border-primary prose-blockquote:text-foreground/70 prose-li:text-foreground/78 prose-strong:text-foreground"
+    className="prose prose-neutral max-w-none font-body text-base leading-8 prose-headings:font-heading prose-headings:font-semibold prose-headings:leading-tight prose-h1:text-4xl prose-h2:mt-12 prose-h2:text-3xl prose-h3:mt-9 prose-h3:text-2xl prose-p:text-foreground/78 prose-a:font-medium prose-a:text-foreground prose-a:underline prose-a:underline-offset-4 prose-blockquote:border-primary prose-blockquote:text-foreground/70 prose-ul:list-disc prose-ol:list-decimal prose-li:text-foreground/78 prose-li:marker:text-primary prose-strong:text-foreground"
     dangerouslySetInnerHTML={{ __html: sanitizeBlogHtml(content) }}
   />
 );
@@ -108,7 +108,7 @@ const BlogDetail = () => {
       <main>
         <article>
           <section className="px-6 pb-12 pt-32">
-            <div className="mx-auto max-w-5xl xl:px-2">
+            <div className="mx-auto max-w-7xl xl:px-2">
               <div className="mb-8 flex flex-wrap items-center gap-2 text-sm font-body text-muted-foreground">
                 <Link to="/" className="hover:text-foreground">Accueil</Link>
                 <span>/</span>
@@ -117,7 +117,7 @@ const BlogDetail = () => {
                 <span className="text-foreground">{post.title}</span>
               </div>
 
-              <div className="max-w-4xl">
+              <div className="max-w-5xl">
                 <div className="mb-5 flex flex-wrap items-center gap-3 text-xs font-body font-semibold uppercase tracking-[0.14em] text-primary">
                   <span>{post.category}</span>
                   <span className="h-1 w-1 rounded-full bg-primary/50" />

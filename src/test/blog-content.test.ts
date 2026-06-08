@@ -25,4 +25,15 @@ describe("blog content", () => {
 
     expect(html).toBe("<p><strong>Gras</strong> et <em>italique</em></p>");
   });
+
+  it("preserves common formatting from pasted Markdown text", () => {
+    const html = prepareBlogContentForEditor(
+      "### À retenir\n\n• Premier point\n• **Deuxième point**\n\n> Une citation utile\n\n[Découvrir Wearevents](https://www.wearevents.fr)",
+    );
+
+    expect(html).toContain("<h3>À retenir</h3>");
+    expect(html).toContain("<ul><li>Premier point</li><li><strong>Deuxième point</strong></li></ul>");
+    expect(html).toContain("<blockquote>Une citation utile</blockquote>");
+    expect(html).toContain('href="https://www.wearevents.fr"');
+  });
 });

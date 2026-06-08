@@ -38,7 +38,7 @@ import {
 } from "@/types/venue";
 import { isSupabaseConfigured, supabase, type BlogPostInsert, type VenueInsert } from "@/lib/supabase";
 import Seo from "@/components/Seo";
-import { prepareBlogContentForEditor, sanitizeBlogHtml } from "@/lib/blog-content";
+import { plainTextToBlogHtml, prepareBlogContentForEditor, sanitizeBlogHtml } from "@/lib/blog-content";
 
 const slugify = (value: string) =>
   value
@@ -1419,6 +1419,7 @@ const BlogForm = ({ form, setForm, saving, editing, onSubmit, onFilesSelected, u
 
 const BlogRichTextEditor = ({ value, onChange }: { value: string; onChange: (value: string) => void }) => {
   const editorRef = useRef<HTMLDivElement | null>(null);
+  const selectionRef = useRef<Range | null>(null);
 
   useEffect(() => {
     const editor = editorRef.current;
@@ -1428,29 +1429,81 @@ const BlogRichTextEditor = ({ value, onChange }: { value: string; onChange: (val
     if (editor.innerHTML !== nextValue) editor.innerHTML = nextValue;
   }, [value]);
 
+  useEffect(() => {
+    const saveCurrentSelection = () => {
+      const editor = editorRef.current;
+      const selection = window.getSelection();
+      if (!editor || !selection?.rangeCount) return;
+
+      const range = selection.getRangeAt(0);
+      if (editor.contains(range.commonAncestorContainer)) {
+        selectionRef.current = range.cloneRange();
+      }
+    };
+
+    document.addEventListener("selectionchange", saveCurrentSelection);
+    return () => document.removeEventListener("selectionchange", saveCurrentSelection);
+  }, []);
+
   const publishValue = () => {
     if (editorRef.current) onChange(editorRef.current.innerHTML);
   };
 
+  const restoreSelection = () => {
+    const editor = editorRef.current;
+    if (!editor) return;
+
+    editor.focus();
+    const selection = window.getSelection();
+    if (!selection || !selectionRef.current) return;
+
+    selection.removeAllRanges();
+    selection.addRange(selectionRef.current);
+  };
+
   const runCommand = (command: string, commandValue?: string) => {
-    editorRef.current?.focus();
+    restoreSelection();
+    document.execCommand("styleWithCSS", false, "false");
     document.execCommand(command, false, commandValue);
     publishValue();
   };
 
   const addLink = () => {
+    const selectedText = window.getSelection()?.toString().trim();
+    if (!selectedText) {
+      window.alert("Sélectionne d'abord le texte qui doit devenir un lien.");
+      return;
+    }
+
     const href = window.prompt("Adresse du lien");
     if (!href) return;
-    runCommand("createLink", href);
+
+    const normalizedHref = /^(https?:|mailto:|tel:|\/|#)/i.test(href)
+      ? href
+      : `https://${href}`;
+    runCommand("createLink", normalizedHref);
+  };
+
+  const handlePaste = (event: React.ClipboardEvent<HTMLDivElement>) => {
+    event.preventDefault();
+
+    const clipboardHtml = event.clipboardData.getData("text/html");
+    const clipboardText = event.clipboardData.getData("text/plain");
+    const pastedHtml = clipboardHtml || plainTextToBlogHtml(clipboardText);
+    const safeHtml = sanitizeBlogHtml(pastedHtml);
+
+    restoreSelection();
+    document.execCommand("insertHTML", false, safeHtml);
+    publishValue();
   };
 
   const toolbarButtons = [
-    { label: "Paragraphe", icon: <Pilcrow className="h-4 w-4" />, onClick: () => runCommand("formatBlock", "p") },
+    { label: "Paragraphe", icon: <Pilcrow className="h-4 w-4" />, onClick: () => runCommand("formatBlock", "<p>") },
     { label: "Gras", icon: <Bold className="h-4 w-4" />, onClick: () => runCommand("bold") },
     { label: "Italique", icon: <Italic className="h-4 w-4" />, onClick: () => runCommand("italic") },
     { label: "Liste à puces", icon: <List className="h-4 w-4" />, onClick: () => runCommand("insertUnorderedList") },
     { label: "Liste numérotée", icon: <ListOrdered className="h-4 w-4" />, onClick: () => runCommand("insertOrderedList") },
-    { label: "Citation", icon: <Quote className="h-4 w-4" />, onClick: () => runCommand("formatBlock", "blockquote") },
+    { label: "Citation", icon: <Quote className="h-4 w-4" />, onClick: () => runCommand("formatBlock", "<blockquote>") },
     { label: "Ajouter un lien", icon: <Link2 className="h-4 w-4" />, onClick: addLink },
     { label: "Annuler", icon: <Undo2 className="h-4 w-4" />, onClick: () => runCommand("undo") },
     { label: "Rétablir", icon: <Redo2 className="h-4 w-4" />, onClick: () => runCommand("redo") },
@@ -1471,8 +1524,8 @@ const BlogRichTextEditor = ({ value, onChange }: { value: string; onChange: (val
             key={heading}
             type="button"
             onMouseDown={(event) => event.preventDefault()}
-            onClick={() => runCommand("formatBlock", heading)}
-            className="flex h-9 min-w-10 items-center justify-center rounded-md border border-transparent px-2 text-xs font-body font-bold uppercase transition-colors hover:border-border hover:bg-background"
+            onClick={() => runCommand("formatBlock", `<${heading}>`)}
+            className="flex h-9 min-w-11 items-center justify-center rounded-md border border-border bg-background px-2 text-xs font-body font-bold uppercase transition-colors hover:border-primary/50 hover:text-primary"
             title={`Titre ${heading.toUpperCase()}`}
             aria-label={`Titre ${heading.toUpperCase()}`}
           >
@@ -1502,7 +1555,16 @@ const BlogRichTextEditor = ({ value, onChange }: { value: string; onChange: (val
         contentEditable
         suppressContentEditableWarning
         onInput={publishValue}
-        className="prose prose-neutral min-h-[360px] max-w-none bg-background px-5 py-5 font-body outline-none focus:ring-2 focus:ring-primary/20 prose-headings:font-heading prose-headings:font-semibold prose-h1:text-4xl prose-h2:text-3xl prose-h3:text-2xl prose-a:text-primary prose-blockquote:border-primary prose-strong:text-foreground"
+        onPaste={handlePaste}
+        onMouseUp={() => {
+          const selection = window.getSelection();
+          if (selection?.rangeCount) selectionRef.current = selection.getRangeAt(0).cloneRange();
+        }}
+        onKeyUp={() => {
+          const selection = window.getSelection();
+          if (selection?.rangeCount) selectionRef.current = selection.getRangeAt(0).cloneRange();
+        }}
+        className="prose prose-neutral min-h-[360px] max-h-[55vh] max-w-none overflow-y-auto scroll-smooth bg-background px-5 py-5 font-body outline-none focus:ring-2 focus:ring-primary/20 prose-headings:font-heading prose-headings:font-semibold prose-h1:text-4xl prose-h2:text-3xl prose-h3:text-2xl prose-a:font-medium prose-a:text-foreground prose-a:underline prose-a:underline-offset-4 prose-blockquote:border-primary prose-blockquote:text-foreground/70 prose-ul:list-disc prose-ol:list-decimal prose-li:marker:text-primary prose-strong:text-foreground"
         aria-label="Contenu de l'article"
       />
     </section>
