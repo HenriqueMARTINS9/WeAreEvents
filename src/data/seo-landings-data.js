@@ -52,6 +52,8 @@ const formatArrondissement = (arrondissement) =>
 export const getLocationSeoPath = (label) => `/location-salle-${slugifySeoValue(label)}`;
 export const getEventSeoPath = (eventType, city = "Paris") =>
   `/salle-${slugifySeoValue(eventType)}-${slugifySeoValue(city)}`;
+export const getCapacitySeoPath = (capacity, city = "Paris") =>
+  `/location-salle-${capacity}-personnes-${slugifySeoValue(city)}`;
 
 const buildFaq = (intentLabel, locationLabel) => [
   {
@@ -89,6 +91,7 @@ const createPage = ({
   searchUrl: buildSearchUrl({
     location: filters.locationQuery,
     type: filters.eventType,
+    guests: filters.minGuests,
     venueTypes: filters.venueTypes,
     ambiance: filters.ambianceTypes,
     privatization: filters.privatizationTypes,
@@ -142,6 +145,22 @@ const eventPages = SEO_EVENT_TYPES.map((eventType) =>
     filters: { locationQuery: "Paris", eventType },
     intro: `Vous organisez un ${eventType.toLowerCase()} à Paris ? Wearevents sélectionne des lieux adaptés à votre format : capacité, ambiance, horaires, restauration, musique et conditions de privatisation. Envoyez une demande gratuite et recevez un retour qualifié.`,
     relatedSlugs: ["location-salle-paris", "bar-privatisable-paris", "restaurant-privatisable-paris"],
+  }),
+);
+
+const capacityPages = [20, 50, 100, 150, 200, 500].map((capacity) =>
+  createPage({
+    slug: `location-salle-${capacity}-personnes-paris`,
+    h1: `Location de salle pour ${capacity} personnes à Paris`,
+    intentLabel: `Salle pour ${capacity} personnes`,
+    locationLabel: "Paris",
+    filters: { locationQuery: "Paris", minGuests: capacity },
+    intro: `Vous cherchez une salle pouvant accueillir ${capacity} personnes à Paris ? Découvrez des lieux adaptés à cette capacité, comparez les configurations, les ambiances et les conditions de privatisation, puis envoyez gratuitement votre demande de disponibilité.`,
+    relatedSlugs: [
+      "location-salle-paris",
+      "salle-anniversaire-paris",
+      "salle-soiree-privee-paris",
+    ],
   }),
 );
 
@@ -234,6 +253,7 @@ export const seoLandingPages = [
   parisMainPage,
   ...parisArrondissementPages,
   ...eventPages,
+  ...capacityPages,
   ...venueTypePages,
 ];
 

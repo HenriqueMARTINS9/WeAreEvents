@@ -9,47 +9,14 @@ import VenueCodeSearch from "@/components/VenueCodeSearch";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { fetchBlogPostBySlug, fetchBlogPosts } from "@/lib/supabase-data";
 import Seo, { siteUrl } from "@/components/Seo";
+import { sanitizeBlogHtml } from "@/lib/blog-content";
 
-const BlogContent = ({ content }: { content: string }) => {
-  const blocks = content
-    .split(/\n{2,}/)
-    .map((block) => block.trim())
-    .filter(Boolean);
-
-  return (
-    <div className="space-y-7 font-body text-base leading-8 text-foreground/78">
-      {blocks.map((block, index) => {
-        if (block.startsWith("## ")) {
-          return (
-            <h2 key={index} className="pt-4 font-heading text-3xl font-semibold leading-tight text-foreground">
-              {block.replace(/^##\s+/, "")}
-            </h2>
-          );
-        }
-
-        if (block.includes("\n- ")) {
-          const items = block
-            .split("\n")
-            .map((item) => item.replace(/^-\s*/, "").trim())
-            .filter(Boolean);
-
-          return (
-            <ul key={index} className="space-y-3">
-              {items.map((item) => (
-                <li key={item} className="flex gap-3">
-                  <span className="mt-3 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ul>
-          );
-        }
-
-        return <p key={index}>{block}</p>;
-      })}
-    </div>
-  );
-};
+const BlogContent = ({ content }: { content: string }) => (
+  <div
+    className="prose prose-neutral max-w-none font-body text-base leading-8 prose-headings:font-heading prose-headings:font-semibold prose-headings:leading-tight prose-h1:text-4xl prose-h2:mt-12 prose-h2:text-3xl prose-h3:mt-9 prose-h3:text-2xl prose-p:text-foreground/78 prose-a:text-primary prose-a:underline prose-a:underline-offset-4 prose-blockquote:border-primary prose-blockquote:text-foreground/70 prose-li:text-foreground/78 prose-strong:text-foreground"
+    dangerouslySetInnerHTML={{ __html: sanitizeBlogHtml(content) }}
+  />
+);
 
 const BlogDetail = () => {
   const { slug = "" } = useParams();

@@ -1,5 +1,6 @@
 import type { Venue } from "@/types/venue";
 import {
+  getCapacitySeoPath,
   getEventSeoPath,
   getLocationSeoPath,
   seoLandingPageSlugs,
@@ -9,6 +10,7 @@ import {
 export type SeoLandingFilters = {
   locationQuery?: string;
   eventType?: string;
+  minGuests?: number;
   venueTypes?: string[];
   ambianceTypes?: string[];
   privatizationTypes?: string[];
@@ -46,6 +48,7 @@ const getPrimaryVenueImage = (venues: Venue[]) =>
   venues.find((venue) => venue.coverImage)?.coverImage;
 
 export {
+  getCapacitySeoPath,
   getEventSeoPath,
   getLocationSeoPath,
   getPrimaryVenueImage,

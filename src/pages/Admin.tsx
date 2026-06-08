@@ -1,16 +1,25 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import {
+  Bold,
   Building2,
   FileText,
   Image,
+  Italic,
   LayoutDashboard,
+  Link2,
+  List,
+  ListOrdered,
   Loader2,
   LogOut,
   Pencil,
+  Pilcrow,
   Plus,
+  Quote,
+  Redo2,
   Save,
   Trash2,
+  Undo2,
   Upload,
   X,
 } from "lucide-react";
@@ -29,6 +38,7 @@ import {
 } from "@/types/venue";
 import { isSupabaseConfigured, supabase, type BlogPostInsert, type VenueInsert } from "@/lib/supabase";
 import Seo from "@/components/Seo";
+import { prepareBlogContentForEditor, sanitizeBlogHtml } from "@/lib/blog-content";
 
 const slugify = (value: string) =>
   value
@@ -883,7 +893,7 @@ const Admin = () => {
         slug: (blogForm.slug || slugify(blogForm.title)).trim(),
         category: blogForm.category,
         excerpt: blogForm.excerpt,
-        content: blogForm.content,
+        content: sanitizeBlogHtml(blogForm.content),
         read_time: blogForm.readTime,
         image: blogForm.image,
         published: blogForm.published,
@@ -971,7 +981,7 @@ const Admin = () => {
       slug: post.slug ?? "",
       category: post.category ?? "",
       excerpt: post.excerpt ?? "",
-      content: post.content ?? "",
+      content: prepareBlogContentForEditor(post.content ?? ""),
       readTime: post.read_time ?? "",
       image: post.image ?? "",
       published: Boolean(post.published),
@@ -1246,8 +1256,9 @@ const AdminTable = ({ title, description, createLabel, onCreate, columns, rows, 
                   ))}
                   <td className="px-4 py-4">
                     <div className="flex justify-end gap-2">
-                      <button type="button" onClick={() => onEdit(row)} className="rounded-lg border border-border p-2 transition-colors hover:border-primary/40" aria-label="Modifier">
+                      <button type="button" onClick={() => onEdit(row)} className="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-xs font-body font-semibold transition-colors hover:border-primary/40 hover:text-primary" aria-label="Modifier">
                         <Pencil className="h-4 w-4" />
+                        Modifier
                       </button>
                       <button type="button" onClick={() => onDelete(row)} className="rounded-lg border border-destructive/30 p-2 text-destructive transition-colors hover:bg-destructive hover:text-destructive-foreground" aria-label="Supprimer">
                         <Trash2 className="h-4 w-4" />
@@ -1393,13 +1404,110 @@ const BlogForm = ({ form, setForm, saving, editing, onSubmit, onFilesSelected, u
       uploading={uploadingImages}
     />
     <AdminTextarea label="Résumé" value={form.excerpt} onChange={(value) => setForm({ ...form, excerpt: value })} />
-    <div className="xl:col-span-2"><AdminTextarea label="Contenu" value={form.content} onChange={(value) => setForm({ ...form, content: value })} rows={12} /></div>
+    <div className="xl:col-span-2">
+      <BlogRichTextEditor
+        value={form.content}
+        onChange={(value) => setForm({ ...form, content: value })}
+      />
+    </div>
     <div className="flex items-center rounded-lg border border-border bg-card p-4">
       <AdminCheckbox label="Publié" checked={form.published} onChange={(value) => setForm({ ...form, published: value })} />
     </div>
     <SubmitBar saving={saving} label={editing ? "Mettre à jour l'article" : "Publier l'article"} />
   </form>
 );
+
+const BlogRichTextEditor = ({ value, onChange }: { value: string; onChange: (value: string) => void }) => {
+  const editorRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const editor = editorRef.current;
+    if (!editor || document.activeElement === editor) return;
+
+    const nextValue = prepareBlogContentForEditor(value);
+    if (editor.innerHTML !== nextValue) editor.innerHTML = nextValue;
+  }, [value]);
+
+  const publishValue = () => {
+    if (editorRef.current) onChange(editorRef.current.innerHTML);
+  };
+
+  const runCommand = (command: string, commandValue?: string) => {
+    editorRef.current?.focus();
+    document.execCommand(command, false, commandValue);
+    publishValue();
+  };
+
+  const addLink = () => {
+    const href = window.prompt("Adresse du lien");
+    if (!href) return;
+    runCommand("createLink", href);
+  };
+
+  const toolbarButtons = [
+    { label: "Paragraphe", icon: <Pilcrow className="h-4 w-4" />, onClick: () => runCommand("formatBlock", "p") },
+    { label: "Gras", icon: <Bold className="h-4 w-4" />, onClick: () => runCommand("bold") },
+    { label: "Italique", icon: <Italic className="h-4 w-4" />, onClick: () => runCommand("italic") },
+    { label: "Liste à puces", icon: <List className="h-4 w-4" />, onClick: () => runCommand("insertUnorderedList") },
+    { label: "Liste numérotée", icon: <ListOrdered className="h-4 w-4" />, onClick: () => runCommand("insertOrderedList") },
+    { label: "Citation", icon: <Quote className="h-4 w-4" />, onClick: () => runCommand("formatBlock", "blockquote") },
+    { label: "Ajouter un lien", icon: <Link2 className="h-4 w-4" />, onClick: addLink },
+    { label: "Annuler", icon: <Undo2 className="h-4 w-4" />, onClick: () => runCommand("undo") },
+    { label: "Rétablir", icon: <Redo2 className="h-4 w-4" />, onClick: () => runCommand("redo") },
+  ];
+
+  return (
+    <section className="overflow-hidden rounded-lg border border-border bg-card">
+      <div className="border-b border-border px-4 py-3">
+        <h3 className="text-sm font-body font-semibold">Contenu de l'article</h3>
+        <p className="mt-1 text-xs font-body text-muted-foreground">
+          Sélectionnez du texte puis appliquez un titre, du gras, de l'italique, une liste ou un lien.
+        </p>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-1 border-b border-border bg-secondary/50 p-2">
+        {(["h1", "h2", "h3"] as const).map((heading) => (
+          <button
+            key={heading}
+            type="button"
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={() => runCommand("formatBlock", heading)}
+            className="flex h-9 min-w-10 items-center justify-center rounded-md border border-transparent px-2 text-xs font-body font-bold uppercase transition-colors hover:border-border hover:bg-background"
+            title={`Titre ${heading.toUpperCase()}`}
+            aria-label={`Titre ${heading.toUpperCase()}`}
+          >
+            {heading.toUpperCase()}
+          </button>
+        ))}
+
+        <span className="mx-1 h-6 w-px bg-border" />
+
+        {toolbarButtons.map((button) => (
+          <button
+            key={button.label}
+            type="button"
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={button.onClick}
+            className="flex h-9 w-9 items-center justify-center rounded-md border border-transparent transition-colors hover:border-border hover:bg-background"
+            title={button.label}
+            aria-label={button.label}
+          >
+            {button.icon}
+          </button>
+        ))}
+      </div>
+
+      <div
+        ref={editorRef}
+        contentEditable
+        suppressContentEditableWarning
+        onInput={publishValue}
+        className="prose prose-neutral min-h-[360px] max-w-none bg-background px-5 py-5 font-body outline-none focus:ring-2 focus:ring-primary/20 prose-headings:font-heading prose-headings:font-semibold prose-h1:text-4xl prose-h2:text-3xl prose-h3:text-2xl prose-a:text-primary prose-blockquote:border-primary prose-strong:text-foreground"
+        aria-label="Contenu de l'article"
+      />
+    </section>
+  );
+};
 
 const ReservationOptionsField = ({
   value,

@@ -15,7 +15,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
 import { searchInspirationLinks } from "@/data/search-inspiration";
-import { getEventSeoPath, getLocationSeoPath } from "@/data/seo-landings";
+import { getCapacitySeoPath, getEventSeoPath, getLocationSeoPath } from "@/data/seo-landings";
 import { fetchBlogPosts, fetchVenues, getVenueLocationSuggestionsFromVenues } from "@/lib/supabase-data";
 import { EVENT_TYPES } from "@/types/venue";
 import DesktopNav from "./DesktopNav";
@@ -46,6 +46,7 @@ const HERO_MOMENTS = [
 ] as const;
 
 const HERO_BACKGROUND_VIDEO = "https://www.pexels.com/fr-fr/download/video/3188991/";
+const CAPACITY_SEARCHES = [20, 50, 100, 150, 200, 500];
 
 const ARRONDISSEMENT_CITY_PREFIXES: Record<string, string> = {
   lyon: "690",
@@ -319,100 +320,6 @@ const DesktopHome = () => {
             ))}
           </div>
 
-          <div className="mt-12 rounded-2xl border border-primary-foreground/10 bg-primary-foreground/[0.04] p-5 backdrop-blur md:p-6">
-            <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-              <div>
-                <p className="font-body text-sm font-semibold text-primary">Une inspiration ?</p>
-                <h3 className="mt-2 font-heading text-3xl font-semibold leading-tight">
-                  Des recherches prêtes à lancer
-                </h3>
-              </div>
-              <p className="max-w-xl font-body text-sm leading-relaxed text-primary-foreground/65">
-                Cliquez sur une idée pour ouvrir directement la recherche avec les filtres adaptés.
-              </p>
-            </div>
-
-            <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-              {searchInspirationLinks.map((item) => (
-                <Link
-                  key={item.title}
-                  to={item.href}
-                  className="group rounded-lg border border-primary-foreground/10 bg-primary-foreground/[0.06] p-4 transition-colors hover:border-primary/50 hover:bg-primary-foreground/[0.1]"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <h4 className="font-body text-sm font-semibold text-primary-foreground">{item.title}</h4>
-                      <p className="mt-2 font-body text-sm leading-relaxed text-primary-foreground/60">
-                        {item.description}
-                      </p>
-                    </div>
-                    <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-primary transition-transform group-hover:translate-x-1" />
-                  </div>
-                </Link>
-              ))}
-            </div>
-
-            <div className="mt-8 grid grid-cols-1 gap-6 border-t border-primary-foreground/10 pt-6 xl:grid-cols-2">
-              <div>
-                <h4 className="font-body text-sm font-semibold text-primary-foreground">Par ville et arrondissement</h4>
-                <div className="mt-3 space-y-4">
-                  {parisLocationSearchLinks.length > 0 && (
-                    <div>
-                      <p className="mb-2 font-body text-xs font-semibold uppercase tracking-[0.08em] text-primary-foreground/45">
-                        Paris et ses arrondissements
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {parisLocationSearchLinks.map((item) => (
-                          <Link
-                            key={item.label}
-                            to={item.href}
-                            className="rounded-full border border-primary-foreground/10 bg-primary-foreground/[0.06] px-3 py-1.5 font-body text-xs font-semibold text-primary-foreground/70 transition-colors hover:border-primary/50 hover:text-primary-foreground"
-                          >
-                            {item.label}
-                          </Link>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {otherLocationSearchLinks.length > 0 && (
-                    <div>
-                      <p className="mb-2 font-body text-xs font-semibold uppercase tracking-[0.08em] text-primary-foreground/45">
-                        Autres villes
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {otherLocationSearchLinks.map((item) => (
-                          <Link
-                            key={item.label}
-                            to={item.href}
-                            className="rounded-full border border-primary-foreground/10 bg-primary-foreground/[0.06] px-3 py-1.5 font-body text-xs font-semibold text-primary-foreground/70 transition-colors hover:border-primary/50 hover:text-primary-foreground"
-                          >
-                            {item.label}
-                          </Link>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div>
-                <h4 className="font-body text-sm font-semibold text-primary-foreground">Par type d'événement</h4>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {EVENT_TYPES.map((eventType) => (
-                    <Link
-                      key={eventType}
-                      to={getEventSeoPath(eventType)}
-                      className="rounded-full border border-primary-foreground/10 bg-primary-foreground/[0.06] px-3 py-1.5 font-body text-xs font-semibold text-primary-foreground/70 transition-colors hover:border-primary/50 hover:text-primary-foreground"
-                    >
-                      {eventType}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-
           <div className="mt-8 text-center xl:hidden">
             <button
               onClick={() => navigate("/recherche")}
@@ -420,6 +327,108 @@ const DesktopHome = () => {
             >
               Voir toutes les salles
             </button>
+          </div>
+        </div>
+      </section>
+
+      <section className="border-y border-border bg-secondary/45 px-6 py-20">
+        <div className="mx-auto max-w-7xl xl:px-2">
+          <div className="grid grid-cols-1 gap-8 xl:grid-cols-[minmax(0,0.9fr)_minmax(420px,1.1fr)] xl:items-end">
+            <div>
+              <p className="mb-3 font-body text-sm font-semibold text-primary">Une inspiration ?</p>
+              <h2 className="font-heading text-4xl font-semibold leading-[1.02] 2xl:text-5xl">
+                Trouvez votre lieu par envie, capacité ou quartier.
+              </h2>
+            </div>
+            <p className="max-w-2xl font-body leading-relaxed text-muted-foreground xl:justify-self-end">
+              Explorez des recherches déjà préparées ou choisissez directement le nombre d'invités prévu pour votre événement.
+            </p>
+          </div>
+
+          <div className="mt-12">
+            <h3 className="font-heading text-2xl font-semibold">Des recherches prêtes à lancer</h3>
+            <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {searchInspirationLinks.map((item) => (
+                <Link
+                  key={item.title}
+                  to={item.href}
+                  className="group rounded-lg border border-border bg-background p-5 transition-all hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-lg"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <h4 className="font-body text-sm font-semibold text-foreground">{item.title}</h4>
+                      <p className="mt-2 font-body text-sm leading-relaxed text-muted-foreground">{item.description}</p>
+                    </div>
+                    <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-primary transition-transform group-hover:translate-x-1" />
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-12 border-t border-border pt-8">
+            <h3 className="font-body text-sm font-semibold text-foreground">Par nombre de personnes</h3>
+            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
+              {CAPACITY_SEARCHES.map((capacity) => (
+                <Link
+                  key={capacity}
+                  to={getCapacitySeoPath(capacity)}
+                  className="group flex min-h-20 items-center justify-between rounded-lg border border-border bg-background px-4 py-3 transition-colors hover:border-primary/50"
+                >
+                  <span>
+                    <span className="block font-heading text-2xl font-semibold text-foreground">{capacity}</span>
+                    <span className="font-body text-xs text-muted-foreground">personnes</span>
+                  </span>
+                  <ChevronRight className="h-4 w-4 text-primary transition-transform group-hover:translate-x-1" />
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-12 grid grid-cols-1 gap-10 border-t border-border pt-8 xl:grid-cols-2">
+            <div>
+              <h3 className="font-body text-sm font-semibold text-foreground">Par ville et arrondissement</h3>
+              <div className="mt-4 space-y-5">
+                {parisLocationSearchLinks.length > 0 && (
+                  <div>
+                    <p className="mb-2 font-body text-xs font-semibold uppercase text-muted-foreground">
+                      Paris et ses arrondissements
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {parisLocationSearchLinks.map((item) => (
+                        <Link key={item.label} to={item.href} className="rounded-full border border-border bg-background px-3 py-1.5 font-body text-xs font-semibold text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground">
+                          {item.label}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {otherLocationSearchLinks.length > 0 && (
+                  <div>
+                    <p className="mb-2 font-body text-xs font-semibold uppercase text-muted-foreground">Autres villes</p>
+                    <div className="flex flex-wrap gap-2">
+                      {otherLocationSearchLinks.map((item) => (
+                        <Link key={item.label} to={item.href} className="rounded-full border border-border bg-background px-3 py-1.5 font-body text-xs font-semibold text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground">
+                          {item.label}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <h3 className="font-body text-sm font-semibold text-foreground">Par type d'événement</h3>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {EVENT_TYPES.map((eventType) => (
+                  <Link key={eventType} to={getEventSeoPath(eventType)} className="rounded-full border border-border bg-background px-3 py-1.5 font-body text-xs font-semibold text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground">
+                    {eventType}
+                  </Link>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </section>

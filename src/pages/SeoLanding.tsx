@@ -30,6 +30,7 @@ const SeoLanding = () => {
     return filterVenues(venues, {
       locationQuery: page.filters.locationQuery,
       eventType: page.filters.eventType,
+      minGuests: page.filters.minGuests,
       venueTypes: page.filters.venueTypes,
       ambianceTypes: page.filters.ambianceTypes,
       privatizationTypes: page.filters.privatizationTypes,
