@@ -58,6 +58,13 @@ describe("booking workflow", () => {
     expect(errors.guestCount).toContain("Ce lieu accueille");
   });
 
+  it("accepts an end time after midnight", () => {
+    const errors = validateBookingForm({ ...validForm, startTime: "22:00", endTime: "02:00" }, venue);
+
+    expect(errors.startTime).toBeUndefined();
+    expect(errors.endTime).toBeUndefined();
+  });
+
   it("creates a request with the selected venue prefilled", () => {
     const request = createBookingRequest(validForm, venue);
 

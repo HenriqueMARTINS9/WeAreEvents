@@ -68,11 +68,6 @@ const getRequestedCapacity = (requestedSpaces: string[], venue: Venue) => {
     .reduce((total, space) => total + space.capacity, 0);
 };
 
-const isInvalidTimeRange = (startTime: string, endTime: string) => {
-  if (!startTime || !endTime) return false;
-  return startTime >= endTime;
-};
-
 const buildReviewFollowUpDate = (dateValue: string) => {
   const nextDay = new Date(`${dateValue}T10:00:00`);
   nextDay.setDate(nextDay.getDate() + 1);
@@ -117,8 +112,6 @@ export const validateBookingForm = (form: BookingFormValues, venue: Venue): Book
 
   if (!values.endTime) {
     errors.endTime = "Indiquez un horaire de fin.";
-  } else if (isInvalidTimeRange(values.startTime, values.endTime)) {
-    errors.endTime = "L'horaire de fin doit être postérieur au début.";
   }
 
   if (!values.guestCount) {
