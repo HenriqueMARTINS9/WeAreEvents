@@ -14,6 +14,8 @@ export type SeoLandingFilters = {
   minGuests?: number;
   guestRangeMin?: number;
   guestRangeMax?: number;
+  maxCapacityGreaterThan?: number;
+  maxCapacityLimit?: number;
   venueTypes?: string[];
   ambianceTypes?: string[];
   privatizationTypes?: string[];

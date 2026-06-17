@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { venueCanHostGuestCount, venueOverlapsGuestRange } from "@/lib/venue-capacity";
+import { venueCanHostGuestCount, venueMaxCapacityFitsBounds, venueOverlapsGuestRange } from "@/lib/venue-capacity";
 
 describe("venue capacity filtering", () => {
   const venue = { minCapacity: 30, maxCapacity: 100 };
@@ -32,5 +32,13 @@ describe("venue capacity filtering", () => {
     expect(venueOverlapsGuestRange(venue, undefined, 20)).toBe(false);
     expect(venueOverlapsGuestRange(venue, 80)).toBe(true);
     expect(venueOverlapsGuestRange(venue, 500)).toBe(false);
+  });
+
+  it("filters SEO capacity buckets by venue maximum capacity", () => {
+    expect(venueMaxCapacityFitsBounds({ minCapacity: 10, maxCapacity: 20 }, undefined, 20)).toBe(true);
+    expect(venueMaxCapacityFitsBounds({ minCapacity: 10, maxCapacity: 30 }, undefined, 20)).toBe(false);
+    expect(venueMaxCapacityFitsBounds({ minCapacity: 30, maxCapacity: 50 }, 20, 50)).toBe(true);
+    expect(venueMaxCapacityFitsBounds({ minCapacity: 30, maxCapacity: 100 }, 20, 50)).toBe(false);
+    expect(venueMaxCapacityFitsBounds({ minCapacity: 100, maxCapacity: 600 }, 500)).toBe(true);
   });
 });

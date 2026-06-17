@@ -44,6 +44,8 @@ const SeoLanding = () => {
       minGuests: page.filters.minGuests,
       guestRangeMin: page.filters.guestRangeMin,
       guestRangeMax: page.filters.guestRangeMax,
+      maxCapacityGreaterThan: page.filters.maxCapacityGreaterThan,
+      maxCapacityLimit: page.filters.maxCapacityLimit,
       venueTypes: page.filters.venueTypes,
       ambianceTypes: page.filters.ambianceTypes,
       privatizationTypes: page.filters.privatizationTypes,
@@ -60,6 +62,8 @@ const SeoLanding = () => {
       minGuests: page.filters.minGuests,
       guestRangeMin: page.filters.guestRangeMin,
       guestRangeMax: page.filters.guestRangeMax,
+      maxCapacityGreaterThan: page.filters.maxCapacityGreaterThan,
+      maxCapacityLimit: page.filters.maxCapacityLimit,
     });
   }, [matchingVenues.length, page, venues]);
 

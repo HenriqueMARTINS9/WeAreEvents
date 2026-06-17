@@ -23,3 +23,14 @@ export const venueOverlapsGuestRange = (
 
   return true;
 };
+
+export const venueMaxCapacityFitsBounds = (
+  venue: VenueCapacity,
+  maxCapacityGreaterThan?: number,
+  maxCapacityLimit?: number,
+) => {
+  if (maxCapacityGreaterThan !== undefined && venue.maxCapacity <= maxCapacityGreaterThan) return false;
+  if (maxCapacityLimit !== undefined && venue.maxCapacity > maxCapacityLimit) return false;
+
+  return true;
+};

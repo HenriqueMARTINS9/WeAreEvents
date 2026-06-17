@@ -56,13 +56,13 @@ export const getCapacitySeoPath = (rangeKey, city = "Paris") =>
   `/location-salle-${rangeKey}-personnes-${slugifySeoValue(city)}`;
 
 export const SEO_CAPACITY_RANGES = [
-  { key: "moins-20", label: "Moins de 20", intent: "moins de 20 personnes", min: 1, max: 19 },
-  { key: "20-50", label: "20–50", intent: "20 à 50 personnes", min: 20, max: 50 },
-  { key: "50-100", label: "50–100", intent: "50 à 100 personnes", min: 50, max: 100 },
-  { key: "100-150", label: "100–150", intent: "100 à 150 personnes", min: 100, max: 150 },
-  { key: "150-200", label: "150–200", intent: "150 à 200 personnes", min: 150, max: 200 },
-  { key: "200-500", label: "200–500", intent: "200 à 500 personnes", min: 200, max: 500 },
-  { key: "plus-500", label: "Plus de 500", intent: "plus de 500 personnes", min: 501 },
+  { key: "moins-20", label: "Moins de 20", intent: "moins de 20 personnes", maxCapacityLimit: 20 },
+  { key: "20-50", label: "20–50", intent: "20 à 50 personnes", maxCapacityGreaterThan: 20, maxCapacityLimit: 50 },
+  { key: "50-100", label: "50–100", intent: "50 à 100 personnes", maxCapacityGreaterThan: 50, maxCapacityLimit: 100 },
+  { key: "100-150", label: "100–150", intent: "100 à 150 personnes", maxCapacityGreaterThan: 100, maxCapacityLimit: 150 },
+  { key: "150-200", label: "150–200", intent: "150 à 200 personnes", maxCapacityGreaterThan: 150, maxCapacityLimit: 200 },
+  { key: "200-500", label: "200–500", intent: "200 à 500 personnes", maxCapacityGreaterThan: 200, maxCapacityLimit: 500 },
+  { key: "plus-500", label: "Plus de 500", intent: "plus de 500 personnes", maxCapacityGreaterThan: 500 },
 ];
 
 const buildFaq = (intentLabel, locationLabel) => [
@@ -104,6 +104,8 @@ const createPage = ({
     guests: filters.minGuests,
     guestsMin: filters.guestRangeMin,
     guestsMax: filters.guestRangeMax,
+    capacityGt: filters.maxCapacityGreaterThan,
+    maxCapacity: filters.maxCapacityLimit,
     venueTypes: filters.venueTypes,
     ambiance: filters.ambianceTypes,
     privatization: filters.privatizationTypes,
@@ -166,8 +168,12 @@ const capacityPages = SEO_CAPACITY_RANGES.map((range) =>
     h1: `Location de salle pour ${range.intent} à Paris`,
     intentLabel: `Salle pour ${range.intent}`,
     locationLabel: "Paris",
-    filters: { locationQuery: "Paris", guestRangeMin: range.min, guestRangeMax: range.max },
-    intro: `Vous cherchez une salle pour ${range.intent} à Paris ? Découvrez des lieux dont la capacité correspond à cette fourchette, comparez les configurations, les ambiances et les conditions de privatisation, puis envoyez gratuitement votre demande de disponibilité.`,
+    filters: {
+      locationQuery: "Paris",
+      maxCapacityGreaterThan: range.maxCapacityGreaterThan,
+      maxCapacityLimit: range.maxCapacityLimit,
+    },
+    intro: `Vous cherchez une salle pour ${range.intent} à Paris ? Découvrez des lieux dont la capacité maximale correspond à cette fourchette, comparez les configurations, les ambiances et les conditions de privatisation, puis envoyez gratuitement votre demande de disponibilité.`,
     relatedSlugs: [
       "location-salle-paris",
       "salle-anniversaire-paris",

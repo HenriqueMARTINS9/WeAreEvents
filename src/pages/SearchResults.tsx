@@ -102,6 +102,8 @@ const readSearchFiltersFromParams = (params: URLSearchParams) => ({
   guests: getParamValue(params, "guests"),
   guestRangeMin: getParamValue(params, "guestsMin"),
   guestRangeMax: getParamValue(params, "guestsMax"),
+  maxCapacityGreaterThan: getParamValue(params, "capacityGt"),
+  maxCapacityLimit: getParamValue(params, "maxCapacity"),
   priceTier: getParamValue(params, "price"),
   closingFilter: getParamValue(params, "closing"),
   eventCategoryFilters: getParamList(params, "events", "eventTypes", "eventCategories"),
@@ -138,6 +140,8 @@ const SearchResults = () => {
   const [guests, setGuests] = useState(parsedSearchFilters.guests);
   const [guestRangeMin, setGuestRangeMin] = useState(parsedSearchFilters.guestRangeMin);
   const [guestRangeMax, setGuestRangeMax] = useState(parsedSearchFilters.guestRangeMax);
+  const [maxCapacityGreaterThan, setMaxCapacityGreaterThan] = useState(parsedSearchFilters.maxCapacityGreaterThan);
+  const [maxCapacityLimit, setMaxCapacityLimit] = useState(parsedSearchFilters.maxCapacityLimit);
   const [priceTier, setPriceTier] = useState(parsedSearchFilters.priceTier);
   const [closingFilter, setClosingFilter] = useState(parsedSearchFilters.closingFilter);
   const [eventCategoryFilters, setEventCategoryFilters] = useState<string[]>(parsedSearchFilters.eventCategoryFilters);
@@ -166,6 +170,8 @@ const SearchResults = () => {
     setGuests(parsedSearchFilters.guests);
     setGuestRangeMin(parsedSearchFilters.guestRangeMin);
     setGuestRangeMax(parsedSearchFilters.guestRangeMax);
+    setMaxCapacityGreaterThan(parsedSearchFilters.maxCapacityGreaterThan);
+    setMaxCapacityLimit(parsedSearchFilters.maxCapacityLimit);
     setPriceTier(parsedSearchFilters.priceTier);
     setClosingFilter(parsedSearchFilters.closingFilter);
     setEventCategoryFilters(parsedSearchFilters.eventCategoryFilters);
@@ -198,6 +204,8 @@ const SearchResults = () => {
     appendSearchParam(nextParams, "guests", guests);
     appendSearchParam(nextParams, "guestsMin", guestRangeMin);
     appendSearchParam(nextParams, "guestsMax", guestRangeMax);
+    appendSearchParam(nextParams, "capacityGt", maxCapacityGreaterThan);
+    appendSearchParam(nextParams, "maxCapacity", maxCapacityLimit);
     appendSearchParam(nextParams, "price", priceTier);
     appendSearchParam(nextParams, "closing", closingFilter);
     appendSearchParam(nextParams, "events", eventCategoryFilters);
@@ -232,6 +240,8 @@ const SearchResults = () => {
     guests,
     guestRangeMax,
     guestRangeMin,
+    maxCapacityGreaterThan,
+    maxCapacityLimit,
     locationQuery,
     navigate,
     optionFilters,
@@ -250,6 +260,8 @@ const SearchResults = () => {
       minGuests: guests ? parseInt(guests, 10) : undefined,
       guestRangeMin: guestRangeMin ? parseInt(guestRangeMin, 10) : undefined,
       guestRangeMax: guestRangeMax ? parseInt(guestRangeMax, 10) : undefined,
+      maxCapacityGreaterThan: maxCapacityGreaterThan ? parseInt(maxCapacityGreaterThan, 10) : undefined,
+      maxCapacityLimit: maxCapacityLimit ? parseInt(maxCapacityLimit, 10) : undefined,
       priceTier: priceTier || undefined,
       closingTimeFilter: closingFilter || undefined,
       ambianceTypes: ambianceFilters,
@@ -260,13 +272,15 @@ const SearchResults = () => {
       equipmentFilters,
       guestDispositions,
     });
-  }, [locationQuery, eventType, eventCategoryFilters, guests, guestRangeMin, guestRangeMax, priceTier, closingFilter, ambianceFilters, venueTypes, privatizationTypes, spaceTypes, optionFilters, equipmentFilters, guestDispositions, venues]);
+  }, [locationQuery, eventType, eventCategoryFilters, guests, guestRangeMin, guestRangeMax, maxCapacityGreaterThan, maxCapacityLimit, priceTier, closingFilter, ambianceFilters, venueTypes, privatizationTypes, spaceTypes, optionFilters, equipmentFilters, guestDispositions, venues]);
   const hasActiveVenueFilters = Boolean(
     locationQuery.trim() ||
       eventType ||
       guests ||
       guestRangeMin ||
       guestRangeMax ||
+      maxCapacityGreaterThan ||
+      maxCapacityLimit ||
       priceTier ||
       closingFilter ||
       eventCategoryFilters.length ||
@@ -356,15 +370,25 @@ const SearchResults = () => {
         : guestRangeMin
           ? `Plus de ${Number(guestRangeMin) - 1} invités`
           : "";
+  const maxCapacityLabel =
+    maxCapacityGreaterThan && maxCapacityLimit
+      ? `${maxCapacityGreaterThan}–${maxCapacityLimit} invités max`
+      : maxCapacityLimit
+        ? `Jusqu'à ${maxCapacityLimit} invités max`
+        : maxCapacityGreaterThan
+          ? `Plus de ${maxCapacityGreaterThan} invités max`
+          : "";
   const mobileSearchSummary = [
     mobileDateLabel || "Date",
-    guests ? `${guests} invités` : guestRangeLabel || "Invités",
+    guests ? `${guests} invités` : guestRangeLabel || maxCapacityLabel || "Invités",
     eventType || "Type d'événement",
   ].join(" · ");
   const handleGuestsChange = (value: string) => {
     setGuests(value);
     setGuestRangeMin("");
     setGuestRangeMax("");
+    setMaxCapacityGreaterThan("");
+    setMaxCapacityLimit("");
   };
   const resetAdvancedFilters = () => {
     setEventCategoryFilters([]);
@@ -507,7 +531,7 @@ const SearchResults = () => {
                         type="number"
                         value={guests}
                         onChange={(event) => handleGuestsChange(event.target.value)}
-                        placeholder={guestRangeLabel || "Nombre"}
+                        placeholder={guestRangeLabel || maxCapacityLabel || "Nombre"}
                         className="min-w-0 flex-1 bg-transparent text-sm font-body outline-none placeholder:text-muted-foreground"
                       />
                     </div>
@@ -771,7 +795,7 @@ const SearchResults = () => {
                     type="number"
                     value={guests}
                     onChange={(event) => handleGuestsChange(event.target.value)}
-                    placeholder={guestRangeLabel || "Nombre d'invités"}
+                    placeholder={guestRangeLabel || maxCapacityLabel || "Nombre d'invités"}
                     className="min-w-0 flex-1 bg-transparent text-sm font-body font-semibold focus:outline-none"
                   />
                 </div>
