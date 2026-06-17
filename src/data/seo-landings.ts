@@ -16,11 +16,15 @@ export type SeoLandingFilters = {
   guestRangeMax?: number;
   maxCapacityGreaterThan?: number;
   maxCapacityLimit?: number;
+  priceTier?: string;
+  closingTimeFilter?: string;
   venueTypes?: string[];
   ambianceTypes?: string[];
   privatizationTypes?: string[];
   spaceTypes?: string[];
   optionFilters?: string[];
+  equipmentFilters?: string[];
+  guestDispositions?: string[];
 };
 
 export type SeoLandingPage = {

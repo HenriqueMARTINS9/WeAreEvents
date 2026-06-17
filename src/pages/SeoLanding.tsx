@@ -46,11 +46,15 @@ const SeoLanding = () => {
       guestRangeMax: page.filters.guestRangeMax,
       maxCapacityGreaterThan: page.filters.maxCapacityGreaterThan,
       maxCapacityLimit: page.filters.maxCapacityLimit,
+      priceTier: page.filters.priceTier,
+      closingTimeFilter: page.filters.closingTimeFilter,
       venueTypes: page.filters.venueTypes,
       ambianceTypes: page.filters.ambianceTypes,
       privatizationTypes: page.filters.privatizationTypes,
       spaceTypes: page.filters.spaceTypes,
       optionFilters: page.filters.optionFilters,
+      equipmentFilters: page.filters.equipmentFilters,
+      guestDispositions: page.filters.guestDispositions,
     });
   }, [page, venues]);
 
@@ -64,6 +68,10 @@ const SeoLanding = () => {
       guestRangeMax: page.filters.guestRangeMax,
       maxCapacityGreaterThan: page.filters.maxCapacityGreaterThan,
       maxCapacityLimit: page.filters.maxCapacityLimit,
+      priceTier: page.filters.priceTier,
+      closingTimeFilter: page.filters.closingTimeFilter,
+      equipmentFilters: page.filters.equipmentFilters,
+      guestDispositions: page.filters.guestDispositions,
     });
   }, [matchingVenues.length, page, venues]);
 

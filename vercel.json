@@ -34,11 +34,6 @@
       "source": "/rooftop-paris",
       "destination": "/restaurant-privatisable-paris",
       "permanent": true
-    },
-    {
-      "source": "/loft-evenement-paris",
-      "destination": "/discotheque-paris",
-      "permanent": true
     }
   ],
   "rewrites": [
