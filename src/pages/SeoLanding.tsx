@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, CheckCircle2, MapPin, Search, ShieldCheck, Sparkles } from "lucide-react";
@@ -71,6 +71,12 @@ const SeoLanding = () => {
     () => shuffleVenues(matchingVenues.length ? matchingVenues : fallbackVenues).slice(0, 12),
     [fallbackVenues, matchingVenues, page?.slug],
   );
+
+  useEffect(() => {
+    if (!page?.slug) return;
+
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [page?.slug]);
 
   if (!page) return <NotFound />;
   const relatedPages = getRelatedSeoLandingPages(page);
