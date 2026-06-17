@@ -196,6 +196,8 @@ const BlogDetail = () => {
                   <Link
                     key={relatedPost.slug}
                     to={`/blog/${relatedPost.slug}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="group overflow-hidden rounded-lg border border-border bg-card transition-transform hover:-translate-y-1"
                   >
                     <img src={relatedPost.image} alt="" className="h-52 w-full object-cover image-grade-luxe" />

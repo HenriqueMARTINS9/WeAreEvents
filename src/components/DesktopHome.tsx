@@ -458,6 +458,8 @@ const DesktopHome = () => {
               <Link
                 key={post.slug}
                 to={`/blog/${post.slug}`}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="group flex h-full flex-col overflow-hidden rounded-lg border border-primary-foreground/10 bg-primary-foreground text-foreground transition-transform hover:-translate-y-1"
               >
                 <img src={post.image} alt="" className="h-52 w-full object-cover image-grade-luxe" />
