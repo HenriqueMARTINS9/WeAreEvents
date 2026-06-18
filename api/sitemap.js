@@ -8,6 +8,7 @@ const staticUrls = [
   { path: "/", changefreq: "weekly", priority: "1.0" },
   { path: "/recherche", changefreq: "daily", priority: "0.9" },
   { path: "/blog", changefreq: "weekly", priority: "0.7" },
+  { path: "/inspirations", changefreq: "weekly", priority: "0.7" },
   { path: "/faq", changefreq: "monthly", priority: "0.5" },
   { path: "/reseaux-sociaux", changefreq: "monthly", priority: "0.4" },
   { path: "/mentions-legales", changefreq: "yearly", priority: "0.3" },

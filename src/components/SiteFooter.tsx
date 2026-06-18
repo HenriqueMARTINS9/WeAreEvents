@@ -45,6 +45,7 @@ const SiteFooter = ({ variant = "light" }: SiteFooterProps) => {
           <h4 className="font-body font-semibold text-sm mb-3">Navigation</h4>
           <div className={`space-y-2 text-sm font-body ${isDark ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
             <Link to="/" className={`transition-colors ${isDark ? "hover:text-primary-foreground" : "hover:text-foreground"}`}>Accueil</Link>
+            <Link to="/inspirations" className={`block transition-colors ${isDark ? "hover:text-primary-foreground" : "hover:text-foreground"}`}>Inspirations</Link>
             <Link to="/blog" className={`block transition-colors ${isDark ? "hover:text-primary-foreground" : "hover:text-foreground"}`}>Blog</Link>
             <Link to="/faq" className={`block transition-colors ${isDark ? "hover:text-primary-foreground" : "hover:text-foreground"}`}>FAQ</Link>
             <Link to="/reseaux-sociaux" className={`block transition-colors ${isDark ? "hover:text-primary-foreground" : "hover:text-foreground"}`}>Réseaux sociaux</Link>

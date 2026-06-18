@@ -71,6 +71,16 @@ const DesktopNav = () => {
               Trouver ma salle
             </Link>
             <Link
+              to="/inspirations"
+              className={`text-sm font-body font-medium transition-colors ${
+                useLightChrome
+                  ? "text-primary-foreground/75 hover:text-primary-foreground"
+                  : "text-foreground/70 hover:text-foreground"
+              }`}
+            >
+              Inspirations
+            </Link>
+            <Link
               to="/blog"
               className={`text-sm font-body font-medium transition-colors ${
                 useLightChrome

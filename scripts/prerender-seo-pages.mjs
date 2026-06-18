@@ -7,6 +7,10 @@ const rootDir = join(dirname(fileURLToPath(import.meta.url)), "..");
 const distDir = join(rootDir, "dist");
 const siteUrl = (process.env.VITE_SITE_URL || "https://www.wearevents.fr").replace(/\/$/, "");
 const defaultImage = `${siteUrl}/og-image.svg`;
+const seoIndexPath = "inspirations";
+const seoIndexTitle = "Inspirations lieux événementiels à Paris | Wearevents";
+const seoIndexDescription =
+  "Toutes les recherches utiles pour trouver une salle à Paris : événement, capacité, ambiance, budget, équipements, horaires et options.";
 
 const escapeHtml = (value) =>
   String(value)
@@ -79,6 +83,41 @@ const renderStaticContent = (page) => `
         </section>
       </main>`;
 
+const buildSeoIndexJsonLd = () => ({
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  name: "Inspirations lieux événementiels à Paris",
+  description: seoIndexDescription,
+  url: `${siteUrl}/${seoIndexPath}`,
+  mainEntity: {
+    "@type": "ItemList",
+    itemListElement: seoLandingPages.map((page, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: page.h1,
+      url: `${siteUrl}/${page.slug}`,
+    })),
+  },
+});
+
+const renderSeoIndexStaticContent = () => `
+      <main data-prerender-seo style="font-family:Inter,Arial,sans-serif;max-width:1120px;margin:0 auto;padding:72px 24px;color:#171717;">
+        <p style="margin:0 0 12px;color:#d94f6d;font-size:14px;font-weight:700;">Inspirations</p>
+        <h1 style="margin:0;font-family:Georgia,serif;font-size:clamp(40px,7vw,72px);line-height:.98;">Toutes les recherches pour trouver le bon lieu à Paris.</h1>
+        <p style="margin:24px 0 0;max-width:760px;font-size:18px;line-height:1.7;color:#525252;">${escapeHtml(seoIndexDescription)}</p>
+        <section style="margin-top:56px;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;">
+          ${seoLandingPages
+            .map(
+              (page) => `
+          <a href="/${escapeHtml(page.slug)}" style="display:block;border:1px solid #e5e5e5;border-radius:8px;padding:14px 16px;color:#171717;text-decoration:none;">
+            <strong style="display:block;font-size:15px;line-height:1.35;">${escapeHtml(page.h1)}</strong>
+            <span style="display:block;margin-top:8px;color:#737373;font-size:13px;line-height:1.5;">${escapeHtml(page.intentLabel)} à ${escapeHtml(page.locationLabel)}</span>
+          </a>`,
+            )
+            .join("")}
+        </section>
+      </main>`;
+
 const applySeoMetadata = (template, page) => {
   const canonical = `${siteUrl}/${page.slug}`;
   let html = template;
@@ -102,6 +141,29 @@ const applySeoMetadata = (template, page) => {
   return html;
 };
 
+const applySeoIndexMetadata = (template) => {
+  const canonical = `${siteUrl}/${seoIndexPath}`;
+  let html = template;
+
+  html = html.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(seoIndexTitle)}</title>`);
+  html = replaceOrInsertHeadTag(html, /<link\s+rel="canonical"\s+href="[^"]*"\s*\/?>/i, `<link rel="canonical" href="${escapeHtml(canonical)}" />`);
+  html = replaceOrInsertHeadTag(html, /<meta\s+name="description"\s+content="[^"]*"\s*\/?>/i, `<meta name="description" content="${escapeHtml(seoIndexDescription)}">`);
+  html = replaceOrInsertHeadTag(html, /<meta\s+property="og:url"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:url" content="${escapeHtml(canonical)}" />`);
+  html = replaceOrInsertHeadTag(html, /<meta\s+property="og:title"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:title" content="${escapeHtml(seoIndexTitle)}">`);
+  html = replaceOrInsertHeadTag(html, /<meta\s+property="og:description"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:description" content="${escapeHtml(seoIndexDescription)}">`);
+  html = replaceOrInsertHeadTag(html, /<meta\s+property="og:image"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:image" content="${escapeHtml(defaultImage)}" />`);
+  html = replaceOrInsertHeadTag(html, /<meta\s+name="twitter:title"\s+content="[^"]*"\s*\/?>/i, `<meta name="twitter:title" content="${escapeHtml(seoIndexTitle)}">`);
+  html = replaceOrInsertHeadTag(html, /<meta\s+name="twitter:description"\s+content="[^"]*"\s*\/?>/i, `<meta name="twitter:description" content="${escapeHtml(seoIndexDescription)}">`);
+  html = replaceOrInsertHeadTag(html, /<meta\s+name="twitter:image"\s+content="[^"]*"\s*\/?>/i, `<meta name="twitter:image" content="${escapeHtml(defaultImage)}" />`);
+  html = html.replace(
+    "</head>",
+    `    <script type="application/ld+json" id="wearevents-prerender-jsonld">${escapeJsonForHtml(buildSeoIndexJsonLd())}</script>\n  </head>`,
+  );
+  html = html.replace('<div id="root"></div>', `<div id="root">${renderSeoIndexStaticContent()}\n    </div>`);
+
+  return html;
+};
+
 const template = await readFile(join(distDir, "index.html"), "utf8");
 
 await Promise.all(
@@ -112,4 +174,8 @@ await Promise.all(
   }),
 );
 
-console.log(`Generated ${seoLandingPages.length} prerendered SEO pages.`);
+const seoIndexPagePath = join(distDir, seoIndexPath, "index.html");
+await mkdir(dirname(seoIndexPagePath), { recursive: true });
+await writeFile(seoIndexPagePath, applySeoIndexMetadata(template), "utf8");
+
+console.log(`Generated ${seoLandingPages.length} prerendered SEO pages and /${seoIndexPath}.`);

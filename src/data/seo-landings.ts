@@ -4,6 +4,7 @@ import {
   getEventSeoPath,
   getLocationSeoPath,
   SEO_CAPACITY_RANGES,
+  SEO_EVENT_TYPES,
   seoLandingPageSlugs,
   seoLandingPages,
 } from "./seo-landings-data";
@@ -61,6 +62,7 @@ export {
   getEventSeoPath,
   getLocationSeoPath,
   SEO_CAPACITY_RANGES,
+  SEO_EVENT_TYPES,
   getPrimaryVenueImage,
   getRelatedSeoLandingPages,
   getSeoLandingPage,

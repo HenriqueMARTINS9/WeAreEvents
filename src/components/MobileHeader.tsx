@@ -108,6 +108,7 @@ const MobileHeader = ({ onCodeSearch, withBackground = false }: MobileHeaderProp
             <nav className="flex flex-col gap-2 px-5 py-5 font-body">
               <MobileMenuLink to="/" label="Accueil" icon={<Home className="h-4 w-4" />} onClick={() => setMenuOpen(false)} />
               <MobileMenuLink to="/recherche" label="Trouver ma salle" icon={<Sparkles className="h-4 w-4" />} onClick={() => setMenuOpen(false)} />
+              <MobileMenuLink to="/inspirations" label="Inspirations" icon={<Search className="h-4 w-4" />} onClick={() => setMenuOpen(false)} />
               <MobileMenuLink to="/blog" label="Blog" icon={<FileText className="h-4 w-4" />} onClick={() => setMenuOpen(false)} />
               <button
                 type="button"

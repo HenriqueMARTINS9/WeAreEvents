@@ -13,6 +13,7 @@ const Blog = lazy(() => import("./pages/Blog.tsx"));
 const BlogDetail = lazy(() => import("./pages/BlogDetail.tsx"));
 const Faq = lazy(() => import("./pages/Faq.tsx"));
 const Socials = lazy(() => import("./pages/Socials.tsx"));
+const SeoIndex = lazy(() => import("./pages/SeoIndex.tsx"));
 const SeoLanding = lazy(() => import("./pages/SeoLanding.tsx"));
 const Admin = lazy(() => import("./pages/Admin.tsx"));
 const Legal = lazy(() => import("./pages/Legal.tsx"));
@@ -35,6 +36,7 @@ const App = () => (
               <Route path="/blog/:slug" element={<BlogDetail />} />
               <Route path="/faq" element={<Faq />} />
               <Route path="/reseaux-sociaux" element={<Socials />} />
+              <Route path="/inspirations" element={<SeoIndex />} />
               <Route path="/mentions-legales" element={<Legal kind="mentions" />} />
               <Route path="/cgu" element={<Legal kind="cgu" />} />
               <Route path="/politique-confidentialite" element={<Legal kind="privacy" />} />

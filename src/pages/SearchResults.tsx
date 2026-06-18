@@ -572,6 +572,7 @@ const SearchResults = () => {
                 <div className="absolute right-0 top-[calc(100%+0.75rem)] z-[1200] w-72 overflow-hidden rounded-2xl border border-border bg-background p-2 text-foreground shadow-2xl">
                   <SearchMenuLink to="/" label="Accueil" icon={<Home className="h-4 w-4" />} onClick={() => setDesktopMenuOpen(false)} />
                   <SearchMenuLink to="/recherche" label="Trouver ma salle" icon={<Sparkles className="h-4 w-4" />} onClick={() => setDesktopMenuOpen(false)} />
+                  <SearchMenuLink to="/inspirations" label="Inspirations" icon={<Search className="h-4 w-4" />} onClick={() => setDesktopMenuOpen(false)} />
                   <SearchMenuLink to="/blog" label="Blog" icon={<FileText className="h-4 w-4" />} onClick={() => setDesktopMenuOpen(false)} />
                   <button
                     type="button"
