@@ -6,6 +6,7 @@ import {
   type BookingFormValues,
   validateBookingForm,
 } from "@/lib/booking";
+import { filterVenues } from "@/lib/supabase-data";
 
 describe("venue code lookup", () => {
   it("maps primary TikTok codes to venue records", () => {
@@ -32,6 +33,13 @@ describe("venue code lookup", () => {
     const parisSuggestion = getVenueLocationSuggestions().find((item) => item.city === "Paris");
 
     expect(parisSuggestion?.postalCodes).toContain("75008");
+  });
+
+  it("matches student event searches to relevant event categories", () => {
+    const results = filterVenues(mockVenues, { eventType: "Événement étudiant" });
+
+    expect(results.length).toBeGreaterThan(0);
+    expect(results.some((venue) => venue.eventCategories.includes("Soirée privée") || venue.eventCategories.includes("Gala"))).toBe(true);
   });
 });
 

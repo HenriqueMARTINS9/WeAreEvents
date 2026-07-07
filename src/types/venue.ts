@@ -120,6 +120,7 @@ export const EVENT_TYPES = [
   "Baptême",
   "Bar mitzvah",
   "Remise de diplôme",
+  "Événement étudiant",
   "Team building",
   "Conférence",
   "Formation",

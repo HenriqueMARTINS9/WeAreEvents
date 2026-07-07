@@ -35,6 +35,16 @@ const normalizeKnownValues = (values: string[] = [], options: readonly string[])
   const joinedValues = values.join(", ");
   return options.filter((option) => values.includes(option) || joinedValues.includes(option));
 };
+const EVENT_TYPE_ALIASES: Record<string, string[]> = {
+  "Événement étudiant": ["Soirée privée", "Remise de diplôme", "Afterwork", "Gala"],
+};
+
+const expandEventTypes = (eventTypes: string[]) =>
+  Array.from(
+    new Set(
+      eventTypes.flatMap((eventType) => [eventType, ...(EVENT_TYPE_ALIASES[eventType] ?? [])]),
+    ),
+  );
 
 const mapVenue = (row: any): Venue => ({
   id: row.id,
@@ -130,7 +140,9 @@ export const filterVenues = (
         return false;
       }
     }
-    const selectedEventTypes = Array.from(new Set([filters.eventType, ...(filters.eventTypes ?? [])].filter(Boolean)));
+    const selectedEventTypes = expandEventTypes(
+      Array.from(new Set([filters.eventType, ...(filters.eventTypes ?? [])].filter(Boolean))),
+    );
 
     if (
       selectedEventTypes.length &&

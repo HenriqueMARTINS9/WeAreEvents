@@ -339,9 +339,18 @@ const DesktopHome = () => {
                 Trouvez votre lieu par envie, capacité ou quartier.
               </h2>
             </div>
-            <p className="max-w-2xl font-body leading-relaxed text-muted-foreground xl:justify-self-end">
-              Explorez des recherches déjà préparées ou choisissez directement le nombre d'invités prévu pour votre événement.
-            </p>
+            <div className="max-w-2xl xl:justify-self-end">
+              <p className="font-body leading-relaxed text-muted-foreground">
+                Explorez des recherches déjà préparées ou choisissez directement le nombre d'invités prévu pour votre événement.
+              </p>
+              <Link
+                to="/inspirations"
+                className="mt-5 inline-flex items-center gap-2 rounded-lg bg-foreground px-4 py-2.5 font-body text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary"
+              >
+                Voir toutes les inspirations
+                <ChevronRight className="h-4 w-4" />
+              </Link>
+            </div>
           </div>
 
           <div className="mt-12">
@@ -454,7 +463,7 @@ const DesktopHome = () => {
           </div>
 
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-            {posts.map((post) => (
+            {posts.slice(0, 3).map((post) => (
               <Link
                 key={post.slug}
                 to={`/blog/${post.slug}`}

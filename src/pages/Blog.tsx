@@ -1,7 +1,7 @@
 import { ArrowRight, Clock3 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import DesktopNav from "@/components/DesktopNav";
 import MobileHeader from "@/components/MobileHeader";
 import SiteFooter from "@/components/SiteFooter";
@@ -10,11 +10,23 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { fetchBlogPosts } from "@/lib/supabase-data";
 import Seo, { siteUrl } from "@/components/Seo";
 
+const shufflePosts = <T,>(items: T[]) => {
+  const shuffled = [...items];
+
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const randomIndex = Math.floor(Math.random() * (index + 1));
+    [shuffled[index], shuffled[randomIndex]] = [shuffled[randomIndex], shuffled[index]];
+  }
+
+  return shuffled;
+};
+
 const Blog = () => {
   const isMobile = useIsMobile();
   const [showCodeSearch, setShowCodeSearch] = useState(false);
   const { data: posts = [] } = useQuery({ queryKey: ["blog-posts"], queryFn: fetchBlogPosts });
-  const heroPost = posts[0];
+  const shuffledPosts = useMemo(() => shufflePosts(posts), [posts]);
+  const heroPost = shuffledPosts[0];
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -92,7 +104,7 @@ const Blog = () => {
 
         <section className="px-6 pb-24">
           <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 md:grid-cols-3 xl:px-2">
-            {posts.slice(1).map((post) => (
+            {shuffledPosts.slice(1).map((post) => (
               <Link
                 key={post.slug}
                 to={`/blog/${post.slug}`}

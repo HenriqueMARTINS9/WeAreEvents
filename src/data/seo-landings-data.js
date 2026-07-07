@@ -12,6 +12,7 @@ export const SEO_EVENT_TYPES = [
   "Baptême",
   "Bar mitzvah",
   "Remise de diplôme",
+  "Événement étudiant",
   "Team building",
   "Conférence",
   "Formation",
