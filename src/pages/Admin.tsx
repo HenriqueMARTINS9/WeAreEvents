@@ -544,6 +544,9 @@ const createEmptyBlogForm = () => ({
   content: "",
   readTime: "",
   image: "",
+  secondaryKeywords: "",
+  seoTitle: "",
+  metaDescription: "",
   published: true,
 });
 
@@ -896,6 +899,9 @@ const Admin = () => {
         content: sanitizeBlogHtml(blogForm.content),
         read_time: blogForm.readTime,
         image: blogForm.image,
+        secondary_keywords: toList(blogForm.secondaryKeywords),
+        seo_title: blogForm.seoTitle.trim(),
+        meta_description: blogForm.metaDescription.trim(),
         published: blogForm.published,
         published_at: blogForm.published ? new Date().toISOString() : null,
       };
@@ -984,6 +990,9 @@ const Admin = () => {
       content: prepareBlogContentForEditor(post.content ?? ""),
       readTime: post.read_time ?? "",
       image: post.image ?? "",
+      secondaryKeywords: (post.secondary_keywords ?? []).join("\n"),
+      seoTitle: post.seo_title ?? "",
+      metaDescription: post.meta_description ?? "",
       published: Boolean(post.published),
     });
     setModal("blog");
@@ -1404,6 +1413,36 @@ const BlogForm = ({ form, setForm, saving, editing, onSubmit, onFilesSelected, u
       uploading={uploadingImages}
     />
     <AdminTextarea label="Résumé" value={form.excerpt} onChange={(value) => setForm({ ...form, excerpt: value })} />
+    <div className="grid gap-4 xl:col-span-2 xl:grid-cols-2">
+      <div className="xl:col-span-2">
+        <p className="font-body text-sm font-semibold">SEO de l'article</p>
+        <p className="mt-1 font-body text-xs text-muted-foreground">
+          Ces champs pilotent le title Google, la meta description et les mots clés secondaires.
+        </p>
+      </div>
+      <AdminInput
+        label="Title SEO"
+        value={form.seoTitle}
+        onChange={(value) => setForm({ ...form, seoTitle: value })}
+        placeholder={form.title || "Ex : Réserver une salle pour un anniversaire à Paris"}
+      />
+      <AdminTextarea
+        label="Meta description"
+        value={form.metaDescription}
+        onChange={(value) => setForm({ ...form, metaDescription: value })}
+        hint="Idéalement 140 à 160 caractères."
+        rows={4}
+      />
+      <div className="xl:col-span-2">
+        <AdminTextarea
+          label="Mots clés secondaires"
+          value={form.secondaryKeywords}
+          onChange={(value) => setForm({ ...form, secondaryKeywords: value })}
+          hint="Un mot clé par ligne, ou séparés par des virgules."
+          rows={4}
+        />
+      </div>
+    </div>
     <div className="xl:col-span-2">
       <BlogRichTextEditor
         value={form.content}

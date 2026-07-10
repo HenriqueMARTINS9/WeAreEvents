@@ -99,6 +99,9 @@ const mapBlogPost = (row: any): BlogPost => ({
   content: row.content ?? "",
   readTime: row.read_time ?? "",
   image: row.image ?? "",
+  secondaryKeywords: Array.isArray(row.secondary_keywords) ? row.secondary_keywords : [],
+  seoTitle: row.seo_title ?? "",
+  metaDescription: row.meta_description ?? "",
   publishedAt: row.published_at ?? undefined,
 });
 

@@ -6,6 +6,9 @@ export type BlogPost = {
   content: string;
   readTime: string;
   image: string;
+  secondaryKeywords?: string[];
+  seoTitle?: string;
+  metaDescription?: string;
   publishedAt?: string;
 };
 

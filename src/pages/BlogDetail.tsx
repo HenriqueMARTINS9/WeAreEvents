@@ -68,20 +68,25 @@ const BlogDetail = () => {
   }
 
   const articleContent = post.content?.trim() || post.excerpt;
+  const seoTitle = post.seoTitle?.trim() || `${post.title} - Blog Wearevents`;
+  const seoDescription = post.metaDescription?.trim() || post.excerpt;
+  const secondaryKeywords = post.secondaryKeywords ?? [];
 
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Seo
-        title={`${post.title} - Blog Wearevents`}
-        description={post.excerpt}
+        title={seoTitle}
+        description={seoDescription}
         path={`/blog/${post.slug}`}
         image={post.image || undefined}
         type="article"
+        keywords={secondaryKeywords}
         jsonLd={{
           "@context": "https://schema.org",
           "@type": "BlogPosting",
           headline: post.title,
-          description: post.excerpt,
+          description: seoDescription,
+          keywords: secondaryKeywords.length ? secondaryKeywords.join(", ") : undefined,
           image: post.image,
           url: `${siteUrl}/blog/${post.slug}`,
           author: {

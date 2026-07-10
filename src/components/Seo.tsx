@@ -14,6 +14,7 @@ type SeoProps = {
   image?: string;
   type?: "website" | "article";
   noindex?: boolean;
+  keywords?: string | string[];
   jsonLd?: Record<string, unknown> | Array<Record<string, unknown>>;
 };
 
@@ -53,15 +54,22 @@ const Seo = ({
   type = "website",
   noindex = false,
   jsonLd,
+  keywords,
 }: SeoProps) => {
   const location = useLocation();
   const canonical = absoluteUrl(path || `${location.pathname}${location.search}`);
   const imageUrl = absoluteUrl(image);
+  const keywordsContent = Array.isArray(keywords) ? keywords.filter(Boolean).join(", ") : keywords?.trim() ?? "";
 
   useEffect(() => {
     document.title = title;
 
     upsertMeta('meta[name="description"]', { name: "description", content: description });
+    if (keywordsContent) {
+      upsertMeta('meta[name="keywords"]', { name: "keywords", content: keywordsContent });
+    } else {
+      document.head.querySelector('meta[name="keywords"]')?.remove();
+    }
     upsertMeta('meta[name="robots"]', { name: "robots", content: noindex ? "noindex, nofollow" : "index, follow" });
     upsertMeta('meta[property="og:type"]', { property: "og:type", content: type });
     upsertMeta('meta[property="og:title"]', { property: "og:title", content: title });
@@ -85,7 +93,7 @@ const Seo = ({
       script.textContent = JSON.stringify(jsonLd);
       document.head.appendChild(script);
     }
-  }, [canonical, description, imageUrl, jsonLd, noindex, title, type]);
+  }, [canonical, description, imageUrl, jsonLd, keywordsContent, noindex, title, type]);
 
   return null;
 };

@@ -49,6 +49,9 @@ export type BlogPostInsert = {
   content: string;
   read_time: string;
   image: string;
+  secondary_keywords: string[];
+  seo_title: string;
+  meta_description: string;
   published: boolean;
   published_at?: string | null;
 };

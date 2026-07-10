@@ -74,11 +74,18 @@ create table if not exists public.blog_posts (
   content text not null default '',
   read_time text not null default '',
   image text not null default '',
+  secondary_keywords text[] not null default '{}',
+  seo_title text not null default '',
+  meta_description text not null default '',
   published boolean not null default true,
   published_at timestamptz default now(),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.blog_posts add column if not exists secondary_keywords text[] not null default '{}';
+alter table public.blog_posts add column if not exists seo_title text not null default '';
+alter table public.blog_posts add column if not exists meta_description text not null default '';
 
 create or replace function public.set_updated_at()
 returns trigger
