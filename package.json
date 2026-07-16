@@ -9,6 +9,7 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
+    "export:seo": "node scripts/export-seo-searches.mjs",
     "test": "vitest run",
     "test:watch": "vitest"
   },

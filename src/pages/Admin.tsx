@@ -18,6 +18,7 @@ import {
   Quote,
   Redo2,
   Save,
+  Sparkles,
   Trash2,
   Undo2,
   Upload,
@@ -510,6 +511,15 @@ const createEmptyVenueForm = () => ({
 type VenueFormState = ReturnType<typeof createEmptyVenueForm>;
 const venueDraftStorageKey = "wearevents-admin-venue-draft";
 
+const getNextVenueCodeFromVenues = (venues: any[]) => {
+  const maxCode = venues.reduce((max, venue) => {
+    const numericCode = Number(String(venue.venue_code ?? "").replace(/\D/g, ""));
+    return Number.isFinite(numericCode) ? Math.max(max, numericCode) : max;
+  }, 1000);
+
+  return String(maxCode + 1).padStart(4, "0").slice(-4);
+};
+
 const readVenueDraft = (): VenueFormState | null => {
   if (typeof window === "undefined") return null;
 
@@ -559,6 +569,8 @@ const Admin = () => {
   const [modal, setModal] = useState<"venue" | "blog" | null>(null);
   const [saving, setSaving] = useState(false);
   const [uploadingImages, setUploadingImages] = useState(false);
+  const [importingVenue, setImportingVenue] = useState(false);
+  const [venueImportUrl, setVenueImportUrl] = useState("");
   const [message, setMessage] = useState("");
   const [adminVenues, setAdminVenues] = useState<any[]>([]);
   const [adminBlogPosts, setAdminBlogPosts] = useState<any[]>([]);
@@ -780,7 +792,8 @@ const Admin = () => {
 
   const openCreateVenue = () => {
     const draft = readVenueDraft();
-    setVenueForm(draft ?? createEmptyVenueForm());
+    setVenueForm(draft ?? { ...createEmptyVenueForm(), venueCode: getNextVenueCodeFromVenues(adminVenues) });
+    setVenueImportUrl("");
     setEditingVenueId(null);
     setMessage(draft ? "Dernier brouillon de salle récupéré." : "");
     setModal("venue");
@@ -881,6 +894,103 @@ const Admin = () => {
       setMessage(formatAdminError(error));
     } finally {
       setSaving(false);
+    }
+  };
+
+  const applyImportedVenue = (importedVenue: any) => {
+    const importedSpaces = Array.isArray(importedVenue.spaces) && importedVenue.spaces.length
+      ? importedVenue.spaces
+      : [{ name: "Salle principale", capacity: importedVenue.maxCapacity || "", squareMeters: "", description: "" }];
+    const toLines = (value: unknown) => Array.isArray(value) ? value.filter(Boolean).join("\n") : "";
+
+    setVenueForm((current) => ({
+      ...current,
+      title: importedVenue.title ?? current.title,
+      slug: importedVenue.slug || slugify(importedVenue.title || current.title),
+      tagline: importedVenue.tagline ?? current.tagline,
+      description: importedVenue.description ?? current.description,
+      city: importedVenue.city ?? current.city,
+      address: importedVenue.address ?? current.address,
+      lat: importedVenue.lat ?? current.lat,
+      lng: importedVenue.lng ?? current.lng,
+      venueCode: importedVenue.venueCode || current.venueCode || getNextVenueCodeFromVenues(adminVenues),
+      minCapacity: importedVenue.minCapacity ?? current.minCapacity,
+      maxCapacity: importedVenue.maxCapacity ?? current.maxCapacity,
+      eventCategories: toLines(importedVenue.eventCategories),
+      venueTypes: toLines(importedVenue.venueTypes),
+      services: toLines(importedVenue.services),
+      spaces: serializeReservationOptions(
+        importedSpaces.map((space: any) => ({
+          name: String(space.name ?? ""),
+          capacity: String(space.capacity ?? ""),
+          squareMeters: String(space.squareMeters ?? ""),
+          description: String(space.description ?? ""),
+          imageUrl: String(space.imageUrl ?? ""),
+        })),
+      ),
+      usefulInformation: toLines(importedVenue.usefulInformation),
+      pricingText: importedVenue.pricingText ?? current.pricingText,
+      coverImage: importedVenue.coverImage || current.coverImage,
+      gallery: toLines(importedVenue.gallery) || current.gallery,
+      priceTier: importedVenue.priceTier || current.priceTier,
+      closingTime: importedVenue.closingTime ?? current.closingTime,
+      ambianceTypes: toLines(importedVenue.ambianceTypes),
+      externalOptions: toLines(importedVenue.externalOptions),
+      privatizationTypes: toLines(importedVenue.privatizationTypes),
+      guestDispositions: toLines(importedVenue.guestDispositions),
+      spaceTypes: toLines(importedVenue.spaceTypes),
+      optionFeatures: toLines(importedVenue.optionFeatures),
+      metroAccess: importedVenue.metroAccess ?? current.metroAccess,
+      contactEmail: importedVenue.contactEmail ?? current.contactEmail,
+      rating: importedVenue.rating || current.rating,
+      reviewCount: importedVenue.reviewCount || current.reviewCount,
+      googleReviewUrl: importedVenue.googleReviewUrl ?? current.googleReviewUrl,
+    }));
+  };
+
+  const handleVenueAiImport = async () => {
+    if (!session?.access_token) {
+      setMessage("Connecte-toi avant de lancer l'import IA.");
+      return;
+    }
+
+    if (!venueImportUrl.trim()) {
+      setMessage("Renseigne un lien de fiche salle à importer.");
+      return;
+    }
+
+    setImportingVenue(true);
+    setMessage("");
+
+    try {
+      const response = await fetch("/api/import-venue-ai", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ url: venueImportUrl.trim() }),
+      });
+      const payload = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(payload.error || "Import IA impossible.");
+      }
+
+      applyImportedVenue(payload.venue);
+      const warningCount = Array.isArray(payload.warnings) ? payload.warnings.length : 0;
+      const imageCount = [payload.venue?.coverImage, ...(payload.venue?.gallery ?? [])].filter(Boolean).length;
+      setMessage(
+        [
+          `Import IA terminé. Code lieu proposé : ${payload.venue?.venueCode || "à vérifier"}.`,
+          imageCount ? `${imageCount} image${imageCount > 1 ? "s" : ""} importée${imageCount > 1 ? "s" : ""}.` : "Aucune image importée automatiquement.",
+          warningCount ? `${warningCount} point${warningCount > 1 ? "s" : ""} à vérifier.` : "",
+        ].filter(Boolean).join(" "),
+      );
+    } catch (error) {
+      setMessage(formatAdminError(error));
+    } finally {
+      setImportingVenue(false);
     }
   };
 
@@ -1087,6 +1197,10 @@ const Admin = () => {
             onVideoSelected={handleVenueVideoUpload}
             onOptionImageSelected={handleVenueOptionImageUpload}
             uploadingImages={uploadingImages}
+            importUrl={venueImportUrl}
+            onImportUrlChange={setVenueImportUrl}
+            onImportVenue={handleVenueAiImport}
+            importingVenue={importingVenue}
           />
         </AdminModal>
       )}
@@ -1317,8 +1431,18 @@ const VenueForm = ({
   onVideoSelected,
   onOptionImageSelected,
   uploadingImages,
+  importUrl,
+  onImportUrlChange,
+  onImportVenue,
+  importingVenue,
 }: any) => (
   <form onSubmit={onSubmit} className="grid grid-cols-1 gap-5 xl:grid-cols-2">
+    <VenueAiImportPanel
+      value={importUrl}
+      onChange={onImportUrlChange}
+      onImport={onImportVenue}
+      importing={importingVenue}
+    />
     <AdminInput label="Nom de la salle" value={form.title} onChange={(value) => setForm({ ...form, title: value, slug: form.slug || slugify(value) })} required />
     <AdminInput label="Slug" value={form.slug} onChange={(value) => setForm({ ...form, slug: value })} required />
     <AdminInput label="Code lieu (4 chiffres)" value={form.venueCode} onChange={(value) => setForm({ ...form, venueCode: value.replace(/\D/g, "").slice(0, 4) })} required />
@@ -1394,6 +1518,51 @@ const VenueForm = ({
     </div>
     <SubmitBar saving={saving} label={editing ? "Mettre à jour la salle" : "Enregistrer la salle"} />
   </form>
+);
+
+const VenueAiImportPanel = ({
+  value,
+  onChange,
+  onImport,
+  importing,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  onImport: () => void;
+  importing: boolean;
+}) => (
+  <section className="rounded-lg border border-primary/25 bg-primary/5 p-4 xl:col-span-2">
+    <div className="flex flex-col gap-4 xl:flex-row xl:items-end">
+      <div className="min-w-0 flex-1">
+        <div className="mb-2 flex items-center gap-2">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+            <Sparkles className="h-4 w-4" />
+          </span>
+          <div>
+            <h3 className="font-body text-sm font-semibold">Préremplir avec l'IA</h3>
+            <p className="mt-0.5 font-body text-xs leading-relaxed text-muted-foreground">
+              Collez une fiche salle publique. L'import lit la page, propose le prochain code lieu et importe les premières images trouvées.
+            </p>
+          </div>
+        </div>
+        <input
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          placeholder="https://www.privateaser.com/lieu/..."
+          className="h-11 w-full rounded-lg border border-border bg-background px-3 text-sm font-body outline-none focus:border-primary"
+        />
+      </div>
+      <button
+        type="button"
+        disabled={importing || !value.trim()}
+        onClick={onImport}
+        className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-lg bg-foreground px-5 text-sm font-body font-semibold text-background transition-colors hover:bg-primary disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        {importing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+        {importing ? "Analyse en cours..." : "Importer avec l'IA"}
+      </button>
+    </div>
+  </section>
 );
 
 const BlogForm = ({ form, setForm, saving, editing, onSubmit, onFilesSelected, uploadingImages }: any) => (
