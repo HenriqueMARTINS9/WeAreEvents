@@ -306,6 +306,167 @@ const extractText = (html) =>
       .trim(),
   ).slice(0, maxTextChars);
 
+const normalizeTextForMatching = (value = "") =>
+  String(value)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+
+const getNumbersFromText = (value = "") => {
+  const normalizedValue = String(value)
+    .replace(/(\d)\s+(?=\d{3}\b)/g, "$1")
+    .replace(/,/g, ".");
+  return (normalizedValue.match(/\d+(?:\.\d+)?/g) ?? [])
+    .map(Number)
+    .filter((number) => Number.isFinite(number));
+};
+
+const getMinNumberText = (value = "") => {
+  const numbers = getNumbersFromText(value);
+  return numbers.length ? String(Math.round(Math.min(...numbers))) : "";
+};
+
+const getMaxNumberText = (value = "") => {
+  const numbers = getNumbersFromText(value);
+  return numbers.length ? String(Math.round(Math.max(...numbers))) : "";
+};
+
+const externalOptionEvidence = {
+  "Possibilité de ramener sa nourriture": [
+    /\btraiteur externe\b/,
+    /\bnourriture externe\b/,
+    /\bapporter (sa|votre|de la) nourriture\b/,
+    /\bramener (sa|votre|de la) nourriture\b/,
+    /\brestauration externe\b/,
+    /\bcaterer externe\b/,
+  ],
+  "Possibilité de ramener ses boissons": [
+    /\bboissons? externes?\b/,
+    /\bapporter (ses|vos|des) boissons?\b/,
+    /\bramener (ses|vos|des) boissons?\b/,
+    /\bvos propres boissons?\b/,
+    /\bdroit de bouchon\b/,
+  ],
+  "Possibilité de ramener son gâteau": [
+    /\bgateau externe\b/,
+    /\bapporter (son|votre|un) gateau\b/,
+    /\bramener (son|votre|un) gateau\b/,
+    /\bpiece montee externe\b/,
+  ],
+};
+
+const categoryEvidence = {
+  eventCategories: {
+    Mariage: [/\bmariage(s)?\b/],
+    Anniversaire: [/\banniversaire(s)?\b/, /\banniv\b/],
+    Corporate: [/\bcorporate\b/, /\bentreprise\b/, /\bprofessionnel(s|le|les)?\b/],
+    "Soirée privée": [/\bsoiree privee\b/, /\bevenement prive\b/],
+    Gala: [/\bgala(s)?\b/],
+    Séminaire: [/\bseminaire(s)?\b/],
+    Cocktail: [/\bcocktail(s)?\b/],
+    Lancement: [/\blancement(s)?\b/, /\blancement de produit\b/],
+    Afterwork: [/\bafterwork(s)?\b/],
+    "EVJF / EVG": [/\bevjf\b/, /\bevg\b/, /\benterrement de vie\b/],
+    Baptême: [/\bbapteme(s)?\b/],
+    "Bar mitzvah": [/\bbar mitzvah\b/, /\bbat mitzvah\b/],
+    "Remise de diplôme": [/\bremise de diplome\b/, /\bdiplome(s)?\b/],
+    "Événement étudiant": [/\betudiant(s|e|es)?\b/, /\becole(s)?\b/, /\buniversite\b/, /\bcampus\b/],
+    "Team building": [/\bteam building\b/, /\bteambuilding\b/],
+    Conférence: [/\bconference(s)?\b/],
+    Formation: [/\bformation(s)?\b/],
+    "Dîner d'affaires": [/\bdiner d'affaires\b/, /\brepas d'affaires\b/],
+    "Shooting / tournage": [/\bshooting(s)?\b/, /\btournage(s)?\b/, /\bprise de vue(s)?\b/],
+  },
+  venueTypes: {
+    Péniche: [/\bpeniche(s)?\b/, /\bbateau(x)?\b/],
+    Rooftop: [/\brooftop(s)?\b/, /\btoit terrasse\b/],
+    Discothèque: [/\bdiscotheque(s)?\b/, /\bclub(s)?\b/, /\bnight[- ]?club\b/],
+    Bar: [/\bbar(s)?\b/],
+    "Salle de réception": [/\bsalle de reception\b/, /\bsalle evenementielle\b/],
+    "Espace extérieur": [/\bespace exterieur\b/, /\bexterieur(s)?\b/, /\bterrasse(s)?\b/, /\bjardin(s)?\b/, /\bpatio(s)?\b/],
+    Appartement: [/\bappartement(s)?\b/],
+    Loft: [/\bloft(s)?\b/],
+    Villa: [/\bvilla(s)?\b/],
+    Restaurant: [/\brestaurant(s)?\b/],
+    Château: [/\bchateau(x)?\b/],
+    Domaine: [/\bdomaine(s)?\b/],
+    Hôtel: [/\bhotel(s)?\b/],
+    Jardin: [/\bjardin(s)?\b/],
+    Showroom: [/\bshowroom(s)?\b/],
+  },
+  services: {
+    TV: [/\btv\b/, /\btelevision(s)?\b/, /\becran(s)?\b/],
+    Climatisation: [/\bclimatisation\b/, /\bclimatise(e|es|s)?\b/, /\bclim\b/],
+    "Accès PMR": [/\bpmr\b/, /\bpersonnes a mobilite reduite\b/, /\bacces handicape\b/],
+    Micro: [/\bmicro(s)?\b/, /\bmicrophone(s)?\b/],
+    "Wi-Fi": [/\bwi[- ]?fi\b/, /\bwifi\b/],
+    Terrasse: [/\bterrasse(s)?\b/],
+    Projecteur: [/\bprojecteur(s)?\b/, /\bvideo[- ]?projecteur(s)?\b/, /\bprojection\b/],
+    "Système son": [/\bsysteme son\b/, /\bsonorisation\b/, /\bsound system\b/],
+    Mobilier: [/\bmobilier\b/, /\btable(s)?\b/, /\bchaise(s)?\b/],
+    "Table de mixage": [/\btable de mixage\b/, /\bmixage\b/],
+    Parking: [/\bparking(s)?\b/, /\bstationnement\b/],
+    Vestiaire: [/\bvestiaire(s)?\b/],
+    "Cuisine équipée": [/\bcuisine equipee\b/, /\bcuisine\b/],
+    "Bar équipé": [/\bbar equipe\b/, /\bcomptoir\b/, /\bbar a\b/],
+    Lumières: [/\blumiere(s)?\b/, /\beclairage(s)?\b/, /\blight(s)?\b/],
+    Scène: [/\bscene(s)?\b/],
+    "Personnel sur place": [/\bpersonnel sur place\b/, /\bequipe sur place\b/, /\bstaff\b/],
+    Sécurité: [/\bsecurite\b/, /\bagent(s)? de securite\b/, /\bvigile(s)?\b/],
+    Hébergement: [/\bhebergement\b/, /\bchambre(s)?\b/, /\bnuit(s)? sur place\b/],
+  },
+  ambianceTypes: {
+    Calme: [/\bcalme\b/, /\bpose(e|es|s)?\b/],
+    Animé: [/\banime(e|es|s)?\b/, /\bvivant(e|es|s)?\b/],
+    Festif: [/\bfestif(s|ve|ves)?\b/, /\bfete\b/, /\bfaire la fete\b/],
+    Élégant: [/\belegant(e|es|s)?\b/, /\braffine(e|es|s)?\b/],
+    Corporate: [/\bcorporate\b/, /\bprofessionnel(s|le|les)?\b/],
+    Intimiste: [/\bintimiste\b/, /\bconfidentiel(le|les)?\b/],
+    Atypique: [/\batypique(s)?\b/, /\binsolite(s)?\b/],
+    Chic: [/\bchic\b/],
+    Convivial: [/\bconvivial(e|es|s)?\b/],
+    Lounge: [/\blounge\b/],
+    Premium: [/\bpremium\b/, /\bhaut de gamme\b/],
+    Décontracté: [/\bdecontracte(e|es|s)?\b/],
+    Bohème: [/\bboheme\b/],
+    Moderne: [/\bmoderne(s)?\b/, /\bcontemporain(e|es|s)?\b/],
+    Industriel: [/\bindustriel(le|les)?\b/],
+    Romantique: [/\bromantique(s)?\b/],
+    Rooftop: [/\brooftop(s)?\b/],
+    Club: [/\bclub(s)?\b/, /\bambiance club\b/],
+  },
+  externalOptions: externalOptionEvidence,
+  privatizationTypes: {
+    "Forfait consommation (budget par personne)": [/\bforfait consommation\b/, /\bminimum de consommation\b/, /\bminimum consommation\b/, /\bconsommation minimum\b/],
+    "Location sèche (budget location)": [/\blocation seche\b/, /\bprix de location\b/, /\bfrais de location\b/, /\blocation de salle\b/],
+  },
+  guestDispositions: {
+    Debout: [/\bdebout\b/, /\bcocktail\b/, /\bstanding\b/],
+    Assis: [/\bassis\b/, /\bdiner assis\b/, /\brepas assis\b/, /\bbanquet\b/],
+  },
+  spaceTypes: {
+    "Espace clos": [/\bespace clos\b/, /\bespace prive\b/, /\bsalon prive\b/, /\bsalle privee\b/],
+    "Espace ouvert": [/\bespace ouvert\b/, /\bterrasse\b/, /\bjardin\b/, /\bpatio\b/, /\bexterieur\b/],
+  },
+  optionFeatures: {
+    "Possibilité de mettre sa musique": [/\bmettre sa musique\b/, /\bvotre musique\b/, /\bplaylist\b/, /\bdj\b/],
+    "Possibilité de danser": [/\bdanser\b/, /\bpiste de danse\b/, /\bsoiree dansante\b/],
+    "Décoration personnalisable": [/\bdecoration personnalisable\b/, /\bdecoration autorisee\b/, /\bpersonnaliser la decoration\b/],
+    "Jeux (baby-foot / ping-pong / etc.)": [/\bbaby[- ]?foot\b/, /\bping[- ]?pong\b/, /\bjeux\b/, /\bborne d'arcade\b/],
+    "Heures supplémentaires possibles": [/\bheures supplementaires\b/, /\bprolongation\b/, /\bprolonger\b/],
+  },
+};
+
+const filterValuesWithEvidence = (selectedOptions = [], sourceText = "", evidence = {}) => {
+  const normalizedSource = normalizeTextForMatching(sourceText);
+
+  return selectedOptions.filter((option) => {
+    const patterns = evidence[option];
+    if (!patterns) return false;
+    return patterns.some((pattern) => pattern.test(normalizedSource));
+  });
+};
+
 const getNextVenueCode = async (supabase) => {
   const { data, error } = await supabase.from("venues").select("venue_code");
   if (error) throw error;
@@ -405,12 +566,13 @@ const createSchema = () => ({
       items: {
         type: "object",
         additionalProperties: false,
-        required: ["name", "capacity", "squareMeters", "description"],
+        required: ["name", "capacity", "squareMeters", "description", "imageUrl"],
         properties: {
           name: { type: "string" },
           capacity: { type: "string" },
           squareMeters: { type: "string" },
           description: { type: "string" },
+          imageUrl: { type: "string" },
         },
       },
     },
@@ -467,7 +629,9 @@ const callOpenAi = async ({ sourceUrl, finalUrl, metas, jsonLd, pageText, imageC
               "minCapacity/maxCapacity: nombres en texte si trouvés.",
               "priceTier: estime € à €€€€ seulement si des prix sont visibles, sinon €€.",
               "closingTime: 00:00 pour jusqu'à minuit, 02:00 pour jusqu'à 2h, 03:00 pour après 2h, sinon chaîne vide.",
-              "spaces: crée au moins une option de réservation si une capacité est connue, sinon Salle principale avec champs vides.",
+              "Pour tous les champs de catégories en tableau, sélectionne uniquement les valeurs explicitement indiquées ou clairement justifiées par la page source. En cas de doute, laisse la catégorie vide.",
+              "externalOptions: coche une option uniquement si la page indique explicitement que nourriture, boissons ou gâteau externes sont autorisés. En cas de doute, retourne un tableau vide.",
+              "spaces: crée au moins une option de réservation si une capacité est connue, sinon Salle principale avec champs vides. Pour capacity, retourne uniquement la capacité maximum : si la source indique 10-20, retourne 20. Pour imageUrl, utilise uniquement une URL exacte présente dans imageCandidates si elle correspond clairement à l'option, sinon chaîne vide.",
               "usefulInformation: points courts et vérifiables uniquement.",
             ],
           }),
@@ -572,7 +736,33 @@ const uploadRemoteImages = async ({ supabase, imageUrls, venueSlug, referer }) =
   return { uploaded, warnings };
 };
 
-const normalizeImportedVenue = (venue, venueCode, sourceUrl) => {
+const normalizeUrlForMatch = (value = "") => {
+  try {
+    const url = new URL(value);
+    url.hash = "";
+    return url.toString();
+  } catch {
+    return String(value || "").trim();
+  }
+};
+
+const applyUploadedSpaceImages = (spaces = [], uploadedImages = []) => {
+  const uploadedBySource = new Map(
+    uploadedImages.map((image) => [normalizeUrlForMatch(image.sourceUrl), image.publicUrl]),
+  );
+
+  return spaces.map((space) => {
+    const sourceImageUrl = normalizeUrlForMatch(space.imageUrl);
+    const publicImageUrl = uploadedBySource.get(sourceImageUrl);
+
+    return {
+      ...space,
+      imageUrl: publicImageUrl || "",
+    };
+  });
+};
+
+const normalizeImportedVenue = (venue, venueCode, sourceUrl, sourceText = "") => {
   const title = String(venue.title || "").trim();
   const slug = slugify(title);
 
@@ -586,8 +776,8 @@ const normalizeImportedVenue = (venue, venueCode, sourceUrl) => {
     address: String(venue.address || "").trim(),
     lat: String(venue.lat || "").trim(),
     lng: String(venue.lng || "").trim(),
-    minCapacity: String(venue.minCapacity || "").replace(/[^\d]/g, ""),
-    maxCapacity: String(venue.maxCapacity || "").replace(/[^\d]/g, ""),
+    minCapacity: getMinNumberText(venue.minCapacity),
+    maxCapacity: getMaxNumberText(venue.maxCapacity),
     pricingText: String(venue.pricingText || "").trim(),
     priceTier: priceTiers.includes(venue.priceTier) ? venue.priceTier : "€€",
     closingTime: closingTimes.includes(venue.closingTime) ? venue.closingTime : "",
@@ -596,15 +786,51 @@ const normalizeImportedVenue = (venue, venueCode, sourceUrl) => {
     rating: String(venue.rating || "0").replace(",", "."),
     reviewCount: String(venue.reviewCount || "0").replace(/[^\d]/g, ""),
     googleReviewUrl: String(venue.googleReviewUrl || "").trim(),
-    eventCategories: (venue.eventCategories || []).filter((item) => eventTypes.includes(item)),
-    venueTypes: (venue.venueTypes || []).filter((item) => venueTypes.includes(item)),
-    services: (venue.services || []).filter((item) => services.includes(item)),
-    ambianceTypes: (venue.ambianceTypes || []).filter((item) => ambianceTypes.includes(item)),
-    externalOptions: (venue.externalOptions || []).filter((item) => externalOptions.includes(item)),
-    privatizationTypes: (venue.privatizationTypes || []).filter((item) => privatizationTypes.includes(item)),
-    guestDispositions: (venue.guestDispositions || []).filter((item) => guestDispositions.includes(item)),
-    spaceTypes: (venue.spaceTypes || []).filter((item) => spaceTypes.includes(item)),
-    optionFeatures: (venue.optionFeatures || []).filter((item) => optionFeatures.includes(item)),
+    eventCategories: filterValuesWithEvidence(
+      (venue.eventCategories || []).filter((item) => eventTypes.includes(item)),
+      sourceText,
+      categoryEvidence.eventCategories,
+    ),
+    venueTypes: filterValuesWithEvidence(
+      (venue.venueTypes || []).filter((item) => venueTypes.includes(item)),
+      sourceText,
+      categoryEvidence.venueTypes,
+    ),
+    services: filterValuesWithEvidence(
+      (venue.services || []).filter((item) => services.includes(item)),
+      sourceText,
+      categoryEvidence.services,
+    ),
+    ambianceTypes: filterValuesWithEvidence(
+      (venue.ambianceTypes || []).filter((item) => ambianceTypes.includes(item)),
+      sourceText,
+      categoryEvidence.ambianceTypes,
+    ),
+    externalOptions: filterValuesWithEvidence(
+      (venue.externalOptions || []).filter((item) => externalOptions.includes(item)),
+      sourceText,
+      categoryEvidence.externalOptions,
+    ),
+    privatizationTypes: filterValuesWithEvidence(
+      (venue.privatizationTypes || []).filter((item) => privatizationTypes.includes(item)),
+      sourceText,
+      categoryEvidence.privatizationTypes,
+    ),
+    guestDispositions: filterValuesWithEvidence(
+      (venue.guestDispositions || []).filter((item) => guestDispositions.includes(item)),
+      sourceText,
+      categoryEvidence.guestDispositions,
+    ),
+    spaceTypes: filterValuesWithEvidence(
+      (venue.spaceTypes || []).filter((item) => spaceTypes.includes(item)),
+      sourceText,
+      categoryEvidence.spaceTypes,
+    ),
+    optionFeatures: filterValuesWithEvidence(
+      (venue.optionFeatures || []).filter((item) => optionFeatures.includes(item)),
+      sourceText,
+      categoryEvidence.optionFeatures,
+    ),
     usefulInformation: unique([
       ...(venue.usefulInformation || []).map((item) => String(item).trim()).filter(Boolean),
       `Source import : ${sourceUrl}`,
@@ -613,11 +839,12 @@ const normalizeImportedVenue = (venue, venueCode, sourceUrl) => {
       Array.isArray(venue.spaces) && venue.spaces.length
         ? venue.spaces.map((space) => ({
             name: String(space.name || "Salle principale").trim() || "Salle principale",
-            capacity: String(space.capacity || "").replace(/[^\d]/g, ""),
-            squareMeters: String(space.squareMeters || "").replace(/[^\d]/g, ""),
+            capacity: getMaxNumberText(space.capacity),
+            squareMeters: getMaxNumberText(space.squareMeters),
             description: String(space.description || "").trim(),
+            imageUrl: String(space.imageUrl || "").trim(),
           }))
-        : [{ name: "Salle principale", capacity: "", squareMeters: "", description: "" }],
+        : [{ name: "Salle principale", capacity: "", squareMeters: "", description: "", imageUrl: "" }],
     notes: venue.notes || [],
   };
 };
@@ -686,6 +913,11 @@ export default async function handler(request, response) {
     const metas = extractMeta(html);
     const jsonLd = extractJsonLd(html);
     const pageText = extractText(html);
+    const evidenceText = [
+      Object.values(metas).join(" "),
+      JSON.stringify(jsonLd),
+      pageText,
+    ].join(" ");
     const imageCandidates = extractImages(html, finalUrl, metas, jsonLd);
 
     if (!pageText && !metas.title) {
@@ -701,19 +933,25 @@ export default async function handler(request, response) {
       imageCandidates,
       writingExamples,
     });
-    const venue = normalizeImportedVenue(extractedVenue, venueCode, finalUrl);
+    const venue = normalizeImportedVenue(extractedVenue, venueCode, finalUrl, evidenceText);
     const venueSlug = venue.slug || `salle-${venueCode}`;
+    const prioritizedImageUrls = unique([
+      ...venue.spaces.map((space) => space.imageUrl).filter(Boolean),
+      ...imageCandidates,
+    ]);
     const imageImport = await uploadRemoteImages({
       supabase: supabaseAdmin,
-      imageUrls: imageCandidates,
+      imageUrls: prioritizedImageUrls,
       venueSlug,
       referer: finalUrl,
     });
     const [coverImage, ...gallery] = imageImport.uploaded.map((image) => image.publicUrl);
+    const spaces = applyUploadedSpaceImages(venue.spaces, imageImport.uploaded);
 
     return jsonResponse(response, 200, {
       venue: {
         ...venue,
+        spaces,
         slug: venueSlug,
         coverImage: coverImage || "",
         gallery,
