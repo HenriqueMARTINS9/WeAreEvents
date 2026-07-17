@@ -291,7 +291,7 @@ const VenueDetail = () => {
 
                 <div className="mt-8 rounded-lg border border-border bg-background p-7">
                   <p className="font-heading text-3xl italic text-primary">"{venue.tagline}"</p>
-                  <p className="mt-5 max-w-3xl font-body text-lg leading-relaxed text-foreground/80">{venue.description}</p>
+                  <p className="mt-5 max-w-3xl whitespace-pre-line font-body text-lg leading-relaxed text-foreground/80">{venue.description}</p>
                 </div>
               </section>
 

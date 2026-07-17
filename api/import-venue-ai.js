@@ -318,6 +318,26 @@ const getNextVenueCode = async (supabase) => {
   return String(maxCode + 1).padStart(4, "0").slice(-4);
 };
 
+const getVenueWritingExamples = async (supabase) => {
+  const { data, error } = await supabase
+    .from("venues")
+    .select("title,tagline,description")
+    .eq("active", true)
+    .order("updated_at", { ascending: false })
+    .limit(12);
+
+  if (error) throw error;
+
+  return (data ?? [])
+    .map((venue) => ({
+      title: String(venue.title || "").trim(),
+      tagline: String(venue.tagline || "").trim(),
+      description: String(venue.description || "").trim(),
+    }))
+    .filter((venue) => venue.title && venue.tagline && venue.description)
+    .slice(0, 5);
+};
+
 const createSchema = () => ({
   type: "object",
   additionalProperties: false,
@@ -398,7 +418,7 @@ const createSchema = () => ({
   },
 });
 
-const callOpenAi = async ({ sourceUrl, finalUrl, metas, jsonLd, pageText, imageCandidates }) => {
+const callOpenAi = async ({ sourceUrl, finalUrl, metas, jsonLd, pageText, imageCandidates, writingExamples }) => {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) throw new Error("OPENAI_API_KEY manquant côté serveur.");
 
@@ -415,7 +435,7 @@ const callOpenAi = async ({ sourceUrl, finalUrl, metas, jsonLd, pageText, imageC
         {
           role: "system",
           content:
-            "Tu es un assistant de back office Wearevents. Tu extrais uniquement les informations factuelles d'une page de lieu événementiel, puis tu les convertis vers le formulaire Wearevents. N'invente pas d'email, d'adresse, de capacité, de métro, d'avis ou de coordonnées si la source ne les contient pas. Pour les textes marketing, reformule en français naturel et concis, sans copier de longs passages.",
+            "Tu es un assistant de back office Wearevents. Tu extrais uniquement les informations factuelles d'une page de lieu événementiel, puis tu les convertis vers le formulaire Wearevents. N'invente pas d'email, d'adresse, de capacité, de métro, d'avis ou de coordonnées si la source ne les contient pas. Pour les textes marketing, rédige en français naturel, premium et concis, en t'inspirant du style des exemples Wearevents fournis sans recopier de formulation.",
         },
         {
           role: "user",
@@ -426,6 +446,7 @@ const callOpenAi = async ({ sourceUrl, finalUrl, metas, jsonLd, pageText, imageC
             structuredData: jsonLd,
             pageText,
             imageCandidates,
+            writingExamples,
             allowedValues: {
               eventTypes,
               venueTypes,
@@ -441,8 +462,8 @@ const callOpenAi = async ({ sourceUrl, finalUrl, metas, jsonLd, pageText, imageC
             },
             instructions: [
               "title: nom public de l'établissement.",
-              "tagline: courte accroche commerciale en une phrase.",
-              "description: 2 à 4 phrases prêtes pour une fiche Wearevents.",
+              "tagline: courte accroche commerciale en une phrase, dans le ton des exemples Wearevents.",
+              "description: 2 à 4 phrases prêtes pour une fiche Wearevents, inspirées du rythme et du niveau de détail des exemples, sans copier.",
               "minCapacity/maxCapacity: nombres en texte si trouvés.",
               "priceTier: estime € à €€€€ seulement si des prix sont visibles, sinon €€.",
               "closingTime: 00:00 pour jusqu'à minuit, 02:00 pour jusqu'à 2h, 03:00 pour après 2h, sinon chaîne vide.",
@@ -650,8 +671,9 @@ export default async function handler(request, response) {
   });
 
   try {
-    const [venueCode, pageResponse] = await Promise.all([
+    const [venueCode, writingExamples, pageResponse] = await Promise.all([
       getNextVenueCode(supabaseAdmin),
+      getVenueWritingExamples(supabaseAdmin),
       fetch(sourceUrl.toString(), { headers: requestHeaders, redirect: "follow" }),
     ]);
 
@@ -677,6 +699,7 @@ export default async function handler(request, response) {
       jsonLd,
       pageText,
       imageCandidates,
+      writingExamples,
     });
     const venue = normalizeImportedVenue(extractedVenue, venueCode, finalUrl);
     const venueSlug = venue.slug || `salle-${venueCode}`;

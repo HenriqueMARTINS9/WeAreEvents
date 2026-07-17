@@ -159,7 +159,7 @@ const VenueDetailSheet = ({ venue, onClose, onBooking }: VenueDetailSheetProps) 
 
         <p className="font-heading text-xl italic text-primary mb-4">"{venue.tagline}"</p>
 
-        <p className="text-sm font-body text-foreground/80 leading-relaxed mb-7">
+        <p className="mb-7 whitespace-pre-line text-sm font-body leading-relaxed text-foreground/80">
           {venue.description}
         </p>
         </div>
