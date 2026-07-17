@@ -503,7 +503,7 @@ const createEmptyVenueForm = () => ({
   metroAccess: "",
   featured: true,
   active: true,
-  contactEmail: "",
+  contactEmail: "anselme@wearevents.fr",
   rating: "0",
   reviewCount: "0",
 });
@@ -515,7 +515,7 @@ const getNextVenueCodeFromVenues = (venues: any[]) => {
   const maxCode = venues.reduce((max, venue) => {
     const numericCode = Number(String(venue.venue_code ?? "").replace(/\D/g, ""));
     return Number.isFinite(numericCode) ? Math.max(max, numericCode) : max;
-  }, 1000);
+  }, 0);
 
   return String(maxCode + 1).padStart(4, "0").slice(-4);
 };
@@ -941,7 +941,7 @@ const Admin = () => {
       spaceTypes: toLines(importedVenue.spaceTypes),
       optionFeatures: toLines(importedVenue.optionFeatures),
       metroAccess: importedVenue.metroAccess ?? current.metroAccess,
-      contactEmail: importedVenue.contactEmail ?? current.contactEmail,
+      contactEmail: importedVenue.contactEmail || current.contactEmail,
       rating: importedVenue.rating || current.rating,
       reviewCount: importedVenue.reviewCount || current.reviewCount,
       googleReviewUrl: importedVenue.googleReviewUrl ?? current.googleReviewUrl,

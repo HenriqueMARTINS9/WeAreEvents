@@ -313,7 +313,7 @@ const getNextVenueCode = async (supabase) => {
   const maxCode = (data ?? []).reduce((max, venue) => {
     const numericCode = Number(String(venue.venue_code ?? "").replace(/\D/g, ""));
     return Number.isFinite(numericCode) ? Math.max(max, numericCode) : max;
-  }, 1000);
+  }, 0);
 
   return String(maxCode + 1).padStart(4, "0").slice(-4);
 };
