@@ -425,6 +425,50 @@ const formatMetroAccess = (value = "") => {
   return `${station}, ligne ${formatListWithEt(lines)}`;
 };
 
+const escapeRegExp = (value = "") => String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const getSourceReferenceLabels = (sourceUrl = "") => {
+  const labels = ["privateaser"];
+
+  try {
+    const url = new URL(sourceUrl);
+    const host = url.hostname.replace(/^www\./i, "");
+    const brand = host.split(".")[0];
+    labels.push(host, brand, url.toString());
+  } catch {
+    if (sourceUrl) labels.push(sourceUrl);
+  }
+
+  return unique(labels.filter(Boolean));
+};
+
+const stripSourceReferences = (value = "", sourceUrl = "") => {
+  let text = String(value || "");
+  const labels = getSourceReferenceLabels(sourceUrl);
+
+  text = text.replace(/^.*source import\s*:.*$/gim, "");
+  text = text.replace(/^.*site source\s*:.*$/gim, "");
+  text = text.replace(/^.*(?:import|source)\s*:?\s*https?:\/\/\S+.*$/gim, "");
+  text = text.replace(/https?:\/\/\S+/gi, "");
+
+  labels.forEach((label) => {
+    text = text.replace(new RegExp(escapeRegExp(label), "gi"), "");
+  });
+
+  return text
+    .replace(/\s+([,.!?;:])/g, "$1")
+    .replace(/[ \t]{2,}/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+};
+
+const cleanSourceFreeList = (values = [], sourceUrl = "") =>
+  unique(
+    values
+      .map((item) => stripSourceReferences(item, sourceUrl))
+      .filter(Boolean),
+  );
+
 const externalOptionEvidence = {
   "Possibilité de ramener sa nourriture": [
     /\btraiteur externe\b/,
@@ -691,7 +735,7 @@ const callOpenAi = async ({ sourceUrl, finalUrl, metas, jsonLd, pageText, imageC
         {
           role: "system",
           content:
-            "Tu es un assistant de back office Wearevents. Tu extrais uniquement les informations factuelles d'une page de lieu événementiel, puis tu les convertis vers le formulaire Wearevents. N'invente pas d'email, d'adresse, de capacité, de métro, d'avis ou de coordonnées si la source ne les contient pas. Pour les textes marketing, rédige en français naturel, premium et concis, en t'inspirant du style des exemples Wearevents fournis sans recopier de formulation.",
+            "Tu es un assistant de back office Wearevents. Tu extrais uniquement les informations factuelles d'une page de lieu événementiel, puis tu les convertis vers le formulaire Wearevents. N'invente pas d'email, d'adresse, de capacité, de métro, d'avis ou de coordonnées si la source ne les contient pas. Pour les textes marketing, rédige en français naturel, premium et concis, en t'inspirant du style des exemples Wearevents fournis sans recopier de formulation. Ne mentionne jamais le nom du site source, Privateaser, une URL source, ni le fait que les informations proviennent d'un autre site.",
         },
         {
           role: "user",
@@ -721,6 +765,7 @@ const callOpenAi = async ({ sourceUrl, finalUrl, metas, jsonLd, pageText, imageC
               "address: reprends l'adresse postale telle qu'elle est écrite sur le site source, avec rue, code postal et ville quand disponibles. Ne transforme pas l'adresse en résumé.",
               "city: ville affichée. Pour Paris, utilise le code postal pour retourner Paris + numéro d'arrondissement, par exemple 75011 => Paris 11.",
               "metroAccess: si une station est trouvée, retourne exactement le format \"Nom de station, ligne X, Y et Z\". Exemple : \"République, ligne 3, 5, 8, 9 et 11\". Ne mets pas de préfixe Métro. Si aucune station claire n'est indiquée, retourne une chaîne vide.",
+              "Ne mets aucune référence au site utilisé pour l'import dans title, tagline, description, usefulInformation, spaces ou notes. Ne mentionne jamais Privateaser ni une URL source.",
               "tagline: courte accroche commerciale en une phrase, dans le ton des exemples Wearevents.",
               "description: 2 à 4 phrases prêtes pour une fiche Wearevents, inspirées du rythme et du niveau de détail des exemples, sans copier.",
               "minCapacity/maxCapacity: nombres en texte si trouvés.",
@@ -868,8 +913,8 @@ const normalizeImportedVenue = (venue, venueCode, sourceUrl, sourceText = "") =>
     title,
     slug,
     venueCode,
-    tagline: String(venue.tagline || "").trim(),
-    description: String(venue.description || "").trim(),
+    tagline: stripSourceReferences(venue.tagline, sourceUrl),
+    description: stripSourceReferences(venue.description, sourceUrl),
     city: addressAndCity.city,
     address: addressAndCity.address,
     lat: String(venue.lat || "").trim(),
@@ -929,21 +974,18 @@ const normalizeImportedVenue = (venue, venueCode, sourceUrl, sourceText = "") =>
       sourceText,
       categoryEvidence.optionFeatures,
     ),
-    usefulInformation: unique([
-      ...(venue.usefulInformation || []).map((item) => String(item).trim()).filter(Boolean),
-      `Source import : ${sourceUrl}`,
-    ]),
+    usefulInformation: cleanSourceFreeList(venue.usefulInformation || [], sourceUrl),
     spaces:
       Array.isArray(venue.spaces) && venue.spaces.length
         ? venue.spaces.map((space) => ({
             name: String(space.name || "Salle principale").trim() || "Salle principale",
             capacity: getMaxNumberText(space.capacity),
             squareMeters: getMaxNumberText(space.squareMeters),
-            description: String(space.description || "").trim(),
+            description: stripSourceReferences(space.description, sourceUrl),
             imageUrl: String(space.imageUrl || "").trim(),
           }))
         : [{ name: "Salle principale", capacity: "", squareMeters: "", description: "", imageUrl: "" }],
-    notes: venue.notes || [],
+    notes: cleanSourceFreeList(venue.notes || [], sourceUrl),
   };
 };
 
@@ -1045,6 +1087,7 @@ export default async function handler(request, response) {
     });
     const [coverImage, ...gallery] = imageImport.uploaded.map((image) => image.publicUrl);
     const spaces = applyUploadedSpaceImages(venue.spaces, imageImport.uploaded);
+    const warnings = cleanSourceFreeList([...(venue.notes || []), ...imageImport.warnings], finalUrl);
 
     return jsonResponse(response, 200, {
       venue: {
@@ -1055,11 +1098,9 @@ export default async function handler(request, response) {
         gallery,
       },
       source: {
-        requestedUrl: sourceUrl.toString(),
-        finalUrl,
         imageCandidatesCount: imageCandidates.length,
       },
-      warnings: [...(venue.notes || []), ...imageImport.warnings],
+      warnings,
     });
   } catch (error) {
     return fail(response, 500, error instanceof Error ? error.message : "Import impossible.");
