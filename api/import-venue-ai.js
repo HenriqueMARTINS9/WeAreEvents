@@ -724,7 +724,7 @@ const callOpenAi = async ({ sourceUrl, finalUrl, metas, jsonLd, pageText, imageC
               "tagline: courte accroche commerciale en une phrase, dans le ton des exemples Wearevents.",
               "description: 2 à 4 phrases prêtes pour une fiche Wearevents, inspirées du rythme et du niveau de détail des exemples, sans copier.",
               "minCapacity/maxCapacity: nombres en texte si trouvés.",
-              "priceTier: estime € à €€€€ seulement si des prix sont visibles, sinon €€.",
+              "pricingText et priceTier: retourne Sur devis et €€. Le prix est géré manuellement dans le back office, ne l'extrais pas depuis la source.",
               "closingTime: 00:00 pour jusqu'à minuit, 02:00 pour jusqu'à 2h, 03:00 pour après 2h, sinon chaîne vide.",
               "Pour tous les champs de catégories en tableau, sélectionne uniquement les valeurs explicitement indiquées ou clairement justifiées par la page source. En cas de doute, laisse la catégorie vide.",
               "externalOptions: coche une option uniquement si la page indique explicitement que nourriture, boissons ou gâteau externes sont autorisés. En cas de doute, retourne un tableau vide.",
