@@ -76,7 +76,7 @@ const buildReviewFollowUpDate = (dateValue: string) => {
 
 const formatEventTypePhrase = (eventType: string) => {
   if (eventType === "Soirée privée") return "une soirée privée";
-  if (eventType === "Corporate") return "un événement corporate";
+  if (eventType === "Repas d'entreprise") return "un repas d'entreprise";
   return `un ${eventType.toLowerCase()}`;
 };
 

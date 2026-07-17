@@ -35,11 +35,11 @@ describe("venue code lookup", () => {
     expect(parisSuggestion?.postalCodes).toContain("75008");
   });
 
-  it("matches student event searches to relevant event categories", () => {
-    const results = filterVenues(mockVenues, { eventType: "Événement étudiant" });
+  it("matches business meal searches to legacy corporate event categories", () => {
+    const results = filterVenues(mockVenues, { eventType: "Repas d'entreprise" });
 
     expect(results.length).toBeGreaterThan(0);
-    expect(results.some((venue) => venue.eventCategories.includes("Soirée privée") || venue.eventCategories.includes("Gala"))).toBe(true);
+    expect(results.some((venue) => venue.eventCategories.includes("Corporate"))).toBe(true);
   });
 });
 

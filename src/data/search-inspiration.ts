@@ -13,10 +13,10 @@ export const searchInspirationLinks = [
   },
   {
     title: "Soirée d'entreprise",
-    description: "Espaces adaptés aux afterworks, cocktails et événements corporate.",
+    description: "Espaces adaptés aux repas d'équipe, cocktails et événements professionnels.",
     href: buildSearchUrl({
       location: "Paris",
-      type: "Corporate",
+      type: "Repas d'entreprise",
       privatization: ["Forfait consommation (budget par personne)"],
     }),
   },

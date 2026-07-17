@@ -40,8 +40,8 @@ const HERO_MOMENTS = [
     noun: "séminaire",
   },
   {
-    label: "Lancement",
-    noun: "lancement",
+    label: "Lancement de produit",
+    noun: "lancement de produit",
   },
 ] as const;
 

@@ -36,7 +36,10 @@ const normalizeKnownValues = (values: string[] = [], options: readonly string[])
   return options.filter((option) => values.includes(option) || joinedValues.includes(option));
 };
 const EVENT_TYPE_ALIASES: Record<string, string[]> = {
-  "Événement étudiant": ["Soirée privée", "Remise de diplôme", "Afterwork", "Gala"],
+  "Lancement de produit": ["Lancement"],
+  "Repas d'entreprise": ["Corporate", "Dîner d'affaires"],
+  Tournage: ["Shooting / tournage"],
+  Shooting: ["Shooting / tournage"],
 };
 
 const expandEventTypes = (eventTypes: string[]) =>

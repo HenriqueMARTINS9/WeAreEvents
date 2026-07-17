@@ -83,7 +83,7 @@ const SeoIndex = () => {
       },
       {
         title: "Par type d'événement",
-        description: "Mariage, anniversaire, afterwork, séminaire ou gala : trouvez une page adaptée à votre besoin.",
+        description: "Mariage, anniversaire, afterwork, séminaire, tournage ou gala : trouvez une page adaptée à votre besoin.",
         tone: "light",
         links: pickPages(SEO_EVENT_TYPES.map((eventType) => stripPath(getEventSeoPath(eventType))), pagesBySlug),
       },
@@ -133,7 +133,6 @@ const SeoIndex = () => {
             "salle-ambiance-festive-paris",
             "salle-ambiance-corporate-paris",
             "salle-ambiance-elegante-paris",
-            "salle-ambiance-club-paris",
           ],
           pagesBySlug,
         ),
