@@ -331,6 +331,100 @@ const getMaxNumberText = (value = "") => {
   return numbers.length ? String(Math.round(Math.max(...numbers))) : "";
 };
 
+const cleanAddressPart = (value = "") =>
+  String(value)
+    .replace(/\s+/g, " ")
+    .replace(/\s*,\s*/g, ", ")
+    .replace(/^[,\s]+|[,\s]+$/g, "")
+    .trim();
+
+const getPostalCode = (value = "") => String(value).match(/\b\d{5}\b/)?.[0] ?? "";
+
+const getParisArrondissementFromPostalCode = (postalCode = "") => {
+  const match = String(postalCode).match(/^750(0[1-9]|1\d|20)$/);
+  if (!match) return "";
+  return String(Number(match[1]));
+};
+
+const formatImportedCity = (city = "", postalCode = "") => {
+  const cleanedCity = cleanAddressPart(city).replace(/\b\d{5}\b/g, "").trim();
+  const parisArrondissement = getParisArrondissementFromPostalCode(postalCode);
+
+  if (parisArrondissement && /\bparis\b/i.test(`${cleanedCity} Paris`)) {
+    return `Paris ${parisArrondissement}`;
+  }
+
+  return cleanedCity;
+};
+
+const extractCityAfterPostalCode = (address = "", postalCode = "") => {
+  if (!postalCode) return "";
+  const postalCodeIndex = address.indexOf(postalCode);
+  if (postalCodeIndex < 0) return "";
+
+  return cleanAddressPart(address.slice(postalCodeIndex + postalCode.length));
+};
+
+const formatImportedAddressAndCity = (address = "", city = "") => {
+  const cleanedAddress = cleanAddressPart(address);
+  const cleanedCity = cleanAddressPart(city);
+  const postalCode = getPostalCode(cleanedAddress) || getPostalCode(cleanedCity);
+  const cityFromAddress = extractCityAfterPostalCode(cleanedAddress, postalCode);
+  const formattedCity = formatImportedCity(cityFromAddress || cleanedCity, postalCode);
+
+  if (!postalCode) {
+    return {
+      address: cleanedAddress,
+      city: formattedCity || cleanedCity,
+    };
+  }
+
+  const postalCodeIndex = cleanedAddress.indexOf(postalCode);
+  const streetAddress = postalCodeIndex >= 0
+    ? cleanAddressPart(cleanedAddress.slice(0, postalCodeIndex))
+    : cleanedAddress;
+
+  return {
+    address: [streetAddress, postalCode, formattedCity].filter(Boolean).join(", "),
+    city: formattedCity,
+  };
+};
+
+const formatListWithEt = (values = []) => {
+  const uniqueValues = unique(values.map((value) => String(value).trim()).filter(Boolean));
+  if (uniqueValues.length <= 1) return uniqueValues[0] || "";
+  if (uniqueValues.length === 2) return `${uniqueValues[0]} et ${uniqueValues[1]}`;
+  return `${uniqueValues.slice(0, -1).join(", ")} et ${uniqueValues[uniqueValues.length - 1]}`;
+};
+
+const extractMetroLines = (value = "") => {
+  const lineSections = [
+    ...String(value).matchAll(/(?:ligne|lignes|metro|métro|rer)\s*([0-9a-zA-Z,\s&et-]+)/gi),
+  ].map((match) => match[1]);
+  const parenthesisSections = [...String(value).matchAll(/\(([^)]*)\)/g)].map((match) => match[1]);
+  const source = [...lineSections, ...parenthesisSections].join(" ");
+
+  return unique((source.match(/\b(?:\d{1,2}(?:bis)?|[A-Z])\b/gi) ?? []).map((line) => line.toUpperCase()));
+};
+
+const formatMetroAccess = (value = "") => {
+  const rawValue = cleanAddressPart(value);
+  if (!rawValue) return "";
+
+  const lines = extractMetroLines(rawValue);
+  let station = rawValue
+    .replace(/^(?:metro|métro|station)\s*:?\s*/i, "")
+    .replace(/\([^)]*(?:\d|ligne|lignes|metro|métro|rer)[^)]*\)/gi, "")
+    .replace(/\s*,?\s*(?:ligne|lignes|metro|métro|rer)\s+[0-9a-zA-Z,\s&et-]+$/i, "")
+    .replace(/\s*[-–]\s*(?:ligne|lignes|metro|métro|rer)\s+[0-9a-zA-Z,\s&et-]+$/i, "");
+
+  station = cleanAddressPart(station).replace(/,$/, "").trim();
+  if (!station) return rawValue;
+  if (!lines.length) return station;
+
+  return `${station}, ligne ${formatListWithEt(lines)}`;
+};
+
 const externalOptionEvidence = {
   "Possibilité de ramener sa nourriture": [
     /\btraiteur externe\b/,
@@ -624,6 +718,9 @@ const callOpenAi = async ({ sourceUrl, finalUrl, metas, jsonLd, pageText, imageC
             },
             instructions: [
               "title: nom public de l'établissement.",
+              "address: reprends l'adresse postale telle qu'elle est écrite sur le site source, avec rue, code postal et ville quand disponibles. Ne transforme pas l'adresse en résumé.",
+              "city: ville affichée. Pour Paris, utilise le code postal pour retourner Paris + numéro d'arrondissement, par exemple 75011 => Paris 11.",
+              "metroAccess: si une station est trouvée, retourne exactement le format \"Nom de station, ligne X, Y et Z\". Exemple : \"République, ligne 3, 5, 8, 9 et 11\". Ne mets pas de préfixe Métro. Si aucune station claire n'est indiquée, retourne une chaîne vide.",
               "tagline: courte accroche commerciale en une phrase, dans le ton des exemples Wearevents.",
               "description: 2 à 4 phrases prêtes pour une fiche Wearevents, inspirées du rythme et du niveau de détail des exemples, sans copier.",
               "minCapacity/maxCapacity: nombres en texte si trouvés.",
@@ -765,6 +862,7 @@ const applyUploadedSpaceImages = (spaces = [], uploadedImages = []) => {
 const normalizeImportedVenue = (venue, venueCode, sourceUrl, sourceText = "") => {
   const title = String(venue.title || "").trim();
   const slug = slugify(title);
+  const addressAndCity = formatImportedAddressAndCity(venue.address, venue.city);
 
   return {
     title,
@@ -772,8 +870,8 @@ const normalizeImportedVenue = (venue, venueCode, sourceUrl, sourceText = "") =>
     venueCode,
     tagline: String(venue.tagline || "").trim(),
     description: String(venue.description || "").trim(),
-    city: String(venue.city || "").trim(),
-    address: String(venue.address || "").trim(),
+    city: addressAndCity.city,
+    address: addressAndCity.address,
     lat: String(venue.lat || "").trim(),
     lng: String(venue.lng || "").trim(),
     minCapacity: getMinNumberText(venue.minCapacity),
@@ -781,7 +879,7 @@ const normalizeImportedVenue = (venue, venueCode, sourceUrl, sourceText = "") =>
     pricingText: String(venue.pricingText || "").trim(),
     priceTier: priceTiers.includes(venue.priceTier) ? venue.priceTier : "€€",
     closingTime: closingTimes.includes(venue.closingTime) ? venue.closingTime : "",
-    metroAccess: String(venue.metroAccess || "").trim(),
+    metroAccess: formatMetroAccess(venue.metroAccess),
     contactEmail: String(venue.contactEmail || "").trim(),
     rating: String(venue.rating || "0").replace(",", "."),
     reviewCount: String(venue.reviewCount || "0").replace(/[^\d]/g, ""),
