@@ -484,7 +484,7 @@ const createEmptyVenueForm = () => ({
   spaces: "Salle principale | 120 | Espace principal modulable",
   accessDetails: "",
   usefulInformation: "",
-  pricingText: "",
+  pricingText: "Sur devis",
   coverImage: "",
   gallery: "",
   videoUrl: "",
