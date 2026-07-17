@@ -6,6 +6,8 @@ const maxTextChars = 70_000;
 const maxImageCandidates = 36;
 const maxUploadedImages = 8;
 const maxRemoteImageSizeBytes = 12 * 1024 * 1024;
+const maxWritingExamples = 20;
+const writingExamplesCandidateLimit = 60;
 
 const eventTypes = [
   "Mariage",
@@ -654,10 +656,10 @@ const getNextVenueCode = async (supabase) => {
 const getVenueWritingExamples = async (supabase) => {
   const { data, error } = await supabase
     .from("venues")
-    .select("title,tagline,description")
+    .select("title,tagline,description,created_at")
     .eq("active", true)
-    .order("updated_at", { ascending: false })
-    .limit(12);
+    .order("created_at", { ascending: true })
+    .limit(writingExamplesCandidateLimit);
 
   if (error) throw error;
 
@@ -668,7 +670,7 @@ const getVenueWritingExamples = async (supabase) => {
       description: String(venue.description || "").trim(),
     }))
     .filter((venue) => venue.title && venue.tagline && venue.description)
-    .slice(0, 5);
+    .slice(0, maxWritingExamples);
 };
 
 const createSchema = () => ({

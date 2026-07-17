@@ -1541,14 +1541,17 @@ const VenueAiImportPanel = ({
           <div>
             <h3 className="font-body text-sm font-semibold">Préremplir avec l'IA</h3>
             <p className="mt-0.5 font-body text-xs leading-relaxed text-muted-foreground">
-              Collez une fiche salle publique. L'import lit la page, propose le prochain code lieu et importe les premières images trouvées.
+              Collez une fiche salle publique. L'import s'inspire des 20 premières fiches Wearevents, propose le prochain code lieu et importe les premières images trouvées.
+            </p>
+            <p className="mt-1 font-body text-xs leading-relaxed text-muted-foreground">
+              L'email de contact et le prix indicatif restent ceux du formulaire.
             </p>
           </div>
         </div>
         <input
           value={value}
           onChange={(event) => onChange(event.target.value)}
-          placeholder="https://www.privateaser.com/lieu/..."
+          placeholder="https://exemple.com/fiche-salle"
           className="h-11 w-full rounded-lg border border-border bg-background px-3 text-sm font-body outline-none focus:border-primary"
         />
       </div>
