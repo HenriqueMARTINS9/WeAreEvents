@@ -1,5 +1,7 @@
 import { useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "react-router-dom";
+import { fetchSeoMetadataByPath, isSeoMetadataConfigured, normalizeSeoPath } from "@/lib/seo-metadata";
 
 const siteUrl = (import.meta.env.VITE_SITE_URL || "https://www.wearevents.fr").replace(/\/$/, "");
 const defaultTitle = "Wearevents | Location de salle pour votre événement";
@@ -58,13 +60,22 @@ const Seo = ({
 }: SeoProps) => {
   const location = useLocation();
   const canonical = absoluteUrl(path || `${location.pathname}${location.search}`);
+  const metadataPath = normalizeSeoPath(path || location.pathname);
+  const { data: seoMetadata } = useQuery({
+    queryKey: ["seo-metadata", metadataPath],
+    queryFn: () => fetchSeoMetadataByPath(metadataPath),
+    enabled: !noindex && isSeoMetadataConfigured,
+    staleTime: 5 * 60 * 1000,
+  });
+  const appliedTitle = seoMetadata?.title?.trim() || title;
+  const appliedDescription = seoMetadata?.description?.trim() || description;
   const imageUrl = absoluteUrl(image);
   const keywordsContent = Array.isArray(keywords) ? keywords.filter(Boolean).join(", ") : keywords?.trim() ?? "";
 
   useEffect(() => {
-    document.title = title;
+    document.title = appliedTitle;
 
-    upsertMeta('meta[name="description"]', { name: "description", content: description });
+    upsertMeta('meta[name="description"]', { name: "description", content: appliedDescription });
     if (keywordsContent) {
       upsertMeta('meta[name="keywords"]', { name: "keywords", content: keywordsContent });
     } else {
@@ -72,14 +83,14 @@ const Seo = ({
     }
     upsertMeta('meta[name="robots"]', { name: "robots", content: noindex ? "noindex, nofollow" : "index, follow" });
     upsertMeta('meta[property="og:type"]', { property: "og:type", content: type });
-    upsertMeta('meta[property="og:title"]', { property: "og:title", content: title });
-    upsertMeta('meta[property="og:description"]', { property: "og:description", content: description });
+    upsertMeta('meta[property="og:title"]', { property: "og:title", content: appliedTitle });
+    upsertMeta('meta[property="og:description"]', { property: "og:description", content: appliedDescription });
     upsertMeta('meta[property="og:url"]', { property: "og:url", content: canonical });
     upsertMeta('meta[property="og:image"]', { property: "og:image", content: imageUrl });
     upsertMeta('meta[property="og:site_name"]', { property: "og:site_name", content: "Wearevents" });
     upsertMeta('meta[name="twitter:card"]', { name: "twitter:card", content: "summary_large_image" });
-    upsertMeta('meta[name="twitter:title"]', { name: "twitter:title", content: title });
-    upsertMeta('meta[name="twitter:description"]', { name: "twitter:description", content: description });
+    upsertMeta('meta[name="twitter:title"]', { name: "twitter:title", content: appliedTitle });
+    upsertMeta('meta[name="twitter:description"]', { name: "twitter:description", content: appliedDescription });
     upsertMeta('meta[name="twitter:image"]', { name: "twitter:image", content: imageUrl });
     upsertLink("canonical", canonical);
 
@@ -93,7 +104,7 @@ const Seo = ({
       script.textContent = JSON.stringify(jsonLd);
       document.head.appendChild(script);
     }
-  }, [canonical, description, imageUrl, jsonLd, keywordsContent, noindex, title, type]);
+  }, [appliedDescription, appliedTitle, canonical, imageUrl, jsonLd, keywordsContent, noindex, type]);
 
   return null;
 };

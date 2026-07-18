@@ -34,6 +34,16 @@
       "source": "/rooftop-paris",
       "destination": "/restaurant-privatisable-paris",
       "permanent": true
+    },
+    {
+      "source": "/rooftop-evenement-paris",
+      "destination": "/terrasse-evenement-paris",
+      "permanent": true
+    },
+    {
+      "source": "/salle-ambiance-club-paris",
+      "destination": "/salle-ambiance-festive-paris",
+      "permanent": true
     }
   ],
   "rewrites": [

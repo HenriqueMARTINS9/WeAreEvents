@@ -6,6 +6,8 @@ import { seoLandingPages } from "../src/data/seo-landings-data.js";
 const rootDir = join(dirname(fileURLToPath(import.meta.url)), "..");
 const distDir = join(rootDir, "dist");
 const siteUrl = (process.env.VITE_SITE_URL || "https://www.wearevents.fr").replace(/\/$/, "");
+const supabaseUrl = process.env.VITE_SUPABASE_URL;
+const supabaseKey = process.env.VITE_SUPABASE_PUBLISHABLE || process.env.SUPABASE_ANON_KEY;
 const defaultImage = `${siteUrl}/og-image.svg`;
 const seoIndexPath = "inspirations";
 const seoIndexTitle = "Inspirations lieux événementiels à Paris | Wearevents";
@@ -30,6 +32,65 @@ const replaceOrInsertHeadTag = (html, matcher, tag) => {
   if (matcher.test(html)) return html.replace(matcher, tag);
   return html.replace("</head>", `    ${tag}\n  </head>`);
 };
+
+const normalizeSeoPath = (value = "/") => {
+  const path = String(value || "/").split(/[?#]/)[0] || "/";
+  const withSlash = path.startsWith("/") ? path : `/${path}`;
+  return withSlash === "/" ? "/" : withSlash.replace(/\/+$/, "");
+};
+
+const fetchSeoMetadataOverrides = async () => {
+  if (!supabaseUrl || !supabaseKey) return new Map();
+
+  try {
+    const url = new URL(`${supabaseUrl.replace(/\/$/, "")}/rest/v1/seo_metadata`);
+    url.searchParams.set("select", "page_path,title,description");
+    url.searchParams.set("active", "eq.true");
+    url.searchParams.set("limit", "1000");
+
+    const response = await fetch(url, {
+      headers: {
+        apikey: supabaseKey,
+        authorization: `Bearer ${supabaseKey}`,
+        accept: "application/json",
+      },
+    });
+
+    if (!response.ok) throw new Error(`Supabase SEO metadata fetch failed with ${response.status}`);
+
+    const rows = await response.json();
+    return new Map(
+      rows
+        .filter((row) => row.page_path)
+        .map((row) => [
+          normalizeSeoPath(row.page_path),
+          {
+            title: String(row.title || "").trim(),
+            description: String(row.description || "").trim(),
+          },
+        ]),
+    );
+  } catch (error) {
+    console.warn(error);
+    return new Map();
+  }
+};
+
+const seoMetadataOverrides = await fetchSeoMetadataOverrides();
+
+const applyMetadataOverride = (path, title, description) => {
+  const override = seoMetadataOverrides.get(normalizeSeoPath(path));
+
+  return {
+    title: override?.title || title,
+    description: override?.description || description,
+  };
+};
+
+const applyPageMetadataOverride = (page) => ({
+  ...page,
+  ...applyMetadataOverride(`/${page.slug}`, page.title, page.description),
+});
 
 const buildJsonLd = (page) => [
   {
@@ -83,11 +144,11 @@ const renderStaticContent = (page) => `
         </section>
       </main>`;
 
-const buildSeoIndexJsonLd = () => ({
+const buildSeoIndexJsonLd = (description) => ({
   "@context": "https://schema.org",
   "@type": "CollectionPage",
   name: "Inspirations lieux événementiels à Paris",
-  description: seoIndexDescription,
+  description,
   url: `${siteUrl}/${seoIndexPath}`,
   mainEntity: {
     "@type": "ItemList",
@@ -100,11 +161,11 @@ const buildSeoIndexJsonLd = () => ({
   },
 });
 
-const renderSeoIndexStaticContent = () => `
+const renderSeoIndexStaticContent = (description) => `
       <main data-prerender-seo style="font-family:Inter,Arial,sans-serif;max-width:1120px;margin:0 auto;padding:72px 24px;color:#171717;">
         <p style="margin:0 0 12px;color:#d94f6d;font-size:14px;font-weight:700;">Inspirations</p>
         <h1 style="margin:0;font-family:Georgia,serif;font-size:clamp(40px,7vw,72px);line-height:.98;">Toutes les recherches pour trouver le bon lieu à Paris.</h1>
-        <p style="margin:24px 0 0;max-width:760px;font-size:18px;line-height:1.7;color:#525252;">${escapeHtml(seoIndexDescription)}</p>
+        <p style="margin:24px 0 0;max-width:760px;font-size:18px;line-height:1.7;color:#525252;">${escapeHtml(description)}</p>
         <section style="margin-top:56px;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;">
           ${seoLandingPages
             .map(
@@ -143,23 +204,24 @@ const applySeoMetadata = (template, page) => {
 
 const applySeoIndexMetadata = (template) => {
   const canonical = `${siteUrl}/${seoIndexPath}`;
+  const metadata = applyMetadataOverride(`/${seoIndexPath}`, seoIndexTitle, seoIndexDescription);
   let html = template;
 
-  html = html.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(seoIndexTitle)}</title>`);
+  html = html.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(metadata.title)}</title>`);
   html = replaceOrInsertHeadTag(html, /<link\s+rel="canonical"\s+href="[^"]*"\s*\/?>/i, `<link rel="canonical" href="${escapeHtml(canonical)}" />`);
-  html = replaceOrInsertHeadTag(html, /<meta\s+name="description"\s+content="[^"]*"\s*\/?>/i, `<meta name="description" content="${escapeHtml(seoIndexDescription)}">`);
+  html = replaceOrInsertHeadTag(html, /<meta\s+name="description"\s+content="[^"]*"\s*\/?>/i, `<meta name="description" content="${escapeHtml(metadata.description)}">`);
   html = replaceOrInsertHeadTag(html, /<meta\s+property="og:url"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:url" content="${escapeHtml(canonical)}" />`);
-  html = replaceOrInsertHeadTag(html, /<meta\s+property="og:title"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:title" content="${escapeHtml(seoIndexTitle)}">`);
-  html = replaceOrInsertHeadTag(html, /<meta\s+property="og:description"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:description" content="${escapeHtml(seoIndexDescription)}">`);
+  html = replaceOrInsertHeadTag(html, /<meta\s+property="og:title"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:title" content="${escapeHtml(metadata.title)}">`);
+  html = replaceOrInsertHeadTag(html, /<meta\s+property="og:description"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:description" content="${escapeHtml(metadata.description)}">`);
   html = replaceOrInsertHeadTag(html, /<meta\s+property="og:image"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:image" content="${escapeHtml(defaultImage)}" />`);
-  html = replaceOrInsertHeadTag(html, /<meta\s+name="twitter:title"\s+content="[^"]*"\s*\/?>/i, `<meta name="twitter:title" content="${escapeHtml(seoIndexTitle)}">`);
-  html = replaceOrInsertHeadTag(html, /<meta\s+name="twitter:description"\s+content="[^"]*"\s*\/?>/i, `<meta name="twitter:description" content="${escapeHtml(seoIndexDescription)}">`);
+  html = replaceOrInsertHeadTag(html, /<meta\s+name="twitter:title"\s+content="[^"]*"\s*\/?>/i, `<meta name="twitter:title" content="${escapeHtml(metadata.title)}">`);
+  html = replaceOrInsertHeadTag(html, /<meta\s+name="twitter:description"\s+content="[^"]*"\s*\/?>/i, `<meta name="twitter:description" content="${escapeHtml(metadata.description)}">`);
   html = replaceOrInsertHeadTag(html, /<meta\s+name="twitter:image"\s+content="[^"]*"\s*\/?>/i, `<meta name="twitter:image" content="${escapeHtml(defaultImage)}" />`);
   html = html.replace(
     "</head>",
-    `    <script type="application/ld+json" id="wearevents-prerender-jsonld">${escapeJsonForHtml(buildSeoIndexJsonLd())}</script>\n  </head>`,
+    `    <script type="application/ld+json" id="wearevents-prerender-jsonld">${escapeJsonForHtml(buildSeoIndexJsonLd(metadata.description))}</script>\n  </head>`,
   );
-  html = html.replace('<div id="root"></div>', `<div id="root">${renderSeoIndexStaticContent()}\n    </div>`);
+  html = html.replace('<div id="root"></div>', `<div id="root">${renderSeoIndexStaticContent(metadata.description)}\n    </div>`);
 
   return html;
 };
@@ -167,7 +229,8 @@ const applySeoIndexMetadata = (template) => {
 const template = await readFile(join(distDir, "index.html"), "utf8");
 
 await Promise.all(
-  seoLandingPages.map(async (page) => {
+  seoLandingPages.map(async (rawPage) => {
+    const page = applyPageMetadataOverride(rawPage);
     const pagePath = join(distDir, page.slug, "index.html");
     await mkdir(dirname(pagePath), { recursive: true });
     await writeFile(pagePath, applySeoMetadata(template, page), "utf8");

@@ -87,6 +87,16 @@ alter table public.blog_posts add column if not exists secondary_keywords text[]
 alter table public.blog_posts add column if not exists seo_title text not null default '';
 alter table public.blog_posts add column if not exists meta_description text not null default '';
 
+create table if not exists public.seo_metadata (
+  id uuid primary key default gen_random_uuid(),
+  page_path text not null unique,
+  title text not null default '',
+  description text not null default '',
+  active boolean not null default true,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 create or replace function public.set_updated_at()
 returns trigger
 language plpgsql
@@ -107,8 +117,14 @@ create trigger blog_posts_set_updated_at
 before update on public.blog_posts
 for each row execute function public.set_updated_at();
 
+drop trigger if exists seo_metadata_set_updated_at on public.seo_metadata;
+create trigger seo_metadata_set_updated_at
+before update on public.seo_metadata
+for each row execute function public.set_updated_at();
+
 alter table public.venues enable row level security;
 alter table public.blog_posts enable row level security;
+alter table public.seo_metadata enable row level security;
 
 drop policy if exists "Public can read active venues" on public.venues;
 create policy "Public can read active venues"
@@ -130,6 +146,18 @@ using (published = true);
 drop policy if exists "Authenticated users can manage blog posts" on public.blog_posts;
 create policy "Authenticated users can manage blog posts"
 on public.blog_posts for all
+to authenticated
+using (true)
+with check (true);
+
+drop policy if exists "Public can read active SEO metadata" on public.seo_metadata;
+create policy "Public can read active SEO metadata"
+on public.seo_metadata for select
+using (active = true);
+
+drop policy if exists "Authenticated users can manage SEO metadata" on public.seo_metadata;
+create policy "Authenticated users can manage SEO metadata"
+on public.seo_metadata for all
 to authenticated
 using (true)
 with check (true);

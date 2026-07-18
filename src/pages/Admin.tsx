@@ -37,7 +37,8 @@ import {
   SPACE_TYPES,
   VENUE_TYPES,
 } from "@/types/venue";
-import { isSupabaseConfigured, supabase, type BlogPostInsert, type VenueInsert } from "@/lib/supabase";
+import { editableSeoPages, type EditableSeoPage } from "@/data/seo-pages";
+import { isSupabaseConfigured, supabase, type BlogPostInsert, type SeoMetadataInsert, type VenueInsert } from "@/lib/supabase";
 import Seo from "@/components/Seo";
 import { plainTextToBlogHtml, prepareBlogContentForEditor, sanitizeBlogHtml } from "@/lib/blog-content";
 
@@ -560,12 +561,32 @@ const createEmptyBlogForm = () => ({
   published: true,
 });
 
+type SeoMetadataFormState = Record<string, { title: string; description: string }>;
+
+const buildSeoMetadataForms = (rows: any[] = []): SeoMetadataFormState => {
+  const rowsByPath = new Map(rows.map((row) => [String(row.page_path), row]));
+
+  return Object.fromEntries(
+    editableSeoPages.map((page) => {
+      const row = rowsByPath.get(page.path);
+
+      return [
+        page.path,
+        {
+          title: String(row?.title || page.defaultTitle),
+          description: String(row?.description || page.defaultDescription),
+        },
+      ];
+    }),
+  );
+};
+
 const Admin = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [view, setView] = useState<"dashboard" | "venues" | "blogs">("dashboard");
+  const [view, setView] = useState<"dashboard" | "venues" | "blogs" | "seo">("dashboard");
   const [modal, setModal] = useState<"venue" | "blog" | null>(null);
   const [saving, setSaving] = useState(false);
   const [uploadingImages, setUploadingImages] = useState(false);
@@ -574,6 +595,9 @@ const Admin = () => {
   const [message, setMessage] = useState("");
   const [adminVenues, setAdminVenues] = useState<any[]>([]);
   const [adminBlogPosts, setAdminBlogPosts] = useState<any[]>([]);
+  const [adminSeoMetadata, setAdminSeoMetadata] = useState<any[]>([]);
+  const [seoForms, setSeoForms] = useState<SeoMetadataFormState>(() => buildSeoMetadataForms());
+  const [savingSeoPath, setSavingSeoPath] = useState<string | null>(null);
   const [editingVenueId, setEditingVenueId] = useState<string | null>(null);
   const [editingBlogId, setEditingBlogId] = useState<string | null>(null);
   const [venueForm, setVenueForm] = useState(createEmptyVenueForm);
@@ -600,20 +624,27 @@ const Admin = () => {
   const loadAdminRecords = async () => {
     if (!supabase || !session) return;
 
-    const [venuesResult, blogResult] = await Promise.all([
+    const [venuesResult, blogResult, seoResult] = await Promise.all([
       supabase.from("venues").select("*").order("created_at", { ascending: false }),
       supabase.from("blog_posts").select("*").order("created_at", { ascending: false }),
+      supabase.from("seo_metadata").select("*").order("page_path", { ascending: true }),
     ]);
 
     if (!venuesResult.error) setAdminVenues(venuesResult.data ?? []);
     if (venuesResult.error) setMessage(formatAdminError(venuesResult.error));
     if (!blogResult.error) setAdminBlogPosts(blogResult.data ?? []);
     if (blogResult.error) setMessage(formatAdminError(blogResult.error));
+    if (!seoResult.error) setAdminSeoMetadata(seoResult.data ?? []);
+    if (seoResult.error) setMessage(formatAdminError(seoResult.error));
   };
 
   useEffect(() => {
     loadAdminRecords();
   }, [session]);
+
+  useEffect(() => {
+    setSeoForms(buildSeoMetadataForms(adminSeoMetadata));
+  }, [adminSeoMetadata]);
 
   useEffect(() => {
     if (modal !== "venue" || editingVenueId) return;
@@ -624,6 +655,7 @@ const Admin = () => {
   const activeVenues = adminVenues.filter((venue) => venue.active).length;
   const featuredVenues = adminVenues.filter((venue) => venue.featured).length;
   const publishedPosts = adminBlogPosts.filter((post) => post.published).length;
+  const seoMetadataCount = adminSeoMetadata.length;
 
   const uploadMediaFiles = async (files: FileList | File[], folder: string, acceptedKinds: Array<UploadedMedia["kind"]>) => {
     if (!supabase) return [];
@@ -1122,6 +1154,75 @@ const Admin = () => {
     if (!error) loadAdminRecords();
   };
 
+  const updateSeoForm = (path: string, field: "title" | "description", value: string) => {
+    setSeoForms((current) => ({
+      ...current,
+      [path]: {
+        ...(current[path] ?? { title: "", description: "" }),
+        [field]: value,
+      },
+    }));
+  };
+
+  const buildSeoPayload = (page: EditableSeoPage): SeoMetadataInsert => {
+    const form = seoForms[page.path] ?? { title: page.defaultTitle, description: page.defaultDescription };
+    const title = form.title.trim();
+    const description = form.description.trim();
+
+    if (!title) throw new Error(`Le title de ${page.label} est obligatoire.`);
+    if (!description) throw new Error(`La meta description de ${page.label} est obligatoire.`);
+
+    return {
+      page_path: page.path,
+      title,
+      description,
+      active: true,
+    };
+  };
+
+  const saveSeoMetadata = async (page: EditableSeoPage) => {
+    if (!supabase || !canSubmit) return;
+    setSavingSeoPath(page.path);
+    setMessage("");
+
+    try {
+      const { error } = await supabase
+        .from("seo_metadata")
+        .upsert(buildSeoPayload(page), { onConflict: "page_path" });
+
+      if (error) throw error;
+
+      setMessage(`SEO mis à jour pour ${page.label}.`);
+      await loadAdminRecords();
+    } catch (error) {
+      setMessage(formatAdminError(error));
+    } finally {
+      setSavingSeoPath(null);
+    }
+  };
+
+  const saveAllSeoMetadata = async () => {
+    if (!supabase || !canSubmit) return;
+    setSavingSeoPath("__all__");
+    setMessage("");
+
+    try {
+      const payload = editableSeoPages.map(buildSeoPayload);
+      const { error } = await supabase
+        .from("seo_metadata")
+        .upsert(payload, { onConflict: "page_path" });
+
+      if (error) throw error;
+
+      setMessage(`${payload.length} pages SEO mises à jour.`);
+      await loadAdminRecords();
+    } catch (error) {
+      setMessage(formatAdminError(error));
+    } finally {
+      setSavingSeoPath(null);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Seo title="Back office - Wearevents" description="Espace privé Wearevents." path="/admin" noindex />
@@ -1164,12 +1265,14 @@ const Admin = () => {
                   featuredVenues={featuredVenues}
                   postsCount={adminBlogPosts.length}
                   publishedPosts={publishedPosts}
+                  seoMetadataCount={seoMetadataCount}
                   recentVenues={adminVenues.slice(0, 4)}
                   recentPosts={adminBlogPosts.slice(0, 4)}
                   onCreateVenue={openCreateVenue}
                   onCreateBlog={openCreateBlog}
                   onOpenVenues={() => setView("venues")}
                   onOpenBlogs={() => setView("blogs")}
+                  onOpenSeo={() => setView("seo")}
                 />
               )}
               {view === "venues" && (
@@ -1177,6 +1280,17 @@ const Admin = () => {
               )}
               {view === "blogs" && (
                 <BlogsView posts={adminBlogPosts} onCreate={openCreateBlog} onEdit={editBlogPost} onDelete={(item) => deleteBlogPost(item.id)} />
+              )}
+              {view === "seo" && (
+                <SeoMetadataView
+                  pages={editableSeoPages}
+                  rows={adminSeoMetadata}
+                  forms={seoForms}
+                  savingPath={savingSeoPath}
+                  onChange={updateSeoForm}
+                  onSave={saveSeoMetadata}
+                  onSaveAll={saveAllSeoMetadata}
+                />
               )}
               {message && <div className="mt-6 rounded-lg border border-border bg-card px-4 py-3 text-sm font-body text-muted-foreground">{message}</div>}
             </section>
@@ -1253,6 +1367,7 @@ const AdminSidebar = ({ view, onViewChange, onCreateVenue, onCreateBlog }: any) 
       { id: "dashboard", label: "Dashboard", icon: <LayoutDashboard className="h-4 w-4" /> },
       { id: "venues", label: "Salles", icon: <Building2 className="h-4 w-4" /> },
       { id: "blogs", label: "Blogs", icon: <FileText className="h-4 w-4" /> },
+      { id: "seo", label: "SEO", icon: <Pilcrow className="h-4 w-4" /> },
     ].map((item) => (
       <button
         key={item.id}
@@ -1279,7 +1394,7 @@ const AdminSidebar = ({ view, onViewChange, onCreateVenue, onCreateBlog }: any) 
   </aside>
 );
 
-const DashboardView = ({ venuesCount, activeVenues, featuredVenues, postsCount, publishedPosts, recentVenues, recentPosts, onCreateVenue, onCreateBlog, onOpenVenues, onOpenBlogs }: any) => (
+const DashboardView = ({ venuesCount, activeVenues, featuredVenues, postsCount, publishedPosts, seoMetadataCount, recentVenues, recentPosts, onCreateVenue, onCreateBlog, onOpenVenues, onOpenBlogs, onOpenSeo }: any) => (
   <div>
     <div className="mb-8">
       <p className="font-body text-sm font-semibold text-primary">Vue rapide</p>
@@ -1290,15 +1405,16 @@ const DashboardView = ({ venuesCount, activeVenues, featuredVenues, postsCount, 
       <MetricCard label="Salles" value={venuesCount} detail={`${activeVenues} actives`} />
       <MetricCard label="À forte demande" value={featuredVenues} detail="mises en avant" />
       <MetricCard label="Articles" value={postsCount} detail={`${publishedPosts} publiés`} />
-      <MetricCard label="Actions" value="4" detail="créer, modifier, publier, supprimer" />
+      <MetricCard label="SEO" value={seoMetadataCount} detail="overrides actifs" />
     </div>
     <div className="mt-8 grid grid-cols-1 gap-6 xl:grid-cols-2">
       <QuickPanel title="Salles récentes" items={recentVenues} empty="Aucune salle" getTitle={(item: any) => item.title} getMeta={(item: any) => `${item.venue_code} · ${item.city} · ${item.active ? "active" : "inactive"}`} onOpen={onOpenVenues} actionLabel="Voir les salles" />
       <QuickPanel title="Blogs récents" items={recentPosts} empty="Aucun article" getTitle={(item: any) => item.title} getMeta={(item: any) => `${item.category} · ${item.published ? "publié" : "brouillon"}`} onOpen={onOpenBlogs} actionLabel="Voir les blogs" />
     </div>
-    <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-2">
+    <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-3">
       <ActionCard title="Ajouter une salle" description="Créer une fiche complète avec galerie, infos pratiques, filtres et vidéo." onClick={onCreateVenue} />
       <ActionCard title="Ajouter un blog" description="Publier un guide ou une checklist visible sur la page Blog et l'accueil." onClick={onCreateBlog} />
+      <ActionCard title="Optimiser les métadonnées" description="Modifier les titles Google et les meta descriptions des pages principales et SEO." onClick={onOpenSeo} />
     </div>
   </div>
 );
@@ -1344,6 +1460,140 @@ const BlogsView = ({ posts, onCreate, onEdit, onDelete }: any) => (
     onDelete={onDelete}
   />
 );
+
+const SeoMetadataView = ({
+  pages,
+  rows,
+  forms,
+  savingPath,
+  onChange,
+  onSave,
+  onSaveAll,
+}: {
+  pages: EditableSeoPage[];
+  rows: any[];
+  forms: SeoMetadataFormState;
+  savingPath: string | null;
+  onChange: (path: string, field: "title" | "description", value: string) => void;
+  onSave: (page: EditableSeoPage) => void;
+  onSaveAll: () => void;
+}) => {
+  const [query, setQuery] = useState("");
+  const [group, setGroup] = useState("Toutes");
+  const rowsByPath = new Map(rows.map((row) => [String(row.page_path), row]));
+  const groups = ["Toutes", ...Array.from(new Set(pages.map((page) => page.group)))];
+  const normalizedQuery = normalizeAdminText(query);
+  const visiblePages = pages.filter((page) => {
+    const form = forms[page.path] ?? { title: page.defaultTitle, description: page.defaultDescription };
+    const matchesGroup = group === "Toutes" || page.group === group;
+    const matchesQuery = !normalizedQuery || normalizeAdminText(`${page.label} ${page.path} ${form.title} ${form.description}`).includes(normalizedQuery);
+
+    return matchesGroup && matchesQuery;
+  });
+
+  return (
+    <section>
+      <div className="mb-8 flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+        <div>
+          <p className="font-body text-sm font-semibold text-primary">Référencement</p>
+          <h2 className="font-heading text-4xl font-semibold">Titles & meta descriptions</h2>
+          <p className="mt-2 max-w-3xl text-sm font-body leading-relaxed text-muted-foreground">
+            Modifie les balises visibles par Google pour les pages principales et les pages SEO. Les articles de blog gardent aussi leurs champs SEO dans le formulaire Blog.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onSaveAll}
+          disabled={Boolean(savingPath)}
+          className="brand-primary-button inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-lg px-5 text-sm font-body font-semibold text-primary-foreground disabled:opacity-60"
+        >
+          {savingPath === "__all__" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+          Enregistrer tout
+        </button>
+      </div>
+
+      <div className="mb-5 grid grid-cols-1 gap-3 rounded-lg border border-border bg-card p-4 md:grid-cols-[minmax(0,1fr)_260px]">
+        <input
+          type="search"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder="Rechercher une page, une URL ou un title"
+          className="h-11 rounded-lg border border-border bg-background px-3 text-sm font-body outline-none focus:border-primary"
+        />
+        <select
+          value={group}
+          onChange={(event) => setGroup(event.target.value)}
+          className="h-11 rounded-lg border border-border bg-background px-3 text-sm font-body outline-none focus:border-primary"
+        >
+          {groups.map((item) => (
+            <option key={item} value={item}>{item}</option>
+          ))}
+        </select>
+      </div>
+
+      <div className="space-y-4">
+        {visiblePages.map((page) => {
+          const form = forms[page.path] ?? { title: page.defaultTitle, description: page.defaultDescription };
+          const savedRow = rowsByPath.get(page.path);
+          const isSaving = savingPath === page.path;
+
+          return (
+            <article key={page.path} className="rounded-lg border border-border bg-card p-4">
+              <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="font-body text-sm font-semibold">{page.label}</h3>
+                    <span className="rounded-full bg-secondary px-2.5 py-1 text-[11px] font-body font-semibold text-muted-foreground">{page.group}</span>
+                    {savedRow && <span className="rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-body font-semibold text-primary">personnalisé</span>}
+                  </div>
+                  <p className="mt-1 break-all text-xs font-body text-muted-foreground">{page.path}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => onSave(page)}
+                  disabled={Boolean(savingPath)}
+                  className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg border border-border px-4 text-xs font-body font-semibold transition-colors hover:border-primary/40 disabled:opacity-60"
+                >
+                  {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                  Enregistrer
+                </button>
+              </div>
+
+              <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+                <label className="block">
+                  <span className="mb-2 block text-xs font-body font-semibold text-muted-foreground">Title</span>
+                  <input
+                    value={form.title}
+                    onChange={(event) => onChange(page.path, "title", event.target.value)}
+                    className="h-11 w-full rounded-lg border border-border bg-background px-3 text-sm font-body outline-none focus:border-primary"
+                  />
+                  <span className="mt-1 block text-[11px] font-body text-muted-foreground">{form.title.trim().length} caractères</span>
+                </label>
+
+                <label className="block">
+                  <span className="mb-2 block text-xs font-body font-semibold text-muted-foreground">Meta description</span>
+                  <textarea
+                    value={form.description}
+                    onChange={(event) => onChange(page.path, "description", event.target.value)}
+                    rows={3}
+                    className="w-full rounded-lg border border-border bg-background px-3 py-3 text-sm font-body leading-relaxed outline-none focus:border-primary"
+                  />
+                  <span className="mt-1 block text-[11px] font-body text-muted-foreground">{form.description.trim().length} caractères</span>
+                </label>
+              </div>
+            </article>
+          );
+        })}
+      </div>
+
+      {visiblePages.length === 0 && (
+        <div className="rounded-lg border border-border bg-card p-6 text-sm font-body text-muted-foreground">
+          Aucune page ne correspond à cette recherche.
+        </div>
+      )}
+    </section>
+  );
+};
 
 const AdminTable = ({ title, description, createLabel, onCreate, columns, rows, renderRow, onEdit, onDelete }: any) => (
   <section>

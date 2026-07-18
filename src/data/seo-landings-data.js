@@ -316,13 +316,6 @@ const venueTypePages = [
     filters: { venueTypes: ["Hangar"] },
     intro: "Un hangar événementiel à Paris offre de grands volumes modulables pour un lancement, une scénographie immersive, un salon, un tournage ou une soirée privée au format atypique.",
   },
-  {
-    slug: "rooftop-evenement-paris",
-    h1: "Rooftop événementiel à Paris",
-    intentLabel: "Rooftop événementiel",
-    filters: { venueTypes: ["Rooftop"] },
-    intro: "Un rooftop événementiel à Paris est idéal pour organiser un cocktail, un lancement ou une soirée avec vue. Comparez les capacités, horaires et conditions de privatisation.",
-  },
 ].map(createParisFilterPage);
 
 const pricePages = [

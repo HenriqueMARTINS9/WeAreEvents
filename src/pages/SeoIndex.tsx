@@ -108,7 +108,6 @@ const SeoIndex = () => {
             "loft-evenement-paris",
             "hotel-evenement-paris",
             "jardin-evenement-paris",
-            "rooftop-evenement-paris",
           ],
           pagesBySlug,
         ),

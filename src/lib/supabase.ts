@@ -56,6 +56,13 @@ export type BlogPostInsert = {
   published_at?: string | null;
 };
 
+export type SeoMetadataInsert = {
+  page_path: string;
+  title: string;
+  description: string;
+  active: boolean;
+};
+
 type Database = {
   public: {
     Tables: {
@@ -68,6 +75,11 @@ type Database = {
         Insert: BlogPostInsert;
         Row: BlogPostInsert & { id: string; created_at: string; updated_at: string };
         Update: Partial<BlogPostInsert>;
+      };
+      seo_metadata: {
+        Insert: SeoMetadataInsert;
+        Row: SeoMetadataInsert & { id: string; created_at: string; updated_at: string };
+        Update: Partial<SeoMetadataInsert>;
       };
     };
   };
