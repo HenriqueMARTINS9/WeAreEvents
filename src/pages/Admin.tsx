@@ -51,6 +51,12 @@ const slugify = (value: string) =>
     .replace(/^-+|-+$/g, "");
 
 const toList = (value: string) => value.split(/\n|,/).map((item) => item.trim()).filter(Boolean);
+const normalizeAdminText = (value: string) =>
+  value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
 const toPresetList = (value: string, options: readonly string[]) => {
   const trimmedValue = value.trim();
   if (!trimmedValue) return [];
