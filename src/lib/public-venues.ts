@@ -43,7 +43,7 @@ type PublicVenueRow = {
 };
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabasePublishable = import.meta.env.VITE_SUPABASE_PUBLISHABLE;
+const supabasePublishable = import.meta.env.VITE_SUPABASE_PUBLISHABLE || import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 const getLegacySpaceTypes = (options: string[] = []) =>
   options.filter((option) => ["Espace clos", "Espace ouvert"].includes(option));

@@ -1,5 +1,5 @@
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabasePublishable = import.meta.env.VITE_SUPABASE_PUBLISHABLE;
+const supabasePublishable = import.meta.env.VITE_SUPABASE_PUBLISHABLE || import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 export type SeoMetadata = {
   pagePath: string;

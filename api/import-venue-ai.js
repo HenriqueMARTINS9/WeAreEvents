@@ -1032,7 +1032,7 @@ export default async function handler(request, response) {
   }
 
   const supabaseUrl = process.env.VITE_SUPABASE_URL;
-  const supabasePublishable = process.env.VITE_SUPABASE_PUBLISHABLE || process.env.SUPABASE_ANON_KEY;
+  const supabasePublishable = process.env.VITE_SUPABASE_PUBLISHABLE || process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
   const supabaseServiceRole = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!supabaseUrl || !supabasePublishable || !supabaseServiceRole) {

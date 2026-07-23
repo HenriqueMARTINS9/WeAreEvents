@@ -46,14 +46,34 @@
       "permanent": true
     }
   ],
-  "rewrites": [
-    {
-      "source": "/sitemap.xml",
-      "destination": "/api/sitemap"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
+  "functions": {
+    "api/seo-render.js": {
+      "includeFiles": "dist/**"
     }
-  ]
+  },
+  "rewrites": {
+    "beforeFiles": [
+      {
+        "source": "/sitemap.xml",
+        "destination": "/api/sitemap"
+      },
+      {
+        "source": "/:path*",
+        "has": [
+          {
+            "type": "header",
+            "key": "accept",
+            "value": ".*text/html.*"
+          }
+        ],
+        "destination": "/api/seo-render?path=/:path*"
+      }
+    ],
+    "fallback": [
+      {
+        "source": "/(.*)",
+        "destination": "/index.html"
+      }
+    ]
+  }
 }
