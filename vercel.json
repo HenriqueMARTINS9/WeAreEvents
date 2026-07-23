@@ -1,79 +1,96 @@
 {
-  "redirects": [
-    {
-      "source": "/location-salle-20-personnes-paris",
-      "destination": "/location-salle-20-50-personnes-paris",
-      "permanent": true
-    },
-    {
-      "source": "/location-salle-50-personnes-paris",
-      "destination": "/location-salle-20-50-personnes-paris",
-      "permanent": true
-    },
-    {
-      "source": "/location-salle-100-personnes-paris",
-      "destination": "/location-salle-50-100-personnes-paris",
-      "permanent": true
-    },
-    {
-      "source": "/location-salle-150-personnes-paris",
-      "destination": "/location-salle-100-150-personnes-paris",
-      "permanent": true
-    },
-    {
-      "source": "/location-salle-200-personnes-paris",
-      "destination": "/location-salle-150-200-personnes-paris",
-      "permanent": true
-    },
-    {
-      "source": "/location-salle-500-personnes-paris",
-      "destination": "/location-salle-200-500-personnes-paris",
-      "permanent": true
-    },
-    {
-      "source": "/rooftop-paris",
-      "destination": "/restaurant-privatisable-paris",
-      "permanent": true
-    },
-    {
-      "source": "/rooftop-evenement-paris",
-      "destination": "/terrasse-evenement-paris",
-      "permanent": true
-    },
-    {
-      "source": "/salle-ambiance-club-paris",
-      "destination": "/salle-ambiance-festive-paris",
-      "permanent": true
-    }
-  ],
   "functions": {
     "api/seo-render.js": {
       "includeFiles": "dist/**"
     }
   },
-  "rewrites": [
+  "routes": [
     {
-      "source": "/",
-      "destination": "/api/seo-render?path=/"
+      "src": "/location-salle-20-personnes-paris",
+      "status": 308,
+      "headers": {
+        "Location": "/location-salle-20-50-personnes-paris"
+      }
     },
     {
-      "source": "/sitemap.xml",
-      "destination": "/api/sitemap"
+      "src": "/location-salle-50-personnes-paris",
+      "status": 308,
+      "headers": {
+        "Location": "/location-salle-20-50-personnes-paris"
+      }
     },
     {
-      "source": "/:path*",
-      "has": [
-        {
-          "type": "header",
-          "key": "accept",
-          "value": ".*text/html.*"
-        }
-      ],
-      "destination": "/api/seo-render?path=/:path*"
+      "src": "/location-salle-100-personnes-paris",
+      "status": 308,
+      "headers": {
+        "Location": "/location-salle-50-100-personnes-paris"
+      }
     },
     {
-      "source": "/(.*)",
-      "destination": "/index.html"
+      "src": "/location-salle-150-personnes-paris",
+      "status": 308,
+      "headers": {
+        "Location": "/location-salle-100-150-personnes-paris"
+      }
+    },
+    {
+      "src": "/location-salle-200-personnes-paris",
+      "status": 308,
+      "headers": {
+        "Location": "/location-salle-150-200-personnes-paris"
+      }
+    },
+    {
+      "src": "/location-salle-500-personnes-paris",
+      "status": 308,
+      "headers": {
+        "Location": "/location-salle-200-500-personnes-paris"
+      }
+    },
+    {
+      "src": "/rooftop-paris",
+      "status": 308,
+      "headers": {
+        "Location": "/restaurant-privatisable-paris"
+      }
+    },
+    {
+      "src": "/rooftop-evenement-paris",
+      "status": 308,
+      "headers": {
+        "Location": "/terrasse-evenement-paris"
+      }
+    },
+    {
+      "src": "/salle-ambiance-club-paris",
+      "status": 308,
+      "headers": {
+        "Location": "/salle-ambiance-festive-paris"
+      }
+    },
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/$1"
+    },
+    {
+      "src": "/sitemap.xml",
+      "dest": "/api/sitemap"
+    },
+    {
+      "src": "/googlebf472ef0f6efe4ef.html",
+      "dest": "/googlebf472ef0f6efe4ef.html"
+    },
+    {
+      "src": "/(.+\\.(?:js|mjs|css|png|jpg|jpeg|gif|webp|avif|svg|ico|webmanifest|json|txt|vtt|xml|mp4|webm|mov|woff|woff2|map))",
+      "dest": "/$1"
+    },
+    {
+      "src": "/",
+      "dest": "/api/seo-render?path=/"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/api/seo-render?path=/$1"
     }
   ]
 }
