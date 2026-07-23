@@ -295,7 +295,8 @@ const resolveMetadata = async (path) => {
 const sendHtml = (response, status, html, method = "GET") => {
   response.statusCode = status;
   response.setHeader("Content-Type", "text/html; charset=utf-8");
-  response.setHeader("Cache-Control", "s-maxage=60, stale-while-revalidate=300");
+  response.setHeader("Cache-Control", "no-store, max-age=0");
+  response.setHeader("X-Wearevents-SEO-Renderer", "1");
   response.end(method === "HEAD" ? "" : html);
 };
 

@@ -53,6 +53,10 @@
   },
   "rewrites": [
     {
+      "source": "/",
+      "destination": "/api/seo-render?path=/"
+    },
+    {
       "source": "/sitemap.xml",
       "destination": "/api/sitemap"
     },
