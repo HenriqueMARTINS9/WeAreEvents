@@ -61,8 +61,8 @@ const VenueDetail = () => {
     );
   }
 
-  const seoTitle = getVenueSeoTitle(venue.title);
-  const seoDescription = getVenueSeoDescription(venue);
+  const seoTitle = venue.seoTitle?.trim() || getVenueSeoTitle(venue.title);
+  const seoDescription = venue.metaDescription?.trim() || getVenueSeoDescription(venue);
 
   if (isMobile) {
     return (

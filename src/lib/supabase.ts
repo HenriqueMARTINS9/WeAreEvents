@@ -25,6 +25,8 @@ export type VenueInsert = {
   video_end_seconds?: number | null;
   tiktok_url?: string | null;
   google_review_url: string;
+  seo_title: string;
+  meta_description: string;
   price_tier: "€" | "€€" | "€€€" | "€€€€";
   closing_time: string;
   ambiance_types: string[];

@@ -183,7 +183,7 @@ const fetchSeoMetadata = async (path) => {
 
 const fetchVenueMetadata = async (slug) => {
   const [venue] = await fetchSupabaseRows("venues", {
-    select: "title,address,city,max_capacity,cover_image",
+    select: "title,address,city,max_capacity,cover_image,seo_title,meta_description",
     slug: `eq.${slug}`,
     active: "eq.true",
     limit: "1",
@@ -196,8 +196,8 @@ const fetchVenueMetadata = async (slug) => {
   const capacity = maxCapacity > 0 ? `Jusqu'à ${maxCapacity} personnes.` : "Capacité sur demande.";
 
   return {
-    title: `${venue.title} | Réservez rapidement`,
-    description: `${address}. ${capacity} Retrouvez le reste des informations utiles sur la page de l'établissement.`,
+    title: String(venue.seo_title || "").trim() || `${venue.title} | Réservez rapidement`,
+    description: String(venue.meta_description || "").trim() || `${address}. ${capacity} Retrouvez le reste des informations utiles sur la page de l'établissement.`,
     image: venue.cover_image || defaultImage,
   };
 };

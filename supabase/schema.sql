@@ -34,6 +34,8 @@ create table if not exists public.venues (
   video_end_seconds integer,
   tiktok_url text,
   google_review_url text not null default '',
+  seo_title text not null default '',
+  meta_description text not null default '',
   price_tier text not null default '€€',
   closing_time text not null default '',
   ambiance_types text[] not null default '{}',
@@ -64,6 +66,8 @@ alter table public.venues add column if not exists guest_dispositions text[] not
 alter table public.venues add column if not exists space_types text[] not null default '{}';
 alter table public.venues add column if not exists option_features text[] not null default '{}';
 alter table public.venues add column if not exists metro_access text;
+alter table public.venues add column if not exists seo_title text not null default '';
+alter table public.venues add column if not exists meta_description text not null default '';
 
 create table if not exists public.blog_posts (
   id uuid primary key default gen_random_uuid(),

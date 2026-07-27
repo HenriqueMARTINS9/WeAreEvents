@@ -499,6 +499,8 @@ const createEmptyVenueForm = () => ({
   videoEndSeconds: "",
   tiktokUrl: "",
   googleReviewUrl: "",
+  seoTitle: "",
+  metaDescription: "",
   priceTier: "€€",
   closingTime: "02:00",
   ambianceTypes: AMBIANCE_TYPES.slice(0, 2).join("\n"),
@@ -889,6 +891,8 @@ const Admin = () => {
         video_end_seconds: venueForm.videoEndSeconds ? toNumber(venueForm.videoEndSeconds) : null,
         tiktok_url: venueForm.tiktokUrl.trim() || null,
         google_review_url: venueForm.googleReviewUrl,
+        seo_title: venueForm.seoTitle.trim(),
+        meta_description: venueForm.metaDescription.trim(),
         price_tier: venueForm.priceTier as "€" | "€€" | "€€€" | "€€€€",
         closing_time: venueForm.closingTime,
         ambiance_types: toPresetList(venueForm.ambianceTypes, AMBIANCE_TYPES),
@@ -1110,6 +1114,8 @@ const Admin = () => {
       videoEndSeconds: venue.video_end_seconds ? String(venue.video_end_seconds) : "",
       tiktokUrl: venue.tiktok_url ?? "",
       googleReviewUrl: venue.google_review_url ?? "",
+      seoTitle: venue.seo_title ?? "",
+      metaDescription: venue.meta_description ?? "",
       priceTier: venue.price_tier ?? "€€",
       closingTime: venue.closing_time ?? "",
       ambianceTypes: (venue.ambiance_types ?? []).join("\n"),
@@ -1768,6 +1774,27 @@ const VenueForm = ({
     <AdminInput label="Fin vidéo en secondes" value={form.videoEndSeconds} onChange={(value) => setForm({ ...form, videoEndSeconds: value })} />
     <AdminInput label="URL TikTok" value={form.tiktokUrl} onChange={(value) => setForm({ ...form, tiktokUrl: value })} />
     <AdminInput label="URL avis Google" value={form.googleReviewUrl} onChange={(value) => setForm({ ...form, googleReviewUrl: value })} />
+    <div className="grid gap-4 rounded-lg border border-border bg-card p-4 xl:col-span-2 xl:grid-cols-2">
+      <div className="xl:col-span-2">
+        <p className="font-body text-sm font-semibold">SEO de la salle</p>
+        <p className="mt-1 font-body text-xs text-muted-foreground">
+          Ces champs pilotent le title Google et la meta description de la fiche établissement. S'ils sont vides, le site garde le title automatique.
+        </p>
+      </div>
+      <AdminInput
+        label="Title SEO"
+        value={form.seoTitle}
+        onChange={(value) => setForm({ ...form, seoTitle: value })}
+        placeholder={form.title ? `${form.title} | Réservez rapidement` : "Ex : KAMA | Réservez rapidement"}
+      />
+      <AdminTextarea
+        label="Meta description"
+        value={form.metaDescription}
+        onChange={(value) => setForm({ ...form, metaDescription: value })}
+        hint="Idéalement 140 à 160 caractères."
+        rows={4}
+      />
+    </div>
     <div className="flex items-center gap-6 rounded-lg border border-border bg-card p-4">
       <AdminCheckbox label="Mise en avant" checked={form.featured} onChange={(value) => setForm({ ...form, featured: value })} />
       <AdminCheckbox label="Active" checked={form.active} onChange={(value) => setForm({ ...form, active: value })} />

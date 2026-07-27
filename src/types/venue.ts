@@ -38,6 +38,8 @@ export interface Venue {
   videoEndSeconds?: number;
   tiktokUrl?: string;
   googleReviewUrl: string;
+  seoTitle?: string;
+  metaDescription?: string;
   priceTier: "€" | "€€" | "€€€" | "€€€€";
   closingTime: string;
   ambianceTypes: string[];

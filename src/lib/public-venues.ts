@@ -26,6 +26,8 @@ type PublicVenueRow = {
   video_end_seconds?: number | null;
   tiktok_url?: string | null;
   google_review_url?: string | null;
+  seo_title?: string | null;
+  meta_description?: string | null;
   price_tier?: Venue["priceTier"] | null;
   closing_time?: string | null;
   ambiance_types?: string[] | null;
@@ -79,6 +81,8 @@ const mapPublicVenue = (row: PublicVenueRow): Venue => ({
   videoEndSeconds: row.video_end_seconds ?? undefined,
   tiktokUrl: row.tiktok_url ?? undefined,
   googleReviewUrl: row.google_review_url ?? "",
+  seoTitle: row.seo_title ?? "",
+  metaDescription: row.meta_description ?? "",
   priceTier: row.price_tier ?? "€€",
   closingTime: row.closing_time ?? "",
   ambianceTypes: row.ambiance_types ?? [],
