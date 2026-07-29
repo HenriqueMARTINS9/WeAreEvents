@@ -1,6 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Building2, CheckCircle2, Mail, MapPin, Phone, UserRound, X } from "lucide-react";
-import { trackEstablishmentReferralConversion } from "@/lib/analytics";
+import {
+  trackEstablishmentReferralConversion,
+  trackReferralFormStart,
+  trackReferralModalOpen,
+} from "@/lib/analytics";
 
 interface EstablishmentReferralModalProps {
   isOpen: boolean;
@@ -19,13 +23,17 @@ const initialForm = {
 const EstablishmentReferralModal = ({ isOpen, onClose }: EstablishmentReferralModalProps) => {
   const [submitted, setSubmitted] = useState(false);
   const [form, setForm] = useState(initialForm);
+  const hasStartedFormRef = useRef(false);
 
   useEffect(() => {
     if (!isOpen) {
       setSubmitted(false);
       setForm(initialForm);
+      hasStartedFormRef.current = false;
       return;
     }
+
+    trackReferralModalOpen();
 
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -45,13 +53,21 @@ const EstablishmentReferralModal = ({ isOpen, onClose }: EstablishmentReferralMo
   if (!isOpen) return null;
 
   const updateField = (field: keyof typeof initialForm, value: string) => {
+    if (!hasStartedFormRef.current) {
+      hasStartedFormRef.current = true;
+      trackReferralFormStart(field);
+    }
+
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitted(true);
-    trackEstablishmentReferralConversion(form.venueName, form.city);
+    void trackEstablishmentReferralConversion(form.venueName, form.city, {
+      email: form.email,
+      phone: form.phone,
+    });
   };
 
   return (

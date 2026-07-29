@@ -26,6 +26,7 @@ import VenueCodeSearch from "@/components/VenueCodeSearch";
 import { useIsMobile } from "@/hooks/use-mobile";
 import logoBlack from "@/assets/logo-black.svg";
 import { useEstablishmentReferralModal } from "@/lib/establishment-referral-modal";
+import { trackAllFiltersOpen, trackSearchResultsView } from "@/lib/analytics";
 import Seo, { siteUrl } from "@/components/Seo";
 
 type FilterGroupProps = {
@@ -361,6 +362,10 @@ const SearchResults = () => {
     ...optionFilters,
     ...equipmentFilters,
   ].filter(Boolean).length;
+  const openAllFilters = () => {
+    trackAllFiltersOpen(filteredResults.length, activeAdvancedFilterCount);
+    setShowAllFilters(true);
+  };
   const mobileDateLabel = formatMobileDate(eventDate);
   const guestRangeLabel =
     guestRangeMin && guestRangeMax
@@ -426,6 +431,59 @@ const SearchResults = () => {
   const toggleGuestDisposition = (value: string) => {
     setGuestDispositions((current) => toggleValue(current, value));
   };
+
+  useEffect(() => {
+    if (!venues.length) return;
+
+    const timeout = window.setTimeout(() => {
+      trackSearchResultsView({
+        locationQuery,
+        eventType,
+        eventDate,
+        guests,
+        guestRangeMin,
+        guestRangeMax,
+        maxCapacityGreaterThan,
+        maxCapacityLimit,
+        priceTier,
+        closingFilter,
+        eventCategoryFilters,
+        ambianceFilters,
+        venueTypes,
+        privatizationTypes,
+        spaceTypes,
+        optionFilters,
+        equipmentFilters,
+        guestDispositions,
+        resultCount: filteredResults.length,
+        source: isMobile ? "mobile_search" : "desktop_search",
+      });
+    }, 650);
+
+    return () => window.clearTimeout(timeout);
+  }, [
+    ambianceFilters,
+    closingFilter,
+    equipmentFilters,
+    eventCategoryFilters,
+    eventDate,
+    eventType,
+    filteredResults.length,
+    guestDispositions,
+    guestRangeMax,
+    guestRangeMin,
+    guests,
+    isMobile,
+    locationQuery,
+    maxCapacityGreaterThan,
+    maxCapacityLimit,
+    optionFilters,
+    priceTier,
+    privatizationTypes,
+    spaceTypes,
+    venueTypes,
+    venues.length,
+  ]);
 
   const FilterGroup = ({ title, options, value, values, onSelect, onToggle }: FilterGroupProps) => (
     <div>
@@ -549,7 +607,7 @@ const SearchResults = () => {
 
               <button
                 type="button"
-                onClick={() => setShowAllFilters(true)}
+                onClick={openAllFilters}
                 className="inline-flex h-10 shrink-0 items-center gap-2 rounded-full border border-border bg-background px-3 text-sm font-body font-semibold text-foreground shadow-sm transition-colors hover:border-foreground"
               >
                 <SlidersHorizontal className="h-4 w-4" />
@@ -631,7 +689,7 @@ const SearchResults = () => {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setShowAllFilters(true)}
+                  onClick={openAllFilters}
                   className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-border bg-background text-foreground shadow-md active:scale-[0.97]"
                   aria-label="Tous les filtres"
                 >

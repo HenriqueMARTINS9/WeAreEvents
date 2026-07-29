@@ -142,6 +142,7 @@ const MobileSwipeHome = () => {
           <BookingModal
             venue={bookingVenue}
             onClose={() => setBookingVenue(null)}
+            source="mobile_swipe_home"
           />
         )}
 

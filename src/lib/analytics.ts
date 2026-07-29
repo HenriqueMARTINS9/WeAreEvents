@@ -1,7 +1,32 @@
-import type { BookingRequest } from "@/types/venue";
+import type { BookingRequest, Venue } from "@/types/venue";
 
 type GoogleConsentChoice = "granted" | "denied";
 type GtagParams = Record<string, string | number | boolean | null | undefined>;
+type SearchTrackingFilters = {
+  locationQuery?: string;
+  eventType?: string;
+  eventDate?: string;
+  guests?: string;
+  guestRangeMin?: string;
+  guestRangeMax?: string;
+  maxCapacityGreaterThan?: string;
+  maxCapacityLimit?: string;
+  priceTier?: string;
+  closingFilter?: string;
+  eventCategoryFilters?: string[];
+  ambianceFilters?: string[];
+  venueTypes?: string[];
+  privatizationTypes?: string[];
+  spaceTypes?: string[];
+  optionFilters?: string[];
+  equipmentFilters?: string[];
+  guestDispositions?: string[];
+};
+
+export type EnhancedConversionData = {
+  email?: string;
+  phone?: string;
+};
 
 declare global {
   interface Window {
@@ -17,6 +42,7 @@ const referralConversionLabel = (import.meta.env.VITE_GOOGLE_ADS_REFERRAL_CONVER
 const whatsAppConversionLabel = (import.meta.env.VITE_GOOGLE_ADS_WHATSAPP_CONVERSION_LABEL || "").trim();
 const consentStorageKey = "wearevents-google-consent";
 const consentChangeEventName = "wearevents:analytics-consent-change";
+const e164PhonePattern = /^\+[1-9]\d{10,14}$/;
 
 let googleTagInitialized = false;
 let googleTagScriptRequested = false;
@@ -141,6 +167,111 @@ export const trackAnalyticsEvent = (eventName: string, params: GtagParams = {}) 
   });
 };
 
+const compactValue = (value?: string | number | boolean | null) => {
+  if (value === undefined || value === null || value === "") return undefined;
+  return value;
+};
+
+const compactList = (values?: string[]) => {
+  const items = values?.map((value) => value.trim()).filter(Boolean) ?? [];
+  return items.length ? items.join("|") : undefined;
+};
+
+const countFilters = (filters: SearchTrackingFilters) =>
+  [
+    filters.locationQuery,
+    filters.eventType,
+    filters.eventDate,
+    filters.guests,
+    filters.guestRangeMin,
+    filters.guestRangeMax,
+    filters.maxCapacityGreaterThan,
+    filters.maxCapacityLimit,
+    filters.priceTier,
+    filters.closingFilter,
+    ...(filters.eventCategoryFilters ?? []),
+    ...(filters.ambianceFilters ?? []),
+    ...(filters.venueTypes ?? []),
+    ...(filters.privatizationTypes ?? []),
+    ...(filters.spaceTypes ?? []),
+    ...(filters.optionFilters ?? []),
+    ...(filters.equipmentFilters ?? []),
+    ...(filters.guestDispositions ?? []),
+  ].filter(Boolean).length;
+
+const getSearchTerm = (filters: SearchTrackingFilters) =>
+  filters.locationQuery?.trim() ||
+  filters.eventType?.trim() ||
+  filters.eventCategoryFilters?.[0] ||
+  filters.venueTypes?.[0] ||
+  "toutes les salles";
+
+const normalizeEmail = (value?: string) => {
+  const email = value?.trim().toLowerCase();
+  if (!email || !email.includes("@")) return "";
+
+  const [localPart, domain] = email.split("@");
+  if (!localPart || !domain) return "";
+
+  if (domain === "gmail.com" || domain === "googlemail.com") {
+    return `${localPart.replace(/\./g, "")}@${domain}`;
+  }
+
+  return `${localPart}@${domain}`;
+};
+
+const normalizePhoneToE164 = (value?: string) => {
+  const phone = value?.trim();
+  if (!phone) return "";
+
+  const hasPlusPrefix = phone.startsWith("+");
+  let digits = phone.replace(/\D/g, "");
+
+  if (!digits) return "";
+  if (digits.startsWith("00")) digits = digits.slice(2);
+
+  const normalized = hasPlusPrefix || digits.startsWith("33")
+    ? `+${digits}`
+    : digits.startsWith("0")
+      ? `+33${digits.slice(1)}`
+      : `+33${digits}`;
+
+  return e164PhonePattern.test(normalized) ? normalized : "";
+};
+
+const sha256Hex = async (value: string) => {
+  if (!canUseDom() || !window.crypto?.subtle || typeof TextEncoder === "undefined") return "";
+
+  const digest = await window.crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
+  return Array.from(new Uint8Array(digest))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+};
+
+const buildEnhancedConversionUserData = async (data?: EnhancedConversionData) => {
+  const email = normalizeEmail(data?.email);
+  const phone = normalizePhoneToE164(data?.phone);
+  const [hashedEmail, hashedPhone] = await Promise.all([
+    email ? sha256Hex(email) : Promise.resolve(""),
+    phone ? sha256Hex(phone) : Promise.resolve(""),
+  ]);
+
+  return {
+    ...(hashedEmail ? { sha256_email_address: hashedEmail } : {}),
+    ...(hashedPhone ? { sha256_phone_number: hashedPhone } : {}),
+  };
+};
+
+const setEnhancedConversionUserData = async (data?: EnhancedConversionData) => {
+  if (!googleAdsId || !hasGoogleTrackingConsent() || !data) return;
+
+  const userData = await buildEnhancedConversionUserData(data);
+  if (!Object.keys(userData).length) return;
+
+  ensureGoogleTag();
+  window.gtag?.("set", "user_data", userData);
+};
+
 const trackGoogleAdsConversion = (label: string, params: GtagParams = {}) => {
   if (!googleAdsId || !label || !hasGoogleTrackingConsent()) return;
   ensureGoogleTag();
@@ -150,7 +281,109 @@ const trackGoogleAdsConversion = (label: string, params: GtagParams = {}) => {
   });
 };
 
-export const trackBookingRequestConversion = (request: BookingRequest) => {
+const getVenueTrackingParams = (venue: Venue) => ({
+  venue_id: venue.id,
+  venue_code: venue.venueCode,
+  venue_name: venue.title,
+  venue_city: venue.city,
+});
+
+export const trackSearchResultsView = (
+  filters: SearchTrackingFilters & { resultCount: number; source?: string },
+) => {
+  const filterCount = countFilters(filters);
+
+  trackAnalyticsEvent("search", {
+    search_term: getSearchTerm(filters),
+    result_count: filters.resultCount,
+    filter_count: filterCount,
+    has_filters: filterCount > 0,
+    search_source: filters.source,
+    location_query: compactValue(filters.locationQuery),
+    event_type: compactValue(filters.eventType),
+    event_date: compactValue(filters.eventDate),
+    guests: compactValue(filters.guests),
+    guest_range_min: compactValue(filters.guestRangeMin),
+    guest_range_max: compactValue(filters.guestRangeMax),
+    max_capacity_gt: compactValue(filters.maxCapacityGreaterThan),
+    max_capacity_limit: compactValue(filters.maxCapacityLimit),
+    price_tier: compactValue(filters.priceTier),
+    closing_filter: compactValue(filters.closingFilter),
+    event_categories: compactList(filters.eventCategoryFilters),
+    ambiance_types: compactList(filters.ambianceFilters),
+    venue_types: compactList(filters.venueTypes),
+    privatization_types: compactList(filters.privatizationTypes),
+    space_types: compactList(filters.spaceTypes),
+    option_filters: compactList(filters.optionFilters),
+    equipment_filters: compactList(filters.equipmentFilters),
+    guest_dispositions: compactList(filters.guestDispositions),
+  });
+};
+
+export const trackAllFiltersOpen = (resultCount: number, activeFilterCount: number) => {
+  trackAnalyticsEvent("all_filters_open", {
+    result_count: resultCount,
+    active_filter_count: activeFilterCount,
+  });
+};
+
+export const trackVenueCardOpen = (venue: Venue, context: string) => {
+  trackAnalyticsEvent("select_content", {
+    content_type: "venue",
+    interaction_context: context,
+    ...getVenueTrackingParams(venue),
+  });
+};
+
+export const trackBookingModalOpen = (venue: Venue, source: string) => {
+  trackAnalyticsEvent("booking_modal_open", {
+    interaction_source: source,
+    ...getVenueTrackingParams(venue),
+  });
+};
+
+export const trackBookingFormStart = (venue: Venue, firstField?: string) => {
+  trackAnalyticsEvent("booking_form_start", {
+    first_field: firstField,
+    ...getVenueTrackingParams(venue),
+  });
+};
+
+export const trackBookingFormError = (venue: Venue, errors: Record<string, string | undefined>) => {
+  const fields = Object.keys(errors).filter((field) => Boolean(errors[field]));
+
+  trackAnalyticsEvent("booking_form_error", {
+    error_count: fields.length,
+    error_fields: fields.join("|"),
+    ...getVenueTrackingParams(venue),
+  });
+};
+
+export const trackBookingSubmitFailure = (venue: Venue, message?: string) => {
+  trackAnalyticsEvent("booking_submit_failure", {
+    error_message: message?.slice(0, 120),
+    ...getVenueTrackingParams(venue),
+  });
+};
+
+export const trackReferralModalOpen = () => {
+  trackAnalyticsEvent("referral_modal_open", {
+    lead_type: "establishment_referral",
+  });
+};
+
+export const trackReferralFormStart = (firstField?: string) => {
+  trackAnalyticsEvent("referral_form_start", {
+    lead_type: "establishment_referral",
+    first_field: firstField,
+  });
+};
+
+export const trackBookingRequestConversion = async (
+  request: BookingRequest,
+  enhancedConversionData?: EnhancedConversionData,
+) => {
+  await setEnhancedConversionUserData(enhancedConversionData);
   trackAnalyticsEvent("generate_lead", {
     lead_type: "booking_request",
     venue_id: request.venueId,
@@ -168,7 +401,12 @@ export const trackBookingRequestConversion = (request: BookingRequest) => {
   });
 };
 
-export const trackEstablishmentReferralConversion = (venueName?: string, city?: string) => {
+export const trackEstablishmentReferralConversion = async (
+  venueName?: string,
+  city?: string,
+  enhancedConversionData?: EnhancedConversionData,
+) => {
+  await setEnhancedConversionUserData(enhancedConversionData);
   trackAnalyticsEvent("generate_lead", {
     lead_type: "establishment_referral",
     venue_name: venueName,
@@ -191,5 +429,20 @@ export const trackWhatsAppClick = (context: string, venueName?: string) => {
   trackGoogleAdsConversion(whatsAppConversionLabel, {
     value: 1,
     currency: "EUR",
+  });
+};
+
+export const trackContactClick = (method: string, context: string) => {
+  trackAnalyticsEvent("contact", {
+    method,
+    contact_context: context,
+  });
+};
+
+export const trackSocialClick = (platform: string, url: string) => {
+  trackAnalyticsEvent("select_content", {
+    content_type: "social_profile",
+    social_platform: platform,
+    link_url: url,
   });
 };

@@ -74,7 +74,7 @@ const VenueDetail = () => {
           image={venue.coverImage}
         />
         <VenueDetailSheet venue={venue} onClose={() => navigate(-1)} onBooking={() => setBookingOpen(true)} />
-        {bookingOpen && <BookingModal venue={venue} onClose={() => setBookingOpen(false)} />}
+        {bookingOpen && <BookingModal venue={venue} onClose={() => setBookingOpen(false)} source="venue_detail_mobile" />}
       </>
     );
   }
@@ -471,7 +471,7 @@ const VenueDetail = () => {
         </section>
       </main>
 
-      {bookingOpen && <BookingModal venue={venue} onClose={() => setBookingOpen(false)} />}
+      {bookingOpen && <BookingModal venue={venue} onClose={() => setBookingOpen(false)} source="venue_detail_desktop" />}
       {activeMediaIndex !== null && (
         <VenueMediaLightbox
           items={mediaItems}

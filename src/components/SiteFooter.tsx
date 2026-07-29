@@ -3,7 +3,7 @@ import { Instagram, Linkedin, Music2 } from "lucide-react";
 import logoBlack from "@/assets/logo-black.svg";
 import { socialLinks, type SocialPlatform } from "@/data/social-links";
 import { useEstablishmentReferralModal } from "@/lib/establishment-referral-modal";
-import { resetGoogleConsentChoice } from "@/lib/analytics";
+import { resetGoogleConsentChoice, trackContactClick, trackSocialClick } from "@/lib/analytics";
 
 interface SiteFooterProps {
   variant?: "light" | "dark";
@@ -30,6 +30,7 @@ const SiteFooter = ({ variant = "light" }: SiteFooterProps) => {
                 href={link.href}
                 target="_blank"
                 rel="noreferrer"
+                onClick={() => trackSocialClick(link.platform, link.href)}
                 aria-label={`Suivre Wearevents sur ${link.label}`}
                 className={`flex h-9 w-9 items-center justify-center rounded-lg border transition-colors ${
                   isDark
@@ -71,6 +72,7 @@ const SiteFooter = ({ variant = "light" }: SiteFooterProps) => {
           <div className={`space-y-2 text-sm font-body ${isDark ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
             <a
               href="mailto:contact@wearevents.fr"
+              onClick={() => trackContactClick("email", "footer")}
               className={`block transition-colors ${isDark ? "hover:text-primary-foreground" : "hover:text-foreground"}`}
             >
               contact@wearevents.fr

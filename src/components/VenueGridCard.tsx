@@ -2,6 +2,7 @@ import { useMemo, useState, type MouseEvent } from "react";
 import { Star, MapPin, Users, ArrowUpRight, ChevronLeft, ChevronRight, Images } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import type { Venue } from "@/types/venue";
+import { trackVenueCardOpen } from "@/lib/analytics";
 
 interface VenueGridCardProps {
   venue: Venue;
@@ -29,13 +30,17 @@ const VenueGridCard = ({ venue, size = "default", variant = "default" }: VenueGr
     setActiveImageIndex((current) => (current + 1) % images.length);
   };
   const openVenueDetailInNewTab = () => {
+    trackVenueCardOpen(venue, variant);
     window.open(`/salle/${venue.slug}`, "_blank", "noopener,noreferrer");
   };
 
   if (variant === "mobile") {
     return (
       <article
-        onClick={() => navigate(`/salle/${venue.slug}`)}
+        onClick={() => {
+          trackVenueCardOpen(venue, "mobile");
+          navigate(`/salle/${venue.slug}`);
+        }}
         className="group cursor-pointer"
       >
         <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-muted">

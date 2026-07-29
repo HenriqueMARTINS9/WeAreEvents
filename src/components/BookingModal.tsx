@@ -9,12 +9,19 @@ import {
   submitBookingRequest,
   validateBookingForm,
 } from "@/lib/booking";
-import { trackBookingRequestConversion } from "@/lib/analytics";
+import {
+  trackBookingFormError,
+  trackBookingFormStart,
+  trackBookingModalOpen,
+  trackBookingRequestConversion,
+  trackBookingSubmitFailure,
+} from "@/lib/analytics";
 import { toast } from "sonner";
 
 interface BookingModalProps {
   venue: Venue;
   onClose: () => void;
+  source?: string;
 }
 
 const initialForm: BookingFormValues = {
@@ -36,7 +43,7 @@ const SWIPE_MAX_OFFSET = 240;
 const SWIPE_RESISTANCE_START = 88;
 const SWIPE_RESISTANCE_FACTOR = 0.42;
 
-const BookingModal = ({ venue, onClose }: BookingModalProps) => {
+const BookingModal = ({ venue, onClose, source }: BookingModalProps) => {
   const isMobile = useIsMobile();
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
   const [fieldErrors, setFieldErrors] = useState<BookingFieldErrors>({});
@@ -48,8 +55,11 @@ const BookingModal = ({ venue, onClose }: BookingModalProps) => {
   const dragStartYRef = useRef<number | null>(null);
   const dragDistanceRef = useRef(0);
   const dragOffsetRef = useRef(0);
+  const hasStartedFormRef = useRef(false);
 
   useEffect(() => {
+    trackBookingModalOpen(venue, source ?? (isMobile ? "venue_detail_mobile" : "venue_detail_desktop"));
+
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
 
@@ -159,6 +169,7 @@ const BookingModal = ({ venue, onClose }: BookingModalProps) => {
 
     if (Object.keys(errors).length > 0) {
       setStatus("error");
+      trackBookingFormError(venue, errors);
       toast.error("Veuillez vérifier les champs signalés.");
       return;
     }
@@ -169,17 +180,26 @@ const BookingModal = ({ venue, onClose }: BookingModalProps) => {
       const submission = await submitBookingRequest(form, venue);
       setResult(submission);
       setStatus("success");
-      trackBookingRequestConversion(submission.request);
+      void trackBookingRequestConversion(submission.request, {
+        email: form.email,
+        phone: form.phone,
+      });
       toast.success("Votre demande a bien été envoyée.");
     } catch (error) {
       setStatus("error");
       const message = error instanceof Error ? error.message : "";
+      trackBookingSubmitFailure(venue, message);
       setSubmitError(message || "L'envoi n'a pas abouti. Veuillez réessayer dans quelques instants.");
       toast.error("Impossible d'envoyer la demande pour le moment.");
     }
   };
 
   const updateField = (field: keyof BookingFormValues, value: string) => {
+    if (!hasStartedFormRef.current) {
+      hasStartedFormRef.current = true;
+      trackBookingFormStart(venue, field);
+    }
+
     setForm((prev) => ({ ...prev, [field]: value }));
     setFieldErrors((prev) => {
       const next = { ...prev };
@@ -191,6 +211,11 @@ const BookingModal = ({ venue, onClose }: BookingModalProps) => {
   };
 
   const toggleSpace = (spaceId: string) => {
+    if (!hasStartedFormRef.current) {
+      hasStartedFormRef.current = true;
+      trackBookingFormStart(venue, "requestedSpaces");
+    }
+
     setForm((prev) => ({
       ...prev,
       requestedSpaces: [spaceId],
