@@ -3,6 +3,7 @@ import { Instagram, Linkedin, Music2 } from "lucide-react";
 import logoBlack from "@/assets/logo-black.svg";
 import { socialLinks, type SocialPlatform } from "@/data/social-links";
 import { useEstablishmentReferralModal } from "@/lib/establishment-referral-modal";
+import { resetGoogleConsentChoice } from "@/lib/analytics";
 
 interface SiteFooterProps {
   variant?: "light" | "dark";
@@ -60,6 +61,9 @@ const SiteFooter = ({ variant = "light" }: SiteFooterProps) => {
             <Link to="/mentions-legales" className={`block transition-colors ${isDark ? "hover:text-primary-foreground" : "hover:text-foreground"}`}>Mentions légales</Link>
             <Link to="/cgu" className={`block transition-colors ${isDark ? "hover:text-primary-foreground" : "hover:text-foreground"}`}>CGU</Link>
             <Link to="/politique-confidentialite" className={`block transition-colors ${isDark ? "hover:text-primary-foreground" : "hover:text-foreground"}`}>Confidentialité</Link>
+            <button type="button" onClick={resetGoogleConsentChoice} className={`block text-left transition-colors ${isDark ? "hover:text-primary-foreground" : "hover:text-foreground"}`}>
+              Préférences cookies
+            </button>
           </div>
         </div>
         <div>

@@ -1,6 +1,7 @@
 import { useLocation } from "react-router-dom";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { trackWhatsAppClick } from "@/lib/analytics";
 
 const FloatingWhatsAppButton = () => {
   const location = useLocation();
@@ -13,6 +14,7 @@ const FloatingWhatsAppButton = () => {
   return (
     <a
       href={buildWhatsAppUrl("Bonjour, je souhaite échanger avec Wearevents au sujet d'un événement.")}
+      onClick={() => trackWhatsAppClick("floating_button")}
       target="_blank"
       rel="noreferrer"
       className="fixed bottom-5 right-5 z-[900] inline-flex h-14 w-14 items-center justify-center rounded-full shadow-2xl transition-transform hover:scale-105 active:scale-[0.98]"

@@ -2,6 +2,7 @@ import { Share2, MessageCircle, Star, MapPin, Users, Tag, ShieldCheck } from "lu
 import type { Venue } from "@/types/venue";
 import { toast } from "sonner";
 import { buildVenueWhatsAppUrl } from "@/lib/whatsapp";
+import { trackWhatsAppClick } from "@/lib/analytics";
 import { countMobileComments } from "@/lib/mobile-comments";
 
 interface VenueCardProps {
@@ -140,6 +141,7 @@ const VenueCard = ({ venue, priority = false, onOpenDetail, onBooking, onComment
 
         <a
           href={buildVenueWhatsAppUrl(venue)}
+          onClick={() => trackWhatsAppClick("venue_card", venue.title)}
           target="_blank"
           rel="noreferrer"
           className="flex flex-col items-center gap-1 text-primary-foreground"

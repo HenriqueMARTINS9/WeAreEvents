@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Building2, CheckCircle2, Mail, MapPin, Phone, UserRound, X } from "lucide-react";
+import { trackEstablishmentReferralConversion } from "@/lib/analytics";
 
 interface EstablishmentReferralModalProps {
   isOpen: boolean;
@@ -50,6 +51,7 @@ const EstablishmentReferralModal = ({ isOpen, onClose }: EstablishmentReferralMo
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitted(true);
+    trackEstablishmentReferralConversion(form.venueName, form.city);
   };
 
   return (

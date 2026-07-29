@@ -78,8 +78,9 @@ const mentionsSections: LegalSection[] = [
   {
     title: "Cookies et mesure d'audience",
     paragraphs: [
-      "Le site peut utiliser des cookies ou technologies similaires nécessaires à son fonctionnement, à la mesure d'audience ou à l'amélioration de l'expérience utilisateur.",
-      "Lorsque le consentement est requis, l'utilisateur peut accepter, refuser ou modifier ses choix selon les modalités affichées sur le site.",
+      "Le site peut utiliser des cookies ou technologies similaires nécessaires à son fonctionnement, à la mesure d'audience et au suivi des campagnes publicitaires en France, principalement en région parisienne.",
+      "Les outils Google Analytics 4 et Google Ads peuvent être utilisés uniquement après consentement afin de mesurer les visites, les clics WhatsApp, les demandes de disponibilité et les demandes de référencement d'établissement.",
+      "L'utilisateur peut accepter, refuser ou modifier ses choix via la bannière de consentement ou le lien Préférences cookies présent dans le footer.",
     ],
   },
   {
@@ -241,7 +242,8 @@ const privacySections: LegalSection[] = [
     title: "Cookies et stockage local",
     paragraphs: [
       "Le site peut utiliser du stockage local, du stockage de session ou des cookies strictement nécessaires au fonctionnement de certaines interfaces, par exemple pour conserver un brouillon dans l'administration, mémoriser un affichage temporaire ou enregistrer des commentaires côté navigateur.",
-      "Si des outils de mesure d'audience ou de suivi nécessitant un consentement sont ajoutés ultérieurement, un mécanisme d'information et de choix sera mis en place.",
+      "Google Analytics 4 et Google Ads peuvent être activés après consentement pour mesurer l'audience, la performance des campagnes et les conversions liées aux demandes envoyées depuis le site.",
+      "Le choix de consentement est conservé localement dans le navigateur et peut être réinitialisé depuis le lien Préférences cookies du footer.",
     ],
   },
   {

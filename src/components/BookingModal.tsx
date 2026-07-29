@@ -9,6 +9,7 @@ import {
   submitBookingRequest,
   validateBookingForm,
 } from "@/lib/booking";
+import { trackBookingRequestConversion } from "@/lib/analytics";
 import { toast } from "sonner";
 
 interface BookingModalProps {
@@ -168,6 +169,7 @@ const BookingModal = ({ venue, onClose }: BookingModalProps) => {
       const submission = await submitBookingRequest(form, venue);
       setResult(submission);
       setStatus("success");
+      trackBookingRequestConversion(submission.request);
       toast.success("Votre demande a bien été envoyée.");
     } catch (error) {
       setStatus("error");

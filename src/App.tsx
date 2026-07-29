@@ -5,6 +5,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import EstablishmentReferralModalProvider from "@/components/EstablishmentReferralModalProvider";
 import FloatingWhatsAppButton from "@/components/FloatingWhatsAppButton";
+import GoogleTagTracker from "@/components/GoogleTagTracker";
 import Index from "./pages/Index.tsx";
 
 const VenueDetail = lazy(() => import("./pages/VenueDetail.tsx"));
@@ -46,6 +47,7 @@ const App = () => (
             </Routes>
           </Suspense>
           <FloatingWhatsAppButton />
+          <GoogleTagTracker />
         </EstablishmentReferralModalProvider>
       </BrowserRouter>
     </TooltipProvider>
