@@ -65,6 +65,26 @@ export type SeoMetadataInsert = {
   active: boolean;
 };
 
+export type BookingRequestInsert = {
+  id: string;
+  venue_id?: string | null;
+  venue_code: string;
+  venue_title: string;
+  venue_city: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  desired_date: string | null;
+  start_time: string;
+  end_time: string;
+  guest_count: number;
+  event_type: string;
+  requested_spaces: string[];
+  message?: string | null;
+  status: string;
+};
+
 type Database = {
   public: {
     Tables: {
@@ -82,6 +102,11 @@ type Database = {
         Insert: SeoMetadataInsert;
         Row: SeoMetadataInsert & { id: string; created_at: string; updated_at: string };
         Update: Partial<SeoMetadataInsert>;
+      };
+      booking_requests: {
+        Insert: BookingRequestInsert;
+        Row: BookingRequestInsert & { created_at: string; updated_at: string };
+        Update: Partial<BookingRequestInsert>;
       };
     };
   };

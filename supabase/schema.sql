@@ -101,6 +101,45 @@ create table if not exists public.seo_metadata (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists public.booking_requests (
+  id text primary key,
+  venue_id uuid references public.venues(id) on delete set null,
+  venue_code text not null default '',
+  venue_title text not null default '',
+  venue_city text not null default '',
+  first_name text not null default '',
+  last_name text not null default '',
+  email text not null default '',
+  phone text not null default '',
+  desired_date date,
+  start_time text not null default '',
+  end_time text not null default '',
+  guest_count integer not null default 0,
+  event_type text not null default '',
+  requested_spaces text[] not null default '{}',
+  message text,
+  status text not null default 'new',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.booking_requests add column if not exists venue_id uuid references public.venues(id) on delete set null;
+alter table public.booking_requests add column if not exists venue_code text not null default '';
+alter table public.booking_requests add column if not exists venue_title text not null default '';
+alter table public.booking_requests add column if not exists venue_city text not null default '';
+alter table public.booking_requests add column if not exists first_name text not null default '';
+alter table public.booking_requests add column if not exists last_name text not null default '';
+alter table public.booking_requests add column if not exists email text not null default '';
+alter table public.booking_requests add column if not exists phone text not null default '';
+alter table public.booking_requests add column if not exists desired_date date;
+alter table public.booking_requests add column if not exists start_time text not null default '';
+alter table public.booking_requests add column if not exists end_time text not null default '';
+alter table public.booking_requests add column if not exists guest_count integer not null default 0;
+alter table public.booking_requests add column if not exists event_type text not null default '';
+alter table public.booking_requests add column if not exists requested_spaces text[] not null default '{}';
+alter table public.booking_requests add column if not exists message text;
+alter table public.booking_requests add column if not exists status text not null default 'new';
+
 create or replace function public.set_updated_at()
 returns trigger
 language plpgsql
@@ -126,9 +165,15 @@ create trigger seo_metadata_set_updated_at
 before update on public.seo_metadata
 for each row execute function public.set_updated_at();
 
+drop trigger if exists booking_requests_set_updated_at on public.booking_requests;
+create trigger booking_requests_set_updated_at
+before update on public.booking_requests
+for each row execute function public.set_updated_at();
+
 alter table public.venues enable row level security;
 alter table public.blog_posts enable row level security;
 alter table public.seo_metadata enable row level security;
+alter table public.booking_requests enable row level security;
 
 drop policy if exists "Public can read active venues" on public.venues;
 create policy "Public can read active venues"
@@ -162,6 +207,19 @@ using (active = true);
 drop policy if exists "Authenticated users can manage SEO metadata" on public.seo_metadata;
 create policy "Authenticated users can manage SEO metadata"
 on public.seo_metadata for all
+to authenticated
+using (true)
+with check (true);
+
+drop policy if exists "Anyone can create booking requests" on public.booking_requests;
+create policy "Anyone can create booking requests"
+on public.booking_requests for insert
+to anon
+with check (true);
+
+drop policy if exists "Authenticated users can manage booking requests" on public.booking_requests;
+create policy "Authenticated users can manage booking requests"
+on public.booking_requests for all
 to authenticated
 using (true)
 with check (true);

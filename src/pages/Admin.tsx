@@ -3,6 +3,7 @@ import type { Session } from "@supabase/supabase-js";
 import {
   Bold,
   Building2,
+  ClipboardList,
   FileText,
   Image,
   Italic,
@@ -26,6 +27,7 @@ import {
 } from "lucide-react";
 import {
   AMBIANCE_TYPES,
+  BOOKING_REQUEST_STATUS_OPTIONS,
   CLOSING_TIME_PRESETS,
   EVENT_TYPES,
   EXTERNAL_OPTIONS,
@@ -36,6 +38,7 @@ import {
   SERVICES,
   SPACE_TYPES,
   VENUE_TYPES,
+  type BookingRequestTrackingStatus,
 } from "@/types/venue";
 import { editableSeoPages, type EditableSeoPage } from "@/data/seo-pages";
 import { isSupabaseConfigured, supabase, type BlogPostInsert, type SeoMetadataInsert, type VenueInsert } from "@/lib/supabase";
@@ -69,6 +72,54 @@ const toPresetList = (value: string, options: readonly string[]) => {
 const toNumber = (value: string, fallback = 0) => {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+type AdminView = "dashboard" | "venues" | "blogs" | "requests" | "seo";
+
+const bookingRequestStatusLabels = Object.fromEntries(
+  BOOKING_REQUEST_STATUS_OPTIONS.map((option) => [option.value, option.label]),
+) as Record<BookingRequestTrackingStatus, string>;
+
+const getBookingRequestStatusLabel = (status: string) =>
+  bookingRequestStatusLabels[status as BookingRequestTrackingStatus] ?? status;
+
+const bookingRequestStatusClasses: Record<BookingRequestTrackingStatus, string> = {
+  new: "bg-primary/10 text-primary",
+  contacted: "bg-blue-100 text-blue-700",
+  waiting_venue: "bg-amber-100 text-amber-800",
+  proposal_sent: "bg-purple-100 text-purple-700",
+  confirmed: "bg-emerald-100 text-emerald-700",
+  lost: "bg-muted text-muted-foreground",
+  email_failed: "bg-destructive/10 text-destructive",
+};
+
+const getBookingRequestStatusClass = (status: string) =>
+  bookingRequestStatusClasses[status as BookingRequestTrackingStatus] ?? "bg-secondary text-secondary-foreground";
+
+const formatAdminDate = (value?: string | null) => {
+  if (!value) return "-";
+  const date = new Date(value.includes("T") ? value : `${value}T12:00:00`);
+  if (Number.isNaN(date.getTime())) return "-";
+
+  return new Intl.DateTimeFormat("fr-FR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(date);
+};
+
+const formatAdminDateTime = (value?: string | null) => {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+
+  return new Intl.DateTimeFormat("fr-FR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
 };
 
 type ReservationOptionForm = {
@@ -594,7 +645,7 @@ const Admin = () => {
   const [authLoading, setAuthLoading] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [view, setView] = useState<"dashboard" | "venues" | "blogs" | "seo">("dashboard");
+  const [view, setView] = useState<AdminView>("dashboard");
   const [modal, setModal] = useState<"venue" | "blog" | null>(null);
   const [saving, setSaving] = useState(false);
   const [uploadingImages, setUploadingImages] = useState(false);
@@ -604,8 +655,10 @@ const Admin = () => {
   const [adminVenues, setAdminVenues] = useState<any[]>([]);
   const [adminBlogPosts, setAdminBlogPosts] = useState<any[]>([]);
   const [adminSeoMetadata, setAdminSeoMetadata] = useState<any[]>([]);
+  const [adminBookingRequests, setAdminBookingRequests] = useState<any[]>([]);
   const [seoForms, setSeoForms] = useState<SeoMetadataFormState>(() => buildSeoMetadataForms());
   const [savingSeoPath, setSavingSeoPath] = useState<string | null>(null);
+  const [updatingRequestId, setUpdatingRequestId] = useState<string | null>(null);
   const [editingVenueId, setEditingVenueId] = useState<string | null>(null);
   const [editingBlogId, setEditingBlogId] = useState<string | null>(null);
   const [venueForm, setVenueForm] = useState(createEmptyVenueForm);
@@ -632,10 +685,11 @@ const Admin = () => {
   const loadAdminRecords = async () => {
     if (!supabase || !session) return;
 
-    const [venuesResult, blogResult, seoResult] = await Promise.all([
+    const [venuesResult, blogResult, seoResult, bookingRequestsResult] = await Promise.all([
       supabase.from("venues").select("*").order("created_at", { ascending: false }),
       supabase.from("blog_posts").select("*").order("created_at", { ascending: false }),
       supabase.from("seo_metadata").select("*").order("page_path", { ascending: true }),
+      supabase.from("booking_requests").select("*").order("created_at", { ascending: false }),
     ]);
 
     if (!venuesResult.error) setAdminVenues(venuesResult.data ?? []);
@@ -644,6 +698,8 @@ const Admin = () => {
     if (blogResult.error) setMessage(formatAdminError(blogResult.error));
     if (!seoResult.error) setAdminSeoMetadata(seoResult.data ?? []);
     if (seoResult.error) setMessage(formatAdminError(seoResult.error));
+    if (!bookingRequestsResult.error) setAdminBookingRequests(bookingRequestsResult.data ?? []);
+    if (bookingRequestsResult.error) setMessage(formatAdminError(bookingRequestsResult.error));
   };
 
   useEffect(() => {
@@ -664,6 +720,8 @@ const Admin = () => {
   const featuredVenues = adminVenues.filter((venue) => venue.featured).length;
   const publishedPosts = adminBlogPosts.filter((post) => post.published).length;
   const seoMetadataCount = adminSeoMetadata.length;
+  const newBookingRequests = adminBookingRequests.filter((request) => request.status === "new").length;
+  const emailFailedBookingRequests = adminBookingRequests.filter((request) => request.status === "email_failed").length;
 
   const uploadMediaFiles = async (files: FileList | File[], folder: string, acceptedKinds: Array<UploadedMedia["kind"]>) => {
     if (!supabase) return [];
@@ -1166,6 +1224,37 @@ const Admin = () => {
     if (!error) loadAdminRecords();
   };
 
+  const updateBookingRequestStatus = async (
+    requestId: string,
+    status: BookingRequestTrackingStatus,
+  ) => {
+    if (!supabase || !canSubmit) return;
+    setUpdatingRequestId(requestId);
+    setMessage("");
+
+    try {
+      const { error } = await supabase
+        .from("booking_requests")
+        .update({ status })
+        .eq("id", requestId);
+
+      if (error) throw error;
+
+      setAdminBookingRequests((current) =>
+        current.map((request) =>
+          request.id === requestId
+            ? { ...request, status, updated_at: new Date().toISOString() }
+            : request,
+        ),
+      );
+      setMessage(`Statut mis à jour : ${getBookingRequestStatusLabel(status)}.`);
+    } catch (error) {
+      setMessage(formatAdminError(error));
+    } finally {
+      setUpdatingRequestId(null);
+    }
+  };
+
   const updateSeoForm = (path: string, field: "title" | "description", value: string) => {
     setSeoForms((current) => ({
       ...current,
@@ -1275,13 +1364,18 @@ const Admin = () => {
                   venuesCount={adminVenues.length}
                   activeVenues={activeVenues}
                   featuredVenues={featuredVenues}
+                  bookingRequestsCount={adminBookingRequests.length}
+                  newBookingRequests={newBookingRequests}
+                  emailFailedBookingRequests={emailFailedBookingRequests}
                   postsCount={adminBlogPosts.length}
                   publishedPosts={publishedPosts}
                   seoMetadataCount={seoMetadataCount}
                   recentVenues={adminVenues.slice(0, 4)}
                   recentPosts={adminBlogPosts.slice(0, 4)}
+                  recentBookingRequests={adminBookingRequests.slice(0, 4)}
                   onCreateVenue={openCreateVenue}
                   onCreateBlog={openCreateBlog}
+                  onOpenRequests={() => setView("requests")}
                   onOpenVenues={() => setView("venues")}
                   onOpenBlogs={() => setView("blogs")}
                   onOpenSeo={() => setView("seo")}
@@ -1292,6 +1386,13 @@ const Admin = () => {
               )}
               {view === "blogs" && (
                 <BlogsView posts={adminBlogPosts} onCreate={openCreateBlog} onEdit={editBlogPost} onDelete={(item) => deleteBlogPost(item.id)} />
+              )}
+              {view === "requests" && (
+                <BookingRequestsView
+                  requests={adminBookingRequests}
+                  updatingRequestId={updatingRequestId}
+                  onStatusChange={updateBookingRequestStatus}
+                />
               )}
               {view === "seo" && (
                 <SeoMetadataView
@@ -1379,6 +1480,7 @@ const AdminSidebar = ({ view, onViewChange, onCreateVenue, onCreateBlog }: any) 
       { id: "dashboard", label: "Dashboard", icon: <LayoutDashboard className="h-4 w-4" /> },
       { id: "venues", label: "Salles", icon: <Building2 className="h-4 w-4" /> },
       { id: "blogs", label: "Blogs", icon: <FileText className="h-4 w-4" /> },
+      { id: "requests", label: "Demandes", icon: <ClipboardList className="h-4 w-4" /> },
       { id: "seo", label: "SEO", icon: <Pilcrow className="h-4 w-4" /> },
     ].map((item) => (
       <button
@@ -1406,24 +1508,59 @@ const AdminSidebar = ({ view, onViewChange, onCreateVenue, onCreateBlog }: any) 
   </aside>
 );
 
-const DashboardView = ({ venuesCount, activeVenues, featuredVenues, postsCount, publishedPosts, seoMetadataCount, recentVenues, recentPosts, onCreateVenue, onCreateBlog, onOpenVenues, onOpenBlogs, onOpenSeo }: any) => (
+const DashboardView = ({
+  venuesCount,
+  activeVenues,
+  featuredVenues,
+  bookingRequestsCount,
+  newBookingRequests,
+  emailFailedBookingRequests,
+  postsCount,
+  publishedPosts,
+  seoMetadataCount,
+  recentVenues,
+  recentPosts,
+  recentBookingRequests,
+  onCreateVenue,
+  onCreateBlog,
+  onOpenRequests,
+  onOpenVenues,
+  onOpenBlogs,
+  onOpenSeo,
+}: any) => (
   <div>
     <div className="mb-8">
       <p className="font-body text-sm font-semibold text-primary">Vue rapide</p>
       <h2 className="font-heading text-4xl font-semibold">Dashboard</h2>
-      <p className="mt-2 text-sm font-body text-muted-foreground">Gérez les salles, les contenus blog et les informations visibles sur le site.</p>
+      <p className="mt-2 text-sm font-body text-muted-foreground">Gérez les demandes, les salles, les contenus blog et les informations visibles sur le site.</p>
     </div>
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
       <MetricCard label="Salles" value={venuesCount} detail={`${activeVenues} actives`} />
       <MetricCard label="À forte demande" value={featuredVenues} detail="mises en avant" />
+      <MetricCard label="Demandes" value={bookingRequestsCount} detail={`${newBookingRequests} nouvelles`} />
       <MetricCard label="Articles" value={postsCount} detail={`${publishedPosts} publiés`} />
       <MetricCard label="SEO" value={seoMetadataCount} detail="overrides actifs" />
     </div>
-    <div className="mt-8 grid grid-cols-1 gap-6 xl:grid-cols-2">
+    {emailFailedBookingRequests > 0 && (
+      <div className="mt-5 rounded-lg border border-destructive/25 bg-destructive/5 px-4 py-3 text-sm font-body text-destructive">
+        {emailFailedBookingRequests} demande{emailFailedBookingRequests > 1 ? "s" : ""} avec email à vérifier.
+      </div>
+    )}
+    <div className="mt-8 grid grid-cols-1 gap-6 xl:grid-cols-3">
+      <QuickPanel
+        title="Demandes récentes"
+        items={recentBookingRequests}
+        empty="Aucune demande"
+        getTitle={(item: any) => `${item.first_name} ${item.last_name}`}
+        getMeta={(item: any) => `${item.venue_title} · ${formatAdminDate(item.desired_date)} · ${getBookingRequestStatusLabel(item.status)}`}
+        onOpen={onOpenRequests}
+        actionLabel="Voir les demandes"
+      />
       <QuickPanel title="Salles récentes" items={recentVenues} empty="Aucune salle" getTitle={(item: any) => item.title} getMeta={(item: any) => `${item.venue_code} · ${item.city} · ${item.active ? "active" : "inactive"}`} onOpen={onOpenVenues} actionLabel="Voir les salles" />
       <QuickPanel title="Blogs récents" items={recentPosts} empty="Aucun article" getTitle={(item: any) => item.title} getMeta={(item: any) => `${item.category} · ${item.published ? "publié" : "brouillon"}`} onOpen={onOpenBlogs} actionLabel="Voir les blogs" />
     </div>
-    <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-3">
+    <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <ActionCard title="Suivre les demandes" description="Qualifier les demandes reçues et mettre à jour leur statut de traitement." onClick={onOpenRequests} />
       <ActionCard title="Ajouter une salle" description="Créer une fiche complète avec galerie, infos pratiques, filtres et vidéo." onClick={onCreateVenue} />
       <ActionCard title="Ajouter un blog" description="Publier un guide ou une checklist visible sur la page Blog et l'accueil." onClick={onCreateBlog} />
       <ActionCard title="Optimiser les métadonnées" description="Modifier les titles Google et les meta descriptions des pages principales et SEO." onClick={onOpenSeo} />
@@ -1471,6 +1608,145 @@ const BlogsView = ({ posts, onCreate, onEdit, onDelete }: any) => (
     onEdit={onEdit}
     onDelete={onDelete}
   />
+);
+
+const BookingRequestsView = ({
+  requests,
+  updatingRequestId,
+  onStatusChange,
+}: {
+  requests: any[];
+  updatingRequestId: string | null;
+  onStatusChange: (requestId: string, status: BookingRequestTrackingStatus) => void;
+}) => (
+  <section>
+    <div className="mb-6">
+      <p className="font-body text-sm font-semibold text-primary">Suivi commercial</p>
+      <h2 className="font-heading text-4xl font-semibold">Demandes</h2>
+      <p className="mt-2 max-w-3xl text-sm font-body leading-relaxed text-muted-foreground">
+        Retrouvez les demandes envoyées depuis les fiches établissement et mettez à jour leur statut de traitement.
+      </p>
+    </div>
+
+    <div className="mb-5 grid grid-cols-1 gap-4 md:grid-cols-4">
+      <MetricCard label="Total" value={requests.length} detail="demandes reçues" />
+      <MetricCard label="Nouvelles" value={requests.filter((request) => request.status === "new").length} detail="à traiter" />
+      <MetricCard label="Confirmées" value={requests.filter((request) => request.status === "confirmed").length} detail="bookings validés" />
+      <MetricCard label="À vérifier" value={requests.filter((request) => request.status === "email_failed").length} detail="envoi email échoué" />
+    </div>
+
+    <div className="overflow-hidden rounded-lg border border-border bg-card luxury-shadow">
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[1180px] text-left">
+          <thead className="border-b border-border bg-secondary/70">
+            <tr>
+              {["Demande", "Lieu", "Date", "Invités", "Contact", "Espaces", "Statut", "Créée le"].map((column) => (
+                <th key={column} className="px-4 py-3 text-xs font-body font-semibold uppercase text-muted-foreground">{column}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {requests.length === 0 ? (
+              <tr>
+                <td colSpan={8} className="px-4 py-10 text-center text-sm font-body text-muted-foreground">
+                  Aucune demande pour le moment.
+                </td>
+              </tr>
+            ) : (
+              requests.map((request) => (
+                <tr key={request.id} className="align-top">
+                  <td className="px-4 py-4">
+                    <div className="min-w-[210px]">
+                      <p className="font-body text-sm font-semibold text-foreground">{request.id}</p>
+                      <p className="mt-1 text-xs font-body text-muted-foreground">
+                        {request.event_type || "Événement non précisé"}
+                      </p>
+                      {request.message && (
+                        <p className="mt-2 line-clamp-2 max-w-xs text-xs font-body leading-relaxed text-muted-foreground">
+                          {request.message}
+                        </p>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-4 py-4">
+                    <div className="min-w-[190px]">
+                      <p className="font-body text-sm font-semibold text-foreground">{request.venue_title || "-"}</p>
+                      <p className="mt-1 text-xs font-body text-muted-foreground">
+                        {[request.venue_code, request.venue_city].filter(Boolean).join(" · ") || "-"}
+                      </p>
+                    </div>
+                  </td>
+                  <td className="px-4 py-4 text-sm font-body text-foreground/80">
+                    <div className="min-w-[130px]">
+                      <p>{formatAdminDate(request.desired_date)}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {[request.start_time, request.end_time].filter(Boolean).join(" - ") || "-"}
+                      </p>
+                    </div>
+                  </td>
+                  <td className="px-4 py-4 text-sm font-body text-foreground/80">
+                    {request.guest_count ? `${request.guest_count} pers.` : "-"}
+                  </td>
+                  <td className="px-4 py-4">
+                    <div className="min-w-[210px] text-sm font-body">
+                      <p className="font-semibold text-foreground">
+                        {[request.first_name, request.last_name].filter(Boolean).join(" ") || "-"}
+                      </p>
+                      {request.email && (
+                        <a href={`mailto:${request.email}`} className="mt-1 block break-all text-xs text-muted-foreground underline-offset-4 hover:text-primary hover:underline">
+                          {request.email}
+                        </a>
+                      )}
+                      {request.phone && (
+                        <a href={`tel:${request.phone}`} className="mt-1 block text-xs text-muted-foreground underline-offset-4 hover:text-primary hover:underline">
+                          {request.phone}
+                        </a>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-4 py-4">
+                    <div className="max-w-[210px] text-xs font-body leading-relaxed text-muted-foreground">
+                      {(request.requested_spaces ?? []).length
+                        ? request.requested_spaces.join(", ")
+                        : "-"}
+                    </div>
+                  </td>
+                  <td className="px-4 py-4">
+                    <div className="min-w-[190px]">
+                      <span className={`mb-2 inline-flex rounded-full px-2.5 py-1 text-xs font-body font-semibold ${getBookingRequestStatusClass(request.status)}`}>
+                        {getBookingRequestStatusLabel(request.status)}
+                      </span>
+                      <select
+                        value={request.status || "new"}
+                        disabled={updatingRequestId === request.id}
+                        onChange={(event) => onStatusChange(request.id, event.target.value as BookingRequestTrackingStatus)}
+                        className="h-10 w-full rounded-lg border border-border bg-background px-3 text-xs font-body font-semibold outline-none focus:border-primary disabled:opacity-60"
+                        aria-label={`Changer le statut de la demande ${request.id}`}
+                      >
+                        {BOOKING_REQUEST_STATUS_OPTIONS.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </td>
+                  <td className="px-4 py-4 text-sm font-body text-foreground/80">
+                    <div className="min-w-[130px]">
+                      <p>{formatAdminDateTime(request.created_at)}</p>
+                      {request.updated_at && request.updated_at !== request.created_at && (
+                        <p className="mt-1 text-xs text-muted-foreground">MAJ {formatAdminDateTime(request.updated_at)}</p>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
 );
 
 const SeoMetadataView = ({

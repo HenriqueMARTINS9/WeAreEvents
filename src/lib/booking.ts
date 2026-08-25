@@ -1,6 +1,6 @@
-import { EVENT_TYPES } from "@/types/venue";
+import { EVENT_TYPES, type BookingRequestTrackingStatus } from "@/types/venue";
 import type { BookingEmailTemplates, BookingRequest, Venue } from "@/types/venue";
-import { supabase } from "@/lib/supabase";
+import { supabase, type BookingRequestInsert } from "@/lib/supabase";
 
 export interface BookingFormValues {
   firstName: string;
@@ -28,6 +28,7 @@ const WEAREVENTS_GOOGLE_REVIEW_URL = "https://g.page/r/Cb3yTIoVykRuEBM/review";
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const phonePattern = /^[+()\d\s.-]{8,}$/;
+const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 const trimForm = (form: BookingFormValues): BookingFormValues => ({
   firstName: form.firstName.trim(),
@@ -272,6 +273,41 @@ const sendBookingEmails = async (request: BookingRequest, emails: BookingEmailTe
   }
 };
 
+const buildBookingRequestInsert = (
+  request: BookingRequest,
+  status: BookingRequestTrackingStatus,
+): BookingRequestInsert => ({
+  id: request.id,
+  venue_id: uuidPattern.test(request.venueId) ? request.venueId : null,
+  venue_code: request.venueCode,
+  venue_title: request.venueTitle,
+  venue_city: request.venueCity,
+  first_name: request.firstName,
+  last_name: request.lastName,
+  email: request.email,
+  phone: request.phone,
+  desired_date: request.desiredDate || null,
+  start_time: request.startTime,
+  end_time: request.endTime,
+  guest_count: request.guestCount,
+  event_type: request.eventType,
+  requested_spaces: request.requestedSpaces,
+  message: request.message ?? null,
+  status,
+});
+
+const saveBookingRequest = async (request: BookingRequest) => {
+  if (!supabase) return;
+
+  const { error } = await supabase
+    .from("booking_requests")
+    .insert(buildBookingRequestInsert(request, "new"));
+
+  if (error) {
+    throw new Error(error.message || "L'enregistrement de la demande a échoué.");
+  }
+};
+
 export const submitBookingRequest = async (
   form: BookingFormValues,
   venue: Venue,
@@ -283,6 +319,7 @@ export const submitBookingRequest = async (
 
   const request = createBookingRequest(form, venue);
   const emails = buildBookingEmailTemplates(request, venue);
+  await saveBookingRequest(request);
   await sendBookingEmails(request, emails);
 
   return { request, emails };

@@ -56,6 +56,20 @@ export interface Venue {
   reviewCount: number;
 }
 
+export type BookingRequestDeliveryStatus = "pending" | "sent" | "failed";
+
+export const BOOKING_REQUEST_STATUS_OPTIONS = [
+  { value: "new", label: "Nouvelle" },
+  { value: "contacted", label: "Client contacté" },
+  { value: "waiting_venue", label: "En attente du lieu" },
+  { value: "proposal_sent", label: "Proposition envoyée" },
+  { value: "confirmed", label: "Confirmée" },
+  { value: "lost", label: "Perdue" },
+  { value: "email_failed", label: "Email à vérifier" },
+] as const;
+
+export type BookingRequestTrackingStatus = (typeof BOOKING_REQUEST_STATUS_OPTIONS)[number]["value"];
+
 export interface BookingRequest {
   id: string;
   venueId: string;
@@ -73,7 +87,7 @@ export interface BookingRequest {
   eventType: string;
   requestedSpaces: string[];
   message?: string;
-  status: "pending" | "sent" | "failed";
+  status: BookingRequestDeliveryStatus;
   createdAt: string;
 }
 

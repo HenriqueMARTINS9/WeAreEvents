@@ -59,7 +59,9 @@ const BookingModal = ({ venue, onClose, source }: BookingModalProps) => {
 
   useEffect(() => {
     trackBookingModalOpen(venue, source ?? (isMobile ? "venue_detail_mobile" : "venue_detail_desktop"));
+  }, [isMobile, source, venue]);
 
+  useEffect(() => {
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
 
