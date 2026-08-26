@@ -282,6 +282,34 @@ const venueTypePages = [
     intro: "Une maison événementielle à Paris offre un cadre plus chaleureux et confidentiel pour organiser un dîner, une réception, un événement privé ou un rendez-vous professionnel.",
   },
   {
+    slug: "appartement-evenement-paris",
+    h1: "Appartement événementiel à Paris",
+    intentLabel: "Appartement événementiel",
+    filters: { venueTypes: ["Appartement"] },
+    intro: "Un appartement événementiel à Paris permet d'organiser une réception intimiste, un shooting, un dîner privé ou un événement professionnel dans un cadre plus confidentiel.",
+  },
+  {
+    slug: "villa-evenement-paris",
+    h1: "Villa événementielle à Paris",
+    intentLabel: "Villa événementielle",
+    filters: { venueTypes: ["Villa"] },
+    intro: "Une villa événementielle apporte un cadre premium et chaleureux pour organiser une réception privée, un cocktail, un tournage ou un événement d'entreprise avec une atmosphère exclusive.",
+  },
+  {
+    slug: "chateau-evenement-paris",
+    h1: "Château événementiel à Paris",
+    intentLabel: "Château événementiel",
+    filters: { venueTypes: ["Château"] },
+    intro: "Un château événementiel convient aux mariages, galas, réceptions et événements professionnels qui recherchent un lieu marquant, élégant et structuré pour accueillir les invités.",
+  },
+  {
+    slug: "domaine-evenement-paris",
+    h1: "Domaine événementiel à Paris",
+    intentLabel: "Domaine événementiel",
+    filters: { venueTypes: ["Domaine"] },
+    intro: "Un domaine événementiel permet de recevoir dans un cadre plus vaste et modulable, adapté aux mariages, séminaires, cocktails et événements privés ou professionnels.",
+  },
+  {
     slug: "hotel-evenement-paris",
     h1: "Hôtel événementiel à Paris",
     intentLabel: "Hôtel événementiel",
@@ -315,6 +343,13 @@ const venueTypePages = [
     intentLabel: "Hangar événementiel",
     filters: { venueTypes: ["Hangar"] },
     intro: "Un hangar événementiel à Paris offre de grands volumes modulables pour un lancement, une scénographie immersive, un salon, un tournage ou une soirée privée au format atypique.",
+  },
+  {
+    slug: "showroom-evenement-paris",
+    h1: "Showroom événementiel à Paris",
+    intentLabel: "Showroom événementiel",
+    filters: { venueTypes: ["Showroom"] },
+    intro: "Un showroom événementiel à Paris est adapté aux lancements de produit, pop-up stores, shootings, présentations presse et événements de marque dans un espace soigné.",
   },
 ].map(createParisFilterPage);
 
@@ -355,6 +390,17 @@ const ambiancePages = [
   ["salle-ambiance-festive-paris", "Salle avec ambiance festive à Paris", "Salle avec ambiance festive", "Festif", "Pour une soirée dansante, un anniversaire ou un événement de nuit, comparez les salles avec ambiance festive à Paris et leurs options de musique, danse et horaires."],
   ["salle-ambiance-corporate-paris", "Salle avec ambiance corporate à Paris", "Salle avec ambiance corporate", "Corporate", "Les salles avec ambiance corporate à Paris sont pensées pour les séminaires, lancements, cocktails professionnels et événements d'entreprise."],
   ["salle-ambiance-elegante-paris", "Salle avec ambiance élégante à Paris", "Salle avec ambiance élégante", "Élégant", "Une salle avec ambiance élégante à Paris permet d'organiser une réception, un dîner ou un événement premium dans un cadre plus soigné."],
+  ["salle-ambiance-intimiste-paris", "Salle avec ambiance intimiste à Paris", "Salle avec ambiance intimiste", "Intimiste", "Une salle avec ambiance intimiste à Paris convient aux dîners privés, anniversaires en petit comité, réunions confidentielles et événements plus chaleureux."],
+  ["salle-ambiance-atypique-paris", "Salle avec ambiance atypique à Paris", "Salle avec ambiance atypique", "Atypique", "Pour sortir du cadre classique, comparez les salles avec ambiance atypique à Paris : lieux originaux, décors singuliers et formats plus mémorables."],
+  ["salle-ambiance-chic-paris", "Salle avec ambiance chic à Paris", "Salle avec ambiance chic", "Chic", "Une salle avec ambiance chic à Paris permet d'organiser une réception élégante, un cocktail, un lancement ou un événement privé dans un cadre soigné."],
+  ["salle-ambiance-conviviale-paris", "Salle avec ambiance conviviale à Paris", "Salle avec ambiance conviviale", "Convivial", "Une ambiance conviviale facilite les échanges pour un anniversaire, un afterwork, un repas d'équipe ou une soirée privée accessible et chaleureuse."],
+  ["salle-ambiance-lounge-paris", "Salle avec ambiance lounge à Paris", "Salle avec ambiance lounge", "Lounge", "Les salles avec ambiance lounge à Paris sont adaptées aux cocktails, soirées privées et événements professionnels dans une atmosphère confortable et feutrée."],
+  ["salle-ambiance-premium-paris", "Salle avec ambiance premium à Paris", "Salle avec ambiance premium", "Premium", "Une salle avec ambiance premium à Paris répond aux événements exigeants : réception, gala, lancement de produit ou soirée privée avec une expérience plus haut de gamme."],
+  ["salle-ambiance-decontractee-paris", "Salle avec ambiance décontractée à Paris", "Salle avec ambiance décontractée", "Décontracté", "Une salle avec ambiance décontractée convient aux afterworks, anniversaires, team buildings et événements où l'on cherche un cadre simple et agréable."],
+  ["salle-ambiance-boheme-paris", "Salle avec ambiance bohème à Paris", "Salle avec ambiance bohème", "Bohème", "Une ambiance bohème apporte un esprit chaleureux et naturel pour un mariage, une baby shower, un cocktail ou une réception plus créative."],
+  ["salle-ambiance-moderne-paris", "Salle avec ambiance moderne à Paris", "Salle avec ambiance moderne", "Moderne", "Les salles avec ambiance moderne à Paris conviennent aux événements professionnels, lancements, cocktails et soirées privées dans un cadre actuel et fonctionnel."],
+  ["salle-ambiance-industrielle-paris", "Salle avec ambiance industrielle à Paris", "Salle avec ambiance industrielle", "Industriel", "Une salle avec ambiance industrielle offre un décor brut et contemporain pour un lancement, un tournage, une soirée privée ou un événement de marque."],
+  ["salle-ambiance-romantique-paris", "Salle avec ambiance romantique à Paris", "Salle avec ambiance romantique", "Romantique", "Une salle avec ambiance romantique à Paris est adaptée aux mariages, demandes, anniversaires de couple et réceptions dans un cadre plus doux et élégant."],
 ].map(([slug, h1, intentLabel, ambiance, intro]) =>
   createParisFilterPage({
     slug,
@@ -483,6 +529,7 @@ const servicePages = [
   ["salle-avec-scene-paris", "Salle avec scène à Paris", "Salle avec scène", "Scène"],
   ["salle-avec-personnel-sur-place-paris", "Salle avec personnel sur place à Paris", "Salle avec personnel sur place", "Personnel sur place"],
   ["salle-avec-securite-paris", "Salle avec sécurité à Paris", "Salle avec sécurité", "Sécurité"],
+  ["salle-avec-hebergement-paris", "Salle avec hébergement à Paris", "Salle avec hébergement", "Hébergement"],
 ].map(([slug, h1, intentLabel, equipment]) =>
   createParisFilterPage({
     slug,
