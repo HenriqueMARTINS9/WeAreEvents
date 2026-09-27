@@ -31,6 +31,8 @@ export interface Venue {
   accessDetails: string[];
   usefulInformation: string[];
   pricingText: string;
+  priceAmount?: number;
+  priceType?: "per_person" | "minimum_spend" | "venue_hire";
   coverImage: string;
   gallery: string[];
   videoUrl?: string;
@@ -87,6 +89,13 @@ export interface BookingRequest {
   eventType: string;
   requestedSpaces: string[];
   message?: string;
+  landingPage?: string;
+  referrer?: string;
+  trafficSource?: string;
+  utmSource?: string;
+  utmMedium?: string;
+  utmCampaign?: string;
+  interactionSource?: string;
   status: BookingRequestDeliveryStatus;
   createdAt: string;
 }
@@ -114,6 +123,12 @@ export interface Review {
   comment: string;
   createdAt: string;
 }
+
+export const VENUE_PRICE_TYPES = [
+  { value: "per_person", label: "Prix par personne" },
+  { value: "minimum_spend", label: "Minimum de consommation" },
+  { value: "venue_hire", label: "Location du lieu" },
+] as const;
 
 export interface TikTokVenueCodeMapping {
   code: string;

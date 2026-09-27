@@ -27,6 +27,8 @@ create table if not exists public.venues (
   access_details text[] not null default '{}',
   useful_information text[] not null default '{}',
   pricing_text text not null default '',
+  price_amount numeric(10, 2),
+  price_type text,
   cover_image text not null default '',
   gallery text[] not null default '{}',
   video_url text,
@@ -68,6 +70,20 @@ alter table public.venues add column if not exists option_features text[] not nu
 alter table public.venues add column if not exists metro_access text;
 alter table public.venues add column if not exists seo_title text not null default '';
 alter table public.venues add column if not exists meta_description text not null default '';
+alter table public.venues add column if not exists price_amount numeric(10, 2);
+alter table public.venues add column if not exists price_type text;
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint where conname = 'venues_price_type_check'
+  ) then
+    alter table public.venues
+      add constraint venues_price_type_check
+      check (price_type is null or price_type in ('per_person', 'minimum_spend', 'venue_hire'));
+  end if;
+end;
+$$;
 
 create table if not exists public.blog_posts (
   id uuid primary key default gen_random_uuid(),
@@ -118,6 +134,16 @@ create table if not exists public.booking_requests (
   event_type text not null default '',
   requested_spaces text[] not null default '{}',
   message text,
+  landing_page text not null default '',
+  referrer text not null default '',
+  traffic_source text not null default '',
+  utm_source text not null default '',
+  utm_medium text not null default '',
+  utm_campaign text not null default '',
+  interaction_source text not null default '',
+  review_token uuid not null default gen_random_uuid(),
+  review_email_scheduled_at timestamptz,
+  review_email_sent_at timestamptz,
   status text not null default 'new',
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -139,6 +165,62 @@ alter table public.booking_requests add column if not exists event_type text not
 alter table public.booking_requests add column if not exists requested_spaces text[] not null default '{}';
 alter table public.booking_requests add column if not exists message text;
 alter table public.booking_requests add column if not exists status text not null default 'new';
+alter table public.booking_requests add column if not exists landing_page text not null default '';
+alter table public.booking_requests add column if not exists referrer text not null default '';
+alter table public.booking_requests add column if not exists traffic_source text not null default '';
+alter table public.booking_requests add column if not exists utm_source text not null default '';
+alter table public.booking_requests add column if not exists utm_medium text not null default '';
+alter table public.booking_requests add column if not exists utm_campaign text not null default '';
+alter table public.booking_requests add column if not exists interaction_source text not null default '';
+alter table public.booking_requests add column if not exists review_token uuid not null default gen_random_uuid();
+alter table public.booking_requests add column if not exists review_email_scheduled_at timestamptz;
+alter table public.booking_requests add column if not exists review_email_sent_at timestamptz;
+
+create unique index if not exists booking_requests_review_token_idx
+on public.booking_requests (review_token);
+
+create table if not exists public.venue_reviews (
+  id uuid primary key default gen_random_uuid(),
+  booking_request_id text not null unique references public.booking_requests(id) on delete cascade,
+  venue_id uuid not null references public.venues(id) on delete cascade,
+  review_token uuid not null unique,
+  author_name text not null default '',
+  rating integer not null check (rating between 1 and 5),
+  comment text not null check (char_length(comment) between 10 and 1200),
+  published boolean not null default true,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create or replace function public.prepare_venue_review()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  booking public.booking_requests;
+begin
+  select * into booking
+  from public.booking_requests
+  where review_token = new.review_token
+    and status = 'confirmed';
+
+  if booking.id is null then
+    raise exception 'Lien d''avis invalide ou réservation non confirmée';
+  end if;
+
+  new.booking_request_id = booking.id;
+  new.venue_id = booking.venue_id;
+  new.author_name = trim(concat(booking.first_name, ' ', left(booking.last_name, 1), case when booking.last_name <> '' then '.' else '' end));
+  return new;
+end;
+$$;
+
+drop trigger if exists venue_reviews_prepare on public.venue_reviews;
+create trigger venue_reviews_prepare
+before insert on public.venue_reviews
+for each row execute function public.prepare_venue_review();
 
 create or replace function public.set_updated_at()
 returns trigger
@@ -170,10 +252,16 @@ create trigger booking_requests_set_updated_at
 before update on public.booking_requests
 for each row execute function public.set_updated_at();
 
+drop trigger if exists venue_reviews_set_updated_at on public.venue_reviews;
+create trigger venue_reviews_set_updated_at
+before update on public.venue_reviews
+for each row execute function public.set_updated_at();
+
 alter table public.venues enable row level security;
 alter table public.blog_posts enable row level security;
 alter table public.seo_metadata enable row level security;
 alter table public.booking_requests enable row level security;
+alter table public.venue_reviews enable row level security;
 
 drop policy if exists "Public can read active venues" on public.venues;
 create policy "Public can read active venues"
@@ -220,6 +308,24 @@ with check (true);
 drop policy if exists "Authenticated users can manage booking requests" on public.booking_requests;
 create policy "Authenticated users can manage booking requests"
 on public.booking_requests for all
+to authenticated
+using (true)
+with check (true);
+
+drop policy if exists "Public can read published venue reviews" on public.venue_reviews;
+create policy "Public can read published venue reviews"
+on public.venue_reviews for select
+using (published = true);
+
+drop policy if exists "Anyone can submit a confirmed booking review" on public.venue_reviews;
+create policy "Anyone can submit a confirmed booking review"
+on public.venue_reviews for insert
+to anon
+with check (true);
+
+drop policy if exists "Authenticated users can manage venue reviews" on public.venue_reviews;
+create policy "Authenticated users can manage venue reviews"
+on public.venue_reviews for all
 to authenticated
 using (true)
 with check (true);

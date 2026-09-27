@@ -1,6 +1,7 @@
 import { EVENT_TYPES, type BookingRequestTrackingStatus } from "@/types/venue";
 import type { BookingEmailTemplates, BookingRequest, Venue } from "@/types/venue";
 import { supabase, type BookingRequestInsert } from "@/lib/supabase";
+import type { BookingAttribution } from "@/lib/booking-attribution";
 
 export interface BookingFormValues {
   firstName: string;
@@ -70,9 +71,9 @@ const getRequestedCapacity = (requestedSpaces: string[], venue: Venue) => {
 };
 
 const buildReviewFollowUpDate = (dateValue: string) => {
-  const nextDay = new Date(`${dateValue}T10:00:00`);
-  nextDay.setDate(nextDay.getDate() + 1);
-  return nextDay.toISOString();
+  const followUpDate = new Date(`${dateValue}T10:00:00`);
+  followUpDate.setDate(followUpDate.getDate() + 2);
+  return followUpDate.toISOString();
 };
 
 const formatEventTypePhrase = (eventType: string) => {
@@ -142,7 +143,11 @@ export const validateBookingForm = (form: BookingFormValues, venue: Venue): Book
   return errors;
 };
 
-export const createBookingRequest = (form: BookingFormValues, venue: Venue): BookingRequest => {
+export const createBookingRequest = (
+  form: BookingFormValues,
+  venue: Venue,
+  attribution?: Partial<BookingAttribution>,
+): BookingRequest => {
   const values = trimForm(form);
 
   return {
@@ -164,6 +169,13 @@ export const createBookingRequest = (form: BookingFormValues, venue: Venue): Boo
       .filter((space) => values.requestedSpaces.includes(space.id))
       .map((space) => space.name),
     message: values.message || undefined,
+    landingPage: attribution?.landingPage,
+    referrer: attribution?.referrer,
+    trafficSource: attribution?.trafficSource,
+    utmSource: attribution?.utmSource,
+    utmMedium: attribution?.utmMedium,
+    utmCampaign: attribution?.utmCampaign,
+    interactionSource: attribution?.interactionSource,
     status: "sent",
     createdAt: new Date().toISOString(),
   };
@@ -293,6 +305,13 @@ const buildBookingRequestInsert = (
   event_type: request.eventType,
   requested_spaces: request.requestedSpaces,
   message: request.message ?? null,
+  landing_page: request.landingPage ?? "",
+  referrer: request.referrer ?? "",
+  traffic_source: request.trafficSource ?? "",
+  utm_source: request.utmSource ?? "",
+  utm_medium: request.utmMedium ?? "",
+  utm_campaign: request.utmCampaign ?? "",
+  interaction_source: request.interactionSource ?? "",
   status,
 });
 
@@ -311,13 +330,14 @@ const saveBookingRequest = async (request: BookingRequest) => {
 export const submitBookingRequest = async (
   form: BookingFormValues,
   venue: Venue,
+  attribution?: Partial<BookingAttribution>,
 ): Promise<BookingSubmissionResult> => {
   const errors = validateBookingForm(form, venue);
   if (Object.keys(errors).length > 0) {
     throw new Error("VALIDATION_ERROR");
   }
 
-  const request = createBookingRequest(form, venue);
+  const request = createBookingRequest(form, venue, attribution);
   const emails = buildBookingEmailTemplates(request, venue);
   await saveBookingRequest(request);
   await sendBookingEmails(request, emails);

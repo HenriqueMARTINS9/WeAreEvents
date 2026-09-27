@@ -68,6 +68,8 @@ const mapVenue = (row: any): Venue => ({
   accessDetails: row.access_details ?? [],
   usefulInformation: row.useful_information ?? [],
   pricingText: row.pricing_text ?? "",
+  priceAmount: row.price_amount == null ? undefined : Number(row.price_amount),
+  priceType: row.price_type ?? undefined,
   coverImage: row.cover_image ?? "",
   gallery: row.gallery ?? [],
   videoUrl: row.video_url ?? undefined,
@@ -264,6 +266,37 @@ export const fetchBlogPosts = async (): Promise<BlogPost[]> => {
   }
 
   return data.map(mapBlogPost);
+};
+
+export const fetchVenueReviews = async (venueId: string) => {
+  if (!supabase) return [];
+
+  const { data, error } = await supabase
+    .from("venue_reviews")
+    .select("id,venue_id,author_name,rating,comment,created_at")
+    .eq("venue_id", venueId)
+    .eq("published", true)
+    .order("created_at", { ascending: false });
+
+  if (error || !data) return [];
+
+  type VenueReviewRow = {
+    id: string;
+    venue_id: string;
+    author_name: string;
+    rating: number;
+    comment: string;
+    created_at: string;
+  };
+
+  return (data as VenueReviewRow[]).map((review) => ({
+    id: review.id,
+    venueId: review.venue_id,
+    authorName: review.author_name,
+    rating: Number(review.rating),
+    comment: review.comment,
+    createdAt: review.created_at,
+  }));
 };
 
 export const fetchBlogPostBySlug = async (slug: string): Promise<BlogPost | undefined> => {

@@ -105,7 +105,7 @@ describe("booking workflow", () => {
     expect(templates.venueContactNotification.text).not.toContain(request.phone);
     expect(templates.venueContactNotification.text).not.toContain(request.email);
     expect(templates.postEventReviewFollowUp.to).toBe(validForm.email);
-    expect(templates.postEventReviewFollowUp.scheduledFor).toContain("2099-06-13");
+    expect(templates.postEventReviewFollowUp.scheduledFor).toContain("2099-06-14");
     expect(templates.postEventReviewFollowUp.text).toContain("https://g.page/r/Cb3yTIoVykRuEBM/review");
   });
 

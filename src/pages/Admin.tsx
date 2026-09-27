@@ -37,6 +37,7 @@ import {
   PRIVATIZATION_TYPES,
   SERVICES,
   SPACE_TYPES,
+  VENUE_PRICE_TYPES,
   VENUE_TYPES,
   type BookingRequestTrackingStatus,
 } from "@/types/venue";
@@ -301,7 +302,7 @@ const decodeImageFile = async (file: File) => {
 };
 
 const compressImageForUpload = async (file: File) => {
-  if (file.size <= maxImageUploadSizeBytes) return file;
+  if (file.size <= maxImageUploadSizeBytes && ["image/webp", "image/avif"].includes(file.type)) return file;
 
   const decodedImage = await decodeImageFile(file);
   const canvas = document.createElement("canvas");
@@ -328,11 +329,11 @@ const compressImageForUpload = async (file: File) => {
       context.fillRect(0, 0, canvas.width, canvas.height);
       context.drawImage(decodedImage.source, 0, 0, canvas.width, canvas.height);
 
-      const blob = await canvasToBlob(canvas, "image/jpeg", quality);
+      const blob = await canvasToBlob(canvas, "image/webp", quality);
       if (!bestBlob || blob.size < bestBlob.size) bestBlob = blob;
       if (blob.size <= maxImageUploadSizeBytes) {
-        return new File([blob], `${slugify(file.name.replace(/\.[^.]+$/, "")) || "image"}.jpg`, {
-          type: "image/jpeg",
+        return new File([blob], `${slugify(file.name.replace(/\.[^.]+$/, "")) || "image"}.webp`, {
+          type: "image/webp",
           lastModified: Date.now(),
         });
       }
@@ -543,6 +544,8 @@ const createEmptyVenueForm = () => ({
   accessDetails: "",
   usefulInformation: "",
   pricingText: "Sur devis",
+  priceAmount: "",
+  priceType: "per_person",
   coverImage: "",
   gallery: "",
   videoUrl: "",
@@ -942,6 +945,8 @@ const Admin = () => {
         access_details: toList(venueForm.accessDetails),
         useful_information: toList(venueForm.usefulInformation),
         pricing_text: venueForm.pricingText,
+        price_amount: venueForm.priceAmount ? toNumber(venueForm.priceAmount) : null,
+        price_type: venueForm.priceAmount ? venueForm.priceType as VenueInsert["price_type"] : null,
         cover_image: venueForm.coverImage.trim(),
         gallery: toList(venueForm.gallery),
         video_url: venueForm.videoUrl.trim() || null,
@@ -1165,6 +1170,8 @@ const Admin = () => {
       accessDetails: (venue.access_details ?? []).join("\n"),
       usefulInformation: (venue.useful_information ?? []).join("\n"),
       pricingText: venue.pricing_text ?? "",
+      priceAmount: venue.price_amount == null ? "" : String(venue.price_amount),
+      priceType: venue.price_type ?? "per_person",
       coverImage: venue.cover_image ?? "",
       gallery: (venue.gallery ?? []).join("\n"),
       videoUrl: venue.video_url ?? "",
@@ -1637,10 +1644,10 @@ const BookingRequestsView = ({
 
     <div className="overflow-hidden rounded-lg border border-border bg-card luxury-shadow">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[1180px] text-left">
+        <table className="w-full min-w-[1360px] text-left">
           <thead className="border-b border-border bg-secondary/70">
             <tr>
-              {["Demande", "Lieu", "Date", "Invités", "Contact", "Espaces", "Statut", "Créée le"].map((column) => (
+              {["Demande", "Lieu", "Date", "Invités", "Contact", "Origine", "Espaces", "Statut", "Créée le"].map((column) => (
                 <th key={column} className="px-4 py-3 text-xs font-body font-semibold uppercase text-muted-foreground">{column}</th>
               ))}
             </tr>
@@ -1648,7 +1655,7 @@ const BookingRequestsView = ({
           <tbody className="divide-y divide-border">
             {requests.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-4 py-10 text-center text-sm font-body text-muted-foreground">
+                <td colSpan={9} className="px-4 py-10 text-center text-sm font-body text-muted-foreground">
                   Aucune demande pour le moment.
                 </td>
               </tr>
@@ -1702,6 +1709,14 @@ const BookingRequestsView = ({
                           {request.phone}
                         </a>
                       )}
+                    </div>
+                  </td>
+                  <td className="px-4 py-4">
+                    <div className="max-w-[220px] text-xs font-body leading-relaxed text-muted-foreground">
+                      <p className="font-semibold text-foreground">{request.traffic_source || "Accès direct"}</p>
+                      {request.interaction_source && <p className="mt-1">CTA : {request.interaction_source}</p>}
+                      {request.utm_campaign && <p className="mt-1">Campagne : {request.utm_campaign}</p>}
+                      {request.landing_page && <p className="mt-1 truncate" title={request.landing_page}>{request.landing_page}</p>}
                     </div>
                   </td>
                   <td className="px-4 py-4">
@@ -1991,7 +2006,15 @@ const VenueForm = ({
     <AdminInput label="Longitude" value={form.lng} onChange={(value) => setForm({ ...form, lng: value })} />
     <AdminInput label="Capacité minimum" value={form.minCapacity} onChange={(value) => setForm({ ...form, minCapacity: value })} />
     <AdminInput label="Capacité maximum" value={form.maxCapacity} onChange={(value) => setForm({ ...form, maxCapacity: value })} />
-    <AdminInput label="Prix indicatif" value={form.pricingText} onChange={(value) => setForm({ ...form, pricingText: value })} />
+    <AdminInput label="Texte du prix" value={form.pricingText} onChange={(value) => setForm({ ...form, pricingText: value })} />
+    <AdminInput label="Montant indicatif (facultatif)" type="number" min="0" step="0.01" value={form.priceAmount} onChange={(value) => setForm({ ...form, priceAmount: value })} placeholder="Ex : 45" />
+    <AdminSelect
+      label="Type de prix indicatif"
+      value={form.priceType}
+      onChange={(value) => setForm({ ...form, priceType: value })}
+      options={VENUE_PRICE_TYPES.map((option) => option.value)}
+      getOptionLabel={(value) => VENUE_PRICE_TYPES.find((option) => option.value === value)?.label ?? value}
+    />
     <AdminSelect label="Symbole prix" value={form.priceTier} onChange={(value) => setForm({ ...form, priceTier: value })} options={PRICE_TIERS} />
     <AdminPresetSelect label="Horaires" value={form.closingTime} onChange={(value) => setForm({ ...form, closingTime: value })} options={CLOSING_TIME_PRESETS} />
     <AdminInput label="Accès métro" value={form.metroAccess} onChange={(value) => setForm({ ...form, metroAccess: value })} placeholder="Ex: George V, ligne 1" />
@@ -2497,6 +2520,9 @@ type FieldProps = {
   required?: boolean;
   rows?: number;
   placeholder?: string;
+  type?: "text" | "number";
+  min?: string;
+  step?: string;
 };
 
 const AdminMediaField = ({
@@ -2575,18 +2601,18 @@ const AdminMediaField = ({
   );
 };
 
-const AdminInput = ({ label, value, onChange, required, placeholder }: FieldProps) => (
+const AdminInput = ({ label, value, onChange, required, placeholder, type = "text", min, step }: FieldProps) => (
   <label className="block rounded-lg border border-border bg-card p-4">
     <span className="mb-2 block text-sm font-body font-semibold">{label}</span>
-    <input value={value} onChange={(event) => onChange(event.target.value)} required={required} placeholder={placeholder} className="h-11 w-full rounded-lg border border-border bg-background px-3 text-sm font-body outline-none focus:border-primary" />
+    <input type={type} min={min} step={step} value={value} onChange={(event) => onChange(event.target.value)} required={required} placeholder={placeholder} className="h-11 w-full rounded-lg border border-border bg-background px-3 text-sm font-body outline-none focus:border-primary" />
   </label>
 );
 
-const AdminSelect = ({ label, value, onChange, options }: { label: string; value: string; onChange: (value: string) => void; options: readonly string[] }) => (
+const AdminSelect = ({ label, value, onChange, options, getOptionLabel = (option) => option }: { label: string; value: string; onChange: (value: string) => void; options: readonly string[]; getOptionLabel?: (option: string) => string }) => (
   <label className="block rounded-lg border border-border bg-card p-4">
     <span className="mb-2 block text-sm font-body font-semibold">{label}</span>
     <select value={value} onChange={(event) => onChange(event.target.value)} className="h-11 w-full rounded-lg border border-border bg-background px-3 text-sm font-body outline-none focus:border-primary">
-      {options.map((option) => <option key={option} value={option}>{option}</option>)}
+      {options.map((option) => <option key={option} value={option}>{getOptionLabel(option)}</option>)}
     </select>
   </label>
 );

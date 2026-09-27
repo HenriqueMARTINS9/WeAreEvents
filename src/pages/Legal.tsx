@@ -3,7 +3,7 @@ import DesktopNav from "@/components/DesktopNav";
 import MobileHeader from "@/components/MobileHeader";
 import SiteFooter from "@/components/SiteFooter";
 import VenueCodeSearch from "@/components/VenueCodeSearch";
-import Seo from "@/components/Seo";
+import Seo, { siteUrl } from "@/components/Seo";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 type LegalPageKind = "mentions" | "cgu" | "privacy";
@@ -310,7 +310,19 @@ const Legal = ({ kind }: { kind: LegalPageKind }) => {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <Seo title={page.seoTitle} description={page.description} path={page.path} />
+      <Seo
+        title={page.seoTitle}
+        description={page.description}
+        path={page.path}
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Accueil", item: siteUrl },
+            { "@type": "ListItem", position: 2, name: page.title, item: `${siteUrl}${page.path}` },
+          ],
+        }}
+      />
       {isMobile ? (
         <MobileHeader onCodeSearch={() => setShowCodeSearch(true)} withBackground />
       ) : (

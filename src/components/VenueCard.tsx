@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { buildVenueWhatsAppUrl } from "@/lib/whatsapp";
 import { trackWhatsAppClick } from "@/lib/analytics";
 import { countMobileComments } from "@/lib/mobile-comments";
+import { formatVenueCapacity, getVenueImageAlt, hasVenueRating } from "@/lib/venue-display";
 
 interface VenueCardProps {
   venue: Venue;
@@ -17,6 +18,7 @@ interface VenueCardProps {
 
 const VenueCard = ({ venue, priority = false, onOpenDetail, onBooking, onComments, commentsCount }: VenueCardProps) => {
   const visibleCommentsCount = commentsCount ?? countMobileComments(venue.id);
+  const showRating = hasVenueRating(venue);
 
   const handleShare = async () => {
     const shareUrl = typeof window !== "undefined"
@@ -56,7 +58,7 @@ const VenueCard = ({ venue, priority = false, onOpenDetail, onBooking, onComment
       {/* Cover image */}
       <img
         src={venue.coverImage}
-        alt={venue.title}
+        alt={getVenueImageAlt(venue)}
         width={1080}
         height={1920}
         className="absolute inset-0 h-full w-full object-cover image-grade-luxe"
@@ -119,12 +121,14 @@ const VenueCard = ({ venue, priority = false, onOpenDetail, onBooking, onComment
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-primary-foreground/90 text-xs font-body">
             <span className="flex items-center gap-1">
               <Users className="w-3.5 h-3.5" />
-              {venue.minCapacity}–{venue.maxCapacity} pers.
+              {formatVenueCapacity(venue, "pers.")}
             </span>
-            <span className="flex items-center gap-1">
-              <Star className="w-3.5 h-3.5 fill-accent text-accent" />
-              {venue.rating} ({venue.reviewCount})
-            </span>
+            {showRating && (
+              <span className="flex items-center gap-1">
+                <Star className="w-3.5 h-3.5 fill-accent text-accent" />
+                {venue.rating} ({venue.reviewCount})
+              </span>
+            )}
           </div>
         </button>
       </div>

@@ -1,8 +1,9 @@
 import { useMemo, useState, type MouseEvent } from "react";
 import { Star, MapPin, Users, ArrowUpRight, ChevronLeft, ChevronRight, Images } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import type { Venue } from "@/types/venue";
 import { trackVenueCardOpen } from "@/lib/analytics";
+import { formatVenueCapacity, formatVenuePrice, getVenueImageAlt, hasVenueRating } from "@/lib/venue-display";
 
 interface VenueGridCardProps {
   venue: Venue;
@@ -12,6 +13,7 @@ interface VenueGridCardProps {
 
 const VenueGridCard = ({ venue, size = "default", variant = "default" }: VenueGridCardProps) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const isLarge = size === "large";
   const isSearch = variant === "search";
   const images = useMemo(
@@ -21,6 +23,9 @@ const VenueGridCard = ({ venue, size = "default", variant = "default" }: VenueGr
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const activeImage = images[activeImageIndex] ?? venue.coverImage;
   const hasMultipleImages = images.length > 1;
+  const detailSearch = location.pathname === "/recherche" ? location.search : "";
+  const detailUrl = `/salle/${venue.slug}${detailSearch}`;
+  const showRating = hasVenueRating(venue);
   const showPreviousImage = (event: MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
     setActiveImageIndex((current) => (current - 1 + images.length) % images.length);
@@ -29,9 +34,9 @@ const VenueGridCard = ({ venue, size = "default", variant = "default" }: VenueGr
     event.stopPropagation();
     setActiveImageIndex((current) => (current + 1) % images.length);
   };
-  const openVenueDetailInNewTab = () => {
+  const openVenueDetail = () => {
     trackVenueCardOpen(venue, variant);
-    window.open(`/salle/${venue.slug}`, "_blank", "noopener,noreferrer");
+    navigate(detailUrl);
   };
 
   if (variant === "mobile") {
@@ -39,14 +44,16 @@ const VenueGridCard = ({ venue, size = "default", variant = "default" }: VenueGr
       <article
         onClick={() => {
           trackVenueCardOpen(venue, "mobile");
-          navigate(`/salle/${venue.slug}`);
+          navigate(detailUrl);
         }}
         className="group cursor-pointer"
       >
         <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-muted">
           <img
             src={activeImage}
-            alt={venue.title}
+            alt={getVenueImageAlt(venue, activeImageIndex)}
+            width={960}
+            height={720}
             className="h-full w-full object-cover image-grade-luxe transition-transform duration-700 group-active:scale-[1.02]"
             loading="lazy"
           />
@@ -86,16 +93,18 @@ const VenueGridCard = ({ venue, size = "default", variant = "default" }: VenueGr
                 {venue.city}
               </p>
             </div>
-            <span className="mt-0.5 inline-flex shrink-0 items-center gap-1 text-sm font-body font-semibold text-foreground">
-              <Star className="h-4 w-4 fill-foreground text-foreground" />
-              {venue.rating}
-            </span>
+            {showRating && (
+              <span className="mt-0.5 inline-flex shrink-0 items-center gap-1 text-sm font-body font-semibold text-foreground">
+                <Star className="h-4 w-4 fill-foreground text-foreground" />
+                {venue.rating}
+              </span>
+            )}
           </div>
           <p className="mt-2 line-clamp-1 text-sm font-body leading-relaxed text-muted-foreground">
             {venue.tagline}
           </p>
           <p className="mt-1 text-sm font-body font-semibold text-foreground">
-            {venue.minCapacity}–{venue.maxCapacity} invités · {venue.pricingText}
+            {formatVenueCapacity(venue, "invités")} · {formatVenuePrice(venue)}
           </p>
         </div>
       </article>
@@ -104,7 +113,7 @@ const VenueGridCard = ({ venue, size = "default", variant = "default" }: VenueGr
 
   return (
     <div
-      onClick={openVenueDetailInNewTab}
+      onClick={openVenueDetail}
       className={`group flex h-full cursor-pointer flex-col overflow-hidden rounded-lg border border-border bg-card transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 ${
         isSearch ? "shadow-sm hover:shadow-xl" : "luxury-shadow"
       }`}
@@ -112,7 +121,9 @@ const VenueGridCard = ({ venue, size = "default", variant = "default" }: VenueGr
       <div className={`relative overflow-hidden bg-foreground ${isLarge ? "h-72" : "h-64"}`}>
         <img
           src={activeImage}
-          alt={venue.title}
+          alt={getVenueImageAlt(venue, activeImageIndex)}
+          width={960}
+          height={640}
           className="w-full h-full object-cover image-grade-luxe transition-transform duration-700 group-hover:scale-105"
           loading="lazy"
         />
@@ -141,16 +152,18 @@ const VenueGridCard = ({ venue, size = "default", variant = "default" }: VenueGr
             </div>
           </>
         )}
-        <div className="absolute top-3 right-3">
-          <div className="flex items-center gap-1 px-2 py-1 rounded-lg glass-dark text-primary-foreground text-xs font-body">
-            <Star className="w-3 h-3 fill-accent text-accent" />
-            {venue.rating}
+        {showRating && (
+          <div className="absolute top-3 right-3">
+            <div className="flex items-center gap-1 px-2 py-1 rounded-lg glass-dark text-primary-foreground text-xs font-body">
+              <Star className="w-3 h-3 fill-accent text-accent" />
+              {venue.rating}
+            </div>
           </div>
-        </div>
+        )}
         <div className="absolute bottom-4 left-4 right-4">
           <p className="mb-1 text-xs font-body text-primary-foreground/75">{venue.city}</p>
           <h3 className={`font-heading font-semibold leading-tight text-primary-foreground ${isLarge ? "text-3xl" : "text-2xl"}`}>
-            {venue.title}
+            <Link to={detailUrl} onClick={(event) => event.stopPropagation()}>{venue.title}</Link>
           </h3>
         </div>
       </div>
@@ -166,9 +179,9 @@ const VenueGridCard = ({ venue, size = "default", variant = "default" }: VenueGr
           </span>
           <span className="flex items-center gap-1">
             <Users className="w-3.5 h-3.5" />
-            {venue.minCapacity}–{venue.maxCapacity}
+            {formatVenueCapacity(venue, "pers.")}
           </span>
-          <span className="col-span-2 text-primary font-semibold">{venue.pricingText}</span>
+          <span className="col-span-2 text-primary font-semibold">{formatVenuePrice(venue)}</span>
         </div>
         <div className="mt-auto flex items-center justify-between border-t border-border pt-4">
           <span className="text-xs font-body text-muted-foreground">Disponibilité sur demande</span>

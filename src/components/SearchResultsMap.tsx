@@ -6,6 +6,7 @@ import { ArrowUpRight, MapPin } from "lucide-react";
 import type { Venue } from "@/types/venue";
 import { useIsMobile } from "@/hooks/use-mobile";
 import "leaflet/dist/leaflet.css";
+import { formatVenuePrice, getVenueImageAlt } from "@/lib/venue-display";
 
 interface SearchResultsMapProps {
   venues: Venue[];
@@ -106,7 +107,9 @@ const SearchResultsMap = ({ venues, onVisibleVenuesChange, className = "", fullH
                 <div className="min-w-[220px]">
                   <img
                     src={venue.coverImage}
-                    alt={venue.title}
+                    alt={getVenueImageAlt(venue)}
+                    width={440}
+                    height={224}
                     className="h-28 w-full rounded-md object-cover image-grade-luxe"
                     loading="lazy"
                   />
@@ -117,7 +120,7 @@ const SearchResultsMap = ({ venues, onVisibleVenuesChange, className = "", fullH
                     {venue.title}
                   </h3>
                   <p className="mt-1 text-sm font-body text-muted-foreground">
-                    {venue.pricingText}
+                    {formatVenuePrice(venue)}
                   </p>
                   <button
                     type="button"

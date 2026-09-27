@@ -240,7 +240,7 @@ const SeoIndex = () => {
         title="Inspirations lieux événementiels à Paris | Wearevents"
         description="Toutes les recherches utiles pour trouver une salle à Paris : événement, capacité, ambiance, budget, équipements, horaires et options."
         path="/inspirations"
-        jsonLd={{
+        jsonLd={[{
           "@context": "https://schema.org",
           "@type": "CollectionPage",
           name: "Inspirations lieux événementiels à Paris",
@@ -255,7 +255,14 @@ const SeoIndex = () => {
               url: `${siteUrl}/${link.slug}`,
             })),
           },
-        }}
+        }, {
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Accueil", item: siteUrl },
+            { "@type": "ListItem", position: 2, name: "Inspirations", item: `${siteUrl}/inspirations` },
+          ],
+        }]}
       />
       {isMobile ? (
         <MobileHeader onCodeSearch={() => setShowCodeSearch(true)} withBackground />

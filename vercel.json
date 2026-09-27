@@ -69,6 +69,13 @@
       }
     },
     {
+      "src": "/salle/maison-brochettes",
+      "status": 301,
+      "headers": {
+        "Location": "/salle/maison-baroque"
+      }
+    },
+    {
       "src": "/api/(.*)",
       "dest": "/api/$1"
     },

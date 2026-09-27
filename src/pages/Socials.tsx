@@ -24,13 +24,20 @@ const Socials = () => {
         title="Réseaux sociaux Wearevents"
         description="Retrouvez Wearevents sur Instagram, TikTok et LinkedIn pour découvrir nos lieux, vidéos et inspirations événementielles."
         path="/reseaux-sociaux"
-        jsonLd={{
+        jsonLd={[{
           "@context": "https://schema.org",
           "@type": "WebPage",
           name: "Réseaux sociaux Wearevents",
           url: `${siteUrl}/reseaux-sociaux`,
           sameAs: socialLinks.map((link) => link.href),
-        }}
+        }, {
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Accueil", item: siteUrl },
+            { "@type": "ListItem", position: 2, name: "Réseaux sociaux", item: `${siteUrl}/reseaux-sociaux` },
+          ],
+        }]}
       />
       {isMobile ? (
         <MobileHeader onCodeSearch={() => setShowCodeSearch(true)} withBackground />

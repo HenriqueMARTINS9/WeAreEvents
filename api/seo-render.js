@@ -11,7 +11,6 @@ const defaultImage = `${siteUrl}/og-image.svg`;
 
 const staticIndexablePaths = new Set([
   "/",
-  "/recherche",
   "/blog",
   "/inspirations",
   "/faq",
@@ -30,6 +29,11 @@ const staticMetadata = {
     title: "Trouver une salle événementielle - Recherche Wearevents",
     description:
       "Recherchez une salle par ville, capacité, type d'événement, ambiance et budget. Comparez les lieux et envoyez une demande gratuite.",
+  },
+  "/avis": {
+    title: "Donner votre avis | Wearevents",
+    description:
+      "Partagez votre expérience après un événement réservé avec Wearevents.",
   },
   "/blog": {
     title: "Blog événementiel - Conseils pour choisir le bon lieu",
@@ -67,7 +71,7 @@ const staticMetadata = {
       "Informations sur la collecte, l'utilisation, la conservation et les droits liés aux données personnelles traitées sur Wearevents.",
   },
 };
-const noindexPaths = new Set(["/admin"]);
+const noindexPaths = new Set(["/admin", "/recherche", "/avis"]);
 const seoLandingPaths = new Set(seoLandingPages.map((page) => `/${page.slug}`));
 
 const escapeHtml = (value) =>
@@ -77,6 +81,23 @@ const escapeHtml = (value) =>
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
+
+const blogHtmlToSafeText = (value = "") =>
+  String(value)
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<\/(p|h1|h2|h3|li|blockquote)>/gi, "\n")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/[ \t]+/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
 
 const normalizeSeoPath = (value = "/") => {
   const path = String(value || "/").split(/[?#]/)[0] || "/";
@@ -106,16 +127,41 @@ const readHtmlForPath = async (path) => {
     const staticPagePath = join(distDir, path.slice(1), "index.html");
 
     if (isInsideDist(staticPagePath) && await fileExists(staticPagePath)) {
-      return readFile(staticPagePath, "utf8");
+      return { html: await readFile(staticPagePath, "utf8"), prerendered: true };
     }
   }
 
-  return readFile(join(distDir, "index.html"), "utf8");
+  if (path === "/") {
+    return { html: await readFile(join(distDir, "index.html"), "utf8"), prerendered: true };
+  }
+
+  const shellPath = join(distDir, "app-shell.html");
+  return {
+    html: await readFile(await fileExists(shellPath) ? shellPath : join(distDir, "index.html"), "utf8"),
+    prerendered: false,
+  };
 };
 
 const replaceOrInsertHeadTag = (html, matcher, tag) => {
   if (matcher.test(html)) return html.replace(matcher, tag);
   return html.replace("</head>", `    ${tag}\n  </head>`);
+};
+
+const escapeJsonForHtml = (value) =>
+  JSON.stringify(value)
+    .replace(/</g, "\\u003c")
+    .replace(/>/g, "\\u003e")
+    .replace(/&/g, "\\u0026");
+
+const applyRuntimeContent = (html, body, jsonLd) => {
+  let nextHtml = html.replace('<div id="root"></div>', `<div id="root">${body}</div>`);
+  if (jsonLd) {
+    nextHtml = nextHtml.replace(
+      "</head>",
+      `    <script type="application/ld+json" id="wearevents-runtime-jsonld">${escapeJsonForHtml(jsonLd)}</script>\n  </head>`,
+    );
+  }
+  return nextHtml;
 };
 
 const applyHtmlMetadata = (html, metadata) => {
@@ -125,7 +171,7 @@ const applyHtmlMetadata = (html, metadata) => {
     description,
     image = defaultImage,
     type = "website",
-    noindex = false,
+    noindex,
   } = metadata;
   const canonical = canonicalUrl(path);
   let nextHtml = html;
@@ -133,7 +179,9 @@ const applyHtmlMetadata = (html, metadata) => {
   nextHtml = nextHtml.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(title)}</title>`);
   nextHtml = replaceOrInsertHeadTag(nextHtml, /<link\s+rel="canonical"\s+href="[^"]*"\s*\/?>/i, `<link rel="canonical" href="${escapeHtml(canonical)}" />`);
   nextHtml = replaceOrInsertHeadTag(nextHtml, /<meta\s+name="description"\s+content="[^"]*"\s*\/?>/i, `<meta name="description" content="${escapeHtml(description)}">`);
-  nextHtml = replaceOrInsertHeadTag(nextHtml, /<meta\s+name="robots"\s+content="[^"]*"\s*\/?>/i, `<meta name="robots" content="${noindex ? "noindex, nofollow" : "index, follow"}" />`);
+  if (typeof noindex === "boolean") {
+    nextHtml = replaceOrInsertHeadTag(nextHtml, /<meta\s+name="robots"\s+content="[^"]*"\s*\/?>/i, `<meta name="robots" content="${noindex ? "noindex, nofollow" : "index, follow"}" />`);
+  }
   nextHtml = replaceOrInsertHeadTag(nextHtml, /<meta\s+property="og:type"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:type" content="${escapeHtml(type)}" />`);
   nextHtml = replaceOrInsertHeadTag(nextHtml, /<meta\s+property="og:url"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:url" content="${escapeHtml(canonical)}" />`);
   nextHtml = replaceOrInsertHeadTag(nextHtml, /<meta\s+property="og:title"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:title" content="${escapeHtml(title)}">`);
@@ -158,6 +206,7 @@ const fetchSupabaseRows = async (table, params) => {
       authorization: `Bearer ${supabaseKey}`,
       accept: "application/json",
     },
+    signal: AbortSignal.timeout(5_000),
   });
 
   if (!response.ok) throw new Error(`Supabase ${table} fetch failed with ${response.status}`);
@@ -183,7 +232,7 @@ const fetchSeoMetadata = async (path) => {
 
 const fetchVenueMetadata = async (slug) => {
   const [venue] = await fetchSupabaseRows("venues", {
-    select: "title,address,city,max_capacity,cover_image,seo_title,meta_description",
+    select: "title,slug,tagline,description,address,city,max_capacity,cover_image,gallery,event_categories,venue_types,rating,review_count,price_amount,price_type,pricing_text,seo_title,meta_description",
     slug: `eq.${slug}`,
     active: "eq.true",
     limit: "1",
@@ -194,17 +243,67 @@ const fetchVenueMetadata = async (slug) => {
   const address = venue.address || venue.city || "";
   const maxCapacity = Number(venue.max_capacity ?? 0);
   const capacity = maxCapacity > 0 ? `Jusqu'à ${maxCapacity} personnes.` : "Capacité sur demande.";
+  const path = `/salle/${venue.slug}`;
+  const rating = Number(venue.rating ?? 0);
+  const reviewCount = Number(venue.review_count ?? 0);
+  const eventCategories = Array.isArray(venue.event_categories) ? venue.event_categories : [];
+  const priceAmount = Number(venue.price_amount ?? 0);
+  const venueSchema = {
+    "@context": "https://schema.org",
+    "@type": "EventVenue",
+    name: venue.title,
+    description: venue.description || venue.tagline || "",
+    image: [venue.cover_image, ...(Array.isArray(venue.gallery) ? venue.gallery : [])].filter(Boolean),
+    url: `${siteUrl}${path}`,
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: address,
+      addressLocality: venue.city,
+      addressCountry: "FR",
+    },
+    maximumAttendeeCapacity: maxCapacity || undefined,
+    aggregateRating: rating > 0 && reviewCount > 0
+      ? { "@type": "AggregateRating", ratingValue: rating, reviewCount }
+      : undefined,
+    offers: priceAmount > 0
+      ? { "@type": "Offer", price: priceAmount, priceCurrency: "EUR", description: venue.pricing_text || undefined }
+      : undefined,
+  };
+  const runtimeBody = `<main style="font-family:Arial,sans-serif;max-width:1120px;margin:0 auto;padding:64px 24px;color:#171717;">
+    <nav aria-label="Fil d'Ariane" style="font-size:13px;margin-bottom:26px;"><a href="/">Accueil</a> / <a href="/inspirations">Inspirations</a> / ${escapeHtml(venue.title)}</nav>
+    <article>
+      <h1 style="font-family:Georgia,serif;font-size:58px;line-height:1;">${escapeHtml(venue.title)}</h1>
+      <p>${escapeHtml(address)} · ${escapeHtml(capacity)}</p>
+      ${venue.cover_image ? `<img src="${escapeHtml(venue.cover_image)}" alt="Espace principal de ${escapeHtml(venue.title)} à ${escapeHtml(venue.city)}" width="1200" height="800" style="width:100%;height:auto;border-radius:8px;">` : ""}
+      <p style="max-width:780px;font-size:17px;line-height:1.8;white-space:pre-line;">${escapeHtml(venue.description || venue.tagline || "")}</p>
+      ${eventCategories.length ? `<section><h2>Événements adaptés</h2><p>${escapeHtml(eventCategories.join(", "))}</p></section>` : ""}
+      <p><a href="/recherche">Voir les autres lieux disponibles</a></p>
+    </article>
+  </main>`;
 
   return {
     title: String(venue.seo_title || "").trim() || `${venue.title} | Réservez rapidement`,
     description: String(venue.meta_description || "").trim() || `${address}. ${capacity} Retrouvez le reste des informations utiles sur la page de l'établissement.`,
     image: venue.cover_image || defaultImage,
+    runtimeBody,
+    jsonLd: [
+      venueSchema,
+      {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "Accueil", item: siteUrl },
+          { "@type": "ListItem", position: 2, name: "Inspirations", item: `${siteUrl}/inspirations` },
+          { "@type": "ListItem", position: 3, name: venue.title, item: `${siteUrl}${path}` },
+        ],
+      },
+    ],
   };
 };
 
 const fetchBlogMetadata = async (slug) => {
   const [post] = await fetchSupabaseRows("blog_posts", {
-    select: "title,excerpt,image,seo_title,meta_description",
+    select: "title,slug,excerpt,content,image,published_at,updated_at,seo_title,meta_description",
     slug: `eq.${slug}`,
     published: "eq.true",
     limit: "1",
@@ -212,19 +311,36 @@ const fetchBlogMetadata = async (slug) => {
 
   if (!post) return null;
 
+  const path = `/blog/${post.slug}`;
+  const description = String(post.meta_description || "").trim() || post.excerpt || "";
+
   return {
     title: String(post.seo_title || "").trim() || `${post.title} - Blog Wearevents`,
-    description: String(post.meta_description || "").trim() || post.excerpt || "",
+    description,
     image: post.image || defaultImage,
     type: "article",
+    runtimeBody: `<main style="font-family:Arial,sans-serif;max-width:1120px;margin:0 auto;padding:64px 24px;color:#171717;">
+      <nav aria-label="Fil d'Ariane" style="font-size:13px;margin-bottom:26px;"><a href="/">Accueil</a> / <a href="/blog">Blog</a> / ${escapeHtml(post.title)}</nav>
+      <article><h1 style="font-family:Georgia,serif;font-size:56px;line-height:1;">${escapeHtml(post.title)}</h1>
+      ${post.image ? `<img src="${escapeHtml(post.image)}" alt="Illustration de l'article ${escapeHtml(post.title)}" width="1200" height="675" style="width:100%;height:auto;border-radius:8px;">` : ""}
+      <p style="font-size:18px;line-height:1.7;">${escapeHtml(post.excerpt || "")}</p>
+      <div style="max-width:760px;font-size:17px;line-height:1.8;white-space:pre-line;">${escapeHtml(blogHtmlToSafeText(post.content))}</div></article>
+    </main>`,
+    jsonLd: [
+      { "@context": "https://schema.org", "@type": "BlogPosting", headline: post.title, description, image: post.image || defaultImage, datePublished: post.published_at, dateModified: post.updated_at, mainEntityOfPage: `${siteUrl}${path}`, publisher: { "@type": "Organization", name: "Wearevents", url: siteUrl } },
+      { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [{ "@type": "ListItem", position: 1, name: "Accueil", item: siteUrl }, { "@type": "ListItem", position: 2, name: "Blog", item: `${siteUrl}/blog` }, { "@type": "ListItem", position: 3, name: post.title, item: `${siteUrl}${path}` }] },
+    ],
   };
 };
 
 const getBaseRouteMetadata = async (path) => {
   if (noindexPaths.has(path)) {
+    const fallback = path === "/admin"
+      ? { title: "Back office - Wearevents", description: "Espace privé Wearevents." }
+      : staticMetadata[path];
+
     return {
-      title: "Back office - Wearevents",
-      description: "Espace privé Wearevents.",
+      ...fallback,
       noindex: true,
       status: 200,
     };
@@ -312,19 +428,22 @@ export default async function handler(request, response) {
   const path = normalizeSeoPath(rawPath || "/");
 
   try {
-    const [html, metadata] = await Promise.all([
+    const [documentResult, metadata] = await Promise.all([
       readHtmlForPath(path),
       resolveMetadata(path),
     ]);
-    const nextHtml = metadata ? applyHtmlMetadata(html, { path, ...metadata }) : html;
+    const metadataHtml = metadata ? applyHtmlMetadata(documentResult.html, { path, ...metadata }) : documentResult.html;
+    const nextHtml = !documentResult.prerendered && metadata?.runtimeBody
+      ? applyRuntimeContent(metadataHtml, metadata.runtimeBody, metadata.jsonLd)
+      : metadataHtml;
     sendHtml(response, metadata?.status ?? 200, nextHtml, request.method);
   } catch (error) {
     console.error(error);
-    const html = await readHtmlForPath("/").catch(() => "<!doctype html><html><head></head><body></body></html>");
+    const documentResult = await readHtmlForPath("/").catch(() => ({ html: "<!doctype html><html><head></head><body></body></html>", prerendered: false }));
     sendHtml(
       response,
       500,
-      applyHtmlMetadata(html, {
+      applyHtmlMetadata(documentResult.html, {
         path,
         title: "Erreur serveur - Wearevents",
         description: "Une erreur est survenue.",

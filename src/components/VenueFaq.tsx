@@ -7,10 +7,9 @@ interface VenueFaqProps {
   compact?: boolean;
 }
 
-type VenueFaqItem = {
+export type VenueFaqItem = {
   question: string;
   answer: string;
-  visible: boolean;
 };
 
 const normalizeValue = (value: string) =>
@@ -27,7 +26,33 @@ const joinList = (items: string[]) => {
   return `${items.slice(0, -1).join(", ")} et ${items[items.length - 1]}`;
 };
 
-const buildVenueFaqItems = (venue: Venue): VenueFaqItem[] => {
+const getRealisticEventCategories = (venue: Venue) => {
+  const technicalEventSignals = normalizeValue(
+    [...venue.services, ...venue.venueTypes, ...venue.spaces.map((space) => `${space.name} ${space.description}`)].join(" "),
+  );
+  const supportsBusinessFormats = hasAnyTerm(technicalEventSignals, [
+    "salle de reunion",
+    "salle de conference",
+    "projecteur",
+    "ecran",
+    "tv",
+    "micro",
+    "wifi",
+  ]);
+  const businessOnlyEvents = new Set([
+    "Journée d'étude",
+    "Conférence",
+    "Assemblée générale",
+    "Salon professionnel",
+  ]);
+
+  return venue.eventCategories
+    .filter(Boolean)
+    .filter((event) => supportsBusinessFormats || !businessOnlyEvents.has(event))
+    .slice(0, 6);
+};
+
+export const buildVenueFaqItems = (venue: Venue): VenueFaqItem[] => {
   const searchable = normalizeValue(
     [
       venue.title,
@@ -47,11 +72,9 @@ const buildVenueFaqItems = (venue: Venue): VenueFaqItem[] => {
       ...venue.spaces.flatMap((space) => [space.name, space.description]),
     ].join(" "),
   );
-  const hasMusic = hasAnyTerm(searchable, [
+  const explicitOptions = normalizeValue([...venue.optionFeatures, ...venue.services].join(" "));
+  const hasMusic = hasAnyTerm(explicitOptions, [
     "possibilite de mettre sa musique",
-    "mettre sa musique",
-    "dj",
-    "musique",
     "systeme son",
     "table de mixage",
   ]);
@@ -90,50 +113,46 @@ const buildVenueFaqItems = (venue: Venue): VenueFaqItem[] => {
     "discotheque",
     "soiree festive",
   ]);
-  const eventCategories = venue.eventCategories.filter(Boolean);
+  const eventCategories = getRealisticEventCategories(venue);
 
   return [
     {
       question: "Peut-on privatiser ce lieu ?",
       answer: `Oui, le ${venue.title} peut être privatisé via Wearevents. Selon les conditions du lieu, la privatisation peut concerner l'ensemble de l'établissement ou un espace dédié.`,
-      visible: venue.spaces.length > 0 || venue.privatizationTypes.length > 0,
     },
     {
       question: "Quels types d'événements peut-on organiser ici ?",
-      answer: `Oui, le ${venue.title} accueille notamment ${joinList(eventCategories)}. Notre équipe vérifie avec vous que le format correspond bien à votre événement.`,
-      visible: eventCategories.length > 0,
+      answer: `Le ${venue.title} accueille notamment ${joinList(eventCategories)}. Notre équipe vérifie avec vous que le format, les horaires et la configuration correspondent bien à votre événement.`,
     },
     {
       question: "Le lieu propose-t-il des boissons ou de la restauration ?",
       answer: `Oui, le ${venue.title} propose des boissons et/ou une offre de restauration selon le format de votre événement. Les formules disponibles sont confirmées lors de votre demande.`,
-      visible: hasFoodOrDrinks,
     },
     {
       question: "Peut-on mettre sa propre musique ?",
       answer: `Oui, le ${venue.title} permet de prévoir votre musique selon les conditions du lieu. Nous confirmons les modalités techniques avec l'établissement avant la réservation.`,
-      visible: hasMusic,
     },
     {
       question: "Comment réserver ce lieu avec Wearevents ?",
       answer: `Oui, vous pouvez réserver le ${venue.title} avec Wearevents en envoyant une demande de disponibilité depuis cette fiche. Notre équipe revient ensuite vers vous pour qualifier votre besoin et avancer jusqu'à la confirmation.`,
-      visible: true,
-    },
-    {
-      question: "Les disponibilités sont-elles garanties ?",
-      answer: `Oui, les disponibilités du ${venue.title} sont vérifiées par notre équipe après votre demande. La réservation est confirmée uniquement après validation de l'établissement.`,
-      visible: true,
     },
     {
       question: "Le lieu dispose-t-il d'une terrasse, d'un rooftop ou d'un espace extérieur ?",
       answer: `Oui, le ${venue.title} dispose d'un espace extérieur, d'une terrasse ou d'un rooftop selon la configuration indiquée sur sa fiche. Nous confirmons les conditions d'accès lors de la demande.`,
-      visible: hasOutdoor,
     },
     {
       question: "Le lieu permet-il de danser ou d'organiser une soirée festive ?",
       answer: `Oui, le ${venue.title} permet d'organiser une soirée festive ou de danser selon les conditions du lieu, les horaires et le format de privatisation retenu.`,
-      visible: hasDance,
     },
-  ].filter((item) => item.visible);
+  ].filter((item) => {
+    if (item.question === "Quels types d'événements peut-on organiser ici ?") return eventCategories.length > 0;
+    if (item.question === "Le lieu propose-t-il des boissons ou de la restauration ?") return hasFoodOrDrinks;
+    if (item.question === "Peut-on mettre sa propre musique ?") return hasMusic;
+    if (item.question.includes("terrasse")) return hasOutdoor;
+    if (item.question.includes("danser")) return hasDance;
+    if (item.question === "Peut-on privatiser ce lieu ?") return venue.spaces.length > 0 || venue.privatizationTypes.length > 0;
+    return true;
+  });
 };
 
 const VenueFaq = ({ venue, compact = false }: VenueFaqProps) => {

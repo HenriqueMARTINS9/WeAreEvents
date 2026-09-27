@@ -34,13 +34,20 @@ const Blog = () => {
         title="Blog événementiel - Conseils pour choisir le bon lieu"
         description="Guides pratiques, checklists et conseils concrets pour choisir une salle, organiser un mariage, un anniversaire, un séminaire ou privatiser un lieu."
         path="/blog"
-        jsonLd={{
+        jsonLd={[{
           "@context": "https://schema.org",
           "@type": "Blog",
           name: "Blog Wearevents",
           description: "Conseils et guides pour trouver le bon lieu événementiel.",
           url: `${siteUrl}/blog`,
-        }}
+        }, {
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Accueil", item: siteUrl },
+            { "@type": "ListItem", position: 2, name: "Blog", item: `${siteUrl}/blog` },
+          ],
+        }]}
       />
       {isMobile ? (
         <MobileHeader onCodeSearch={() => setShowCodeSearch(true)} withBackground />
@@ -68,7 +75,9 @@ const Blog = () => {
               <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.08fr)_minmax(360px,0.92fr)]">
                 <img
                   src={heroPost.image}
-                  alt=""
+                  alt={`Illustration de l'article ${heroPost.title}`}
+                  width={1200}
+                  height={800}
                   className="h-80 w-full object-cover image-grade-luxe xl:h-full"
                 />
                 <div className="flex flex-col justify-center px-7 py-6 xl:px-9 xl:py-8">
@@ -112,7 +121,7 @@ const Blog = () => {
                 rel="noopener noreferrer"
                 className="group overflow-hidden rounded-lg border border-border bg-card transition-transform hover:-translate-y-1"
               >
-                <img src={post.image} alt="" className="h-56 w-full object-cover image-grade-luxe" />
+                <img src={post.image} alt={`Illustration de l'article ${post.title}`} width={720} height={448} loading="lazy" className="h-56 w-full object-cover image-grade-luxe" />
                 <div className="px-5 pb-5 pt-4">
                   <div className="mb-2.5 flex items-center justify-between gap-3 text-xs font-body font-semibold text-muted-foreground">
                     <span className="text-primary">{post.category}</span>

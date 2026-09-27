@@ -471,7 +471,7 @@ const DesktopHome = () => {
                 rel="noopener noreferrer"
                 className="group flex h-full flex-col overflow-hidden rounded-lg border border-primary-foreground/10 bg-primary-foreground text-foreground transition-transform hover:-translate-y-1"
               >
-                <img src={post.image} alt="" className="h-52 w-full object-cover image-grade-luxe" />
+                <img src={post.image} alt={`Illustration de l'article ${post.title}`} width={720} height={416} loading="lazy" className="h-52 w-full object-cover image-grade-luxe" />
                 <div className="flex flex-1 flex-col px-5 pb-5 pt-4">
                   <div className="mb-2.5 flex items-center justify-between gap-3 text-xs font-body font-semibold text-muted-foreground">
                     <span className="text-primary">{post.category}</span>

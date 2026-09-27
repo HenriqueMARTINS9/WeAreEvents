@@ -5,11 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && node scripts/prerender-seo-pages.mjs",
+    "build": "vite build && node scripts/prerender-public-pages.mjs && node scripts/audit-seo.mjs",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
     "export:seo": "node scripts/export-seo-searches.mjs",
+    "audit:seo": "node scripts/audit-seo.mjs",
     "test": "vitest run",
     "test:watch": "vitest"
   },

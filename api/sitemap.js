@@ -1,4 +1,5 @@
 import { seoLandingPages } from "../src/data/seo-landings-data.js";
+import { getIndexableSeoPages } from "../src/data/seo-venue-filter.js";
 
 const siteUrl = (process.env.VITE_SITE_URL || process.env.PUBLIC_SITE_URL || "https://www.wearevents.fr").replace(/\/$/, "");
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
@@ -6,7 +7,6 @@ const supabaseKey = process.env.VITE_SUPABASE_PUBLISHABLE || process.env.VITE_SU
 
 const staticUrls = [
   { path: "/", changefreq: "weekly", priority: "1.0" },
-  { path: "/recherche", changefreq: "daily", priority: "0.9" },
   { path: "/blog", changefreq: "weekly", priority: "0.7" },
   { path: "/inspirations", changefreq: "weekly", priority: "0.7" },
   { path: "/faq", changefreq: "monthly", priority: "0.5" },
@@ -21,12 +21,6 @@ const getSeoPriority = (slug) => {
   if (slug.startsWith("location-salle-paris-")) return "0.75";
   return "0.76";
 };
-
-const seoUrls = seoLandingPages.map((page) => ({
-  path: `/${page.slug}`,
-  changefreq: "weekly",
-  priority: getSeoPriority(page.slug),
-}));
 
 const escapeXml = (value) =>
   String(value)
@@ -68,6 +62,7 @@ const fetchSupabaseRows = async (table, params) => {
       authorization: `Bearer ${supabaseKey}`,
       accept: "application/json",
     },
+    signal: AbortSignal.timeout(8_000),
   });
 
   if (!response.ok) {
@@ -80,7 +75,7 @@ const fetchSupabaseRows = async (table, params) => {
 const getDynamicUrls = async () => {
   const [venues, blogPosts] = await Promise.all([
     fetchSupabaseRows("venues", {
-      select: "slug,updated_at",
+      select: "slug,updated_at,title,tagline,description,city,address,min_capacity,max_capacity,event_categories,venue_types,services,spaces,price_tier,closing_time,ambiance_types,external_options,privatization_types,guest_dispositions,space_types,option_features,active",
       active: "eq.true",
       order: "updated_at.desc",
     }),
@@ -91,7 +86,14 @@ const getDynamicUrls = async () => {
     }),
   ]);
 
+  const seoUrls = getIndexableSeoPages(venues, seoLandingPages).map((page) => ({
+    path: `/${page.slug}`,
+    changefreq: "weekly",
+    priority: getSeoPriority(page.slug),
+  }));
+
   return [
+    ...seoUrls,
     ...venues
       .filter((venue) => venue.slug)
       .map((venue) => ({
@@ -132,5 +134,5 @@ export default async function handler(_request, response) {
 
   response.setHeader("Content-Type", "application/xml; charset=utf-8");
   response.setHeader("Cache-Control", "s-maxage=3600, stale-while-revalidate=86400");
-  response.status(200).send(buildSitemap([...staticUrls, ...seoUrls, ...dynamicUrls]));
+  response.status(200).send(buildSitemap([...staticUrls, ...dynamicUrls]));
 }

@@ -33,7 +33,7 @@ const SeoLanding = () => {
   const page = getSeoLandingPage(seoSlug);
   const isMobile = useIsMobile();
   const [showCodeSearch, setShowCodeSearch] = useState(false);
-  const { data: venues = [] } = useQuery({ queryKey: ["venues"], queryFn: fetchVenues });
+  const { data: venues = [], isLoading: venuesLoading } = useQuery({ queryKey: ["venues"], queryFn: fetchVenues });
 
   const matchingVenues = useMemo(() => {
     if (!page) return [];
@@ -58,26 +58,9 @@ const SeoLanding = () => {
     });
   }, [page, venues]);
 
-  const fallbackVenues = useMemo(() => {
-    if (!page || matchingVenues.length > 0) return [];
-
-    return filterVenues(venues, {
-      locationQuery: page.locationLabel.startsWith("Paris") ? "Paris" : page.filters.locationQuery,
-      minGuests: page.filters.minGuests,
-      guestRangeMin: page.filters.guestRangeMin,
-      guestRangeMax: page.filters.guestRangeMax,
-      maxCapacityGreaterThan: page.filters.maxCapacityGreaterThan,
-      maxCapacityLimit: page.filters.maxCapacityLimit,
-      priceTier: page.filters.priceTier,
-      closingTimeFilter: page.filters.closingTimeFilter,
-      equipmentFilters: page.filters.equipmentFilters,
-      guestDispositions: page.filters.guestDispositions,
-    });
-  }, [matchingVenues.length, page, venues]);
-
   const venuesToDisplay = useMemo(
-    () => shuffleVenues(matchingVenues.length ? matchingVenues : fallbackVenues).slice(0, 12),
-    [fallbackVenues, matchingVenues, page?.slug],
+    () => shuffleVenues(matchingVenues).slice(0, 12),
+    [matchingVenues],
   );
 
   useEffect(() => {
@@ -97,6 +80,7 @@ const SeoLanding = () => {
         description={page.description}
         path={`/${page.slug}`}
         image={image}
+        noindex={!venuesLoading && matchingVenues.length < 3}
         jsonLd={[
           {
             "@context": "https://schema.org",
@@ -142,6 +126,13 @@ const SeoLanding = () => {
       )}
 
       <main className="pt-24">
+        <nav aria-label="Fil d'Ariane" className="mx-auto flex max-w-7xl items-center gap-2 px-6 pb-4 font-body text-xs text-muted-foreground xl:px-8">
+          <Link to="/" className="transition-colors hover:text-foreground">Accueil</Link>
+          <span aria-hidden="true">/</span>
+          <Link to="/inspirations" className="transition-colors hover:text-foreground">Inspirations</Link>
+          <span aria-hidden="true">/</span>
+          <span aria-current="page" className="line-clamp-1 text-foreground">{page.h1}</span>
+        </nav>
         <section className="bg-foreground px-6 py-20 text-primary-foreground">
           <div className="mx-auto grid max-w-7xl grid-cols-1 gap-10 xl:grid-cols-[minmax(0,1fr)_420px] xl:items-end xl:px-2">
             <div>
@@ -198,7 +189,7 @@ const SeoLanding = () => {
               <div>
                 <p className="font-body text-sm font-semibold text-primary">Sélection de lieux</p>
                 <h2 className="mt-2 font-heading text-4xl font-semibold leading-tight">
-                  {matchingVenues.length || fallbackVenues.length} lieu{(matchingVenues.length || fallbackVenues.length) !== 1 ? "x" : ""} à découvrir
+                  {matchingVenues.length} lieu{matchingVenues.length !== 1 ? "x" : ""} à découvrir
                 </h2>
               </div>
               <p className="max-w-xl font-body text-sm leading-relaxed text-muted-foreground">

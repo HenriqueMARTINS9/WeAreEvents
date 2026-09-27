@@ -16,6 +16,7 @@ import {
   trackBookingRequestConversion,
   trackBookingSubmitFailure,
 } from "@/lib/analytics";
+import { getBookingAttribution, getBookingPrefillFromUrl } from "@/lib/booking-attribution";
 import { toast } from "sonner";
 
 interface BookingModalProps {
@@ -24,7 +25,7 @@ interface BookingModalProps {
   source?: string;
 }
 
-const initialForm: BookingFormValues = {
+const createInitialForm = (venue: Venue): BookingFormValues => ({
   firstName: "",
   lastName: "",
   email: "",
@@ -32,11 +33,10 @@ const initialForm: BookingFormValues = {
   desiredDate: "",
   startTime: "",
   endTime: "",
-  guestCount: "",
-  eventType: "",
-  requestedSpaces: [],
+  ...getBookingPrefillFromUrl(),
+  requestedSpaces: venue.spaces.length === 1 ? [venue.spaces[0].id] : [],
   message: "",
-};
+});
 
 const SWIPE_CLOSE_THRESHOLD = 120;
 const SWIPE_MAX_OFFSET = 240;
@@ -49,7 +49,7 @@ const BookingModal = ({ venue, onClose, source }: BookingModalProps) => {
   const [fieldErrors, setFieldErrors] = useState<BookingFieldErrors>({});
   const [submitError, setSubmitError] = useState("");
   const [result, setResult] = useState<{ request: BookingRequest; emails: BookingEmailTemplates } | null>(null);
-  const [form, setForm] = useState<BookingFormValues>(initialForm);
+  const [form, setForm] = useState<BookingFormValues>(() => createInitialForm(venue));
   const [dragOffset, setDragOffset] = useState(0);
   const [isDraggingSheet, setIsDraggingSheet] = useState(false);
   const dragStartYRef = useRef<number | null>(null);
@@ -179,7 +179,7 @@ const BookingModal = ({ venue, onClose, source }: BookingModalProps) => {
     setStatus("submitting");
 
     try {
-      const submission = await submitBookingRequest(form, venue);
+      const submission = await submitBookingRequest(form, venue, getBookingAttribution(source));
       setResult(submission);
       setStatus("success");
       void trackBookingRequestConversion(submission.request, {

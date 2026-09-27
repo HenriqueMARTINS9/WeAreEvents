@@ -18,7 +18,7 @@ const Faq = () => {
         title="FAQ - Questions fréquentes sur la réservation de lieux"
         description="Fonctionnement de Wearevents, gratuité du service, types de lieux, délais de réservation et formats de privatisation."
         path="/faq"
-        jsonLd={{
+        jsonLd={[{
           "@context": "https://schema.org",
           "@type": "FAQPage",
           mainEntity: faqItems.map((item) => ({
@@ -30,7 +30,14 @@ const Faq = () => {
             },
           })),
           url: `${siteUrl}/faq`,
-        }}
+        }, {
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Accueil", item: siteUrl },
+            { "@type": "ListItem", position: 2, name: "FAQ", item: `${siteUrl}/faq` },
+          ],
+        }]}
       />
       {isMobile ? (
         <MobileHeader onCodeSearch={() => setShowCodeSearch(true)} withBackground />

@@ -7,6 +7,7 @@ import {
   setGoogleConsentChoice,
   trackPageView,
 } from "@/lib/analytics";
+import { getBookingAttribution } from "@/lib/booking-attribution";
 
 const GoogleTagTracker = () => {
   const location = useLocation();
@@ -14,6 +15,8 @@ const GoogleTagTracker = () => {
   const hideOnAdmin = location.pathname.startsWith("/admin");
 
   useEffect(() => {
+    getBookingAttribution();
+
     return addGoogleConsentChangeListener(() => {
       setConsentChoice(getGoogleConsentChoice());
     });

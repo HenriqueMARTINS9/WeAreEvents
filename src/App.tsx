@@ -18,6 +18,7 @@ const SeoIndex = lazy(() => import("./pages/SeoIndex.tsx"));
 const SeoLanding = lazy(() => import("./pages/SeoLanding.tsx"));
 const Admin = lazy(() => import("./pages/Admin.tsx"));
 const Legal = lazy(() => import("./pages/Legal.tsx"));
+const Review = lazy(() => import("./pages/Review.tsx"));
 const NotFound = lazy(() => import("./pages/NotFound.tsx"));
 
 const queryClient = new QueryClient();
@@ -41,6 +42,7 @@ const App = () => (
               <Route path="/mentions-legales" element={<Legal kind="mentions" />} />
               <Route path="/cgu" element={<Legal kind="cgu" />} />
               <Route path="/politique-confidentialite" element={<Legal kind="privacy" />} />
+              <Route path="/avis" element={<Review />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="/:seoSlug" element={<SeoLanding />} />
               <Route path="*" element={<NotFound />} />

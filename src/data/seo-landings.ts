@@ -48,8 +48,35 @@ const typedSeoLandingPages = seoLandingPages as SeoLandingPage[];
 const getSeoLandingPage = (slug = "") =>
   typedSeoLandingPages.find((page) => page.slug === slug);
 
+const getAdjacentSeoSlugs = (page: SeoLandingPage) => {
+  const arrondissementMatch = page.slug.match(/^location-salle-paris-(\d{1,2})(?:er|e)$/);
+  if (arrondissementMatch) {
+    const arrondissement = Number(arrondissementMatch[1]);
+    return [arrondissement - 1, arrondissement + 1]
+      .filter((value) => value >= 1 && value <= 20)
+      .map((value) => `location-salle-paris-${value}${value === 1 ? "er" : "e"}`);
+  }
+
+  const capacityIndex = SEO_CAPACITY_RANGES.findIndex(
+    (range) => page.slug === `location-salle-${range.key}-personnes-paris`,
+  );
+  if (capacityIndex >= 0) {
+    return [SEO_CAPACITY_RANGES[capacityIndex - 1], SEO_CAPACITY_RANGES[capacityIndex + 1]]
+      .filter(Boolean)
+      .map((range) => `location-salle-${range.key}-personnes-paris`);
+  }
+
+  const eventRelations: Record<string, string[]> = {
+    "salle-anniversaire-paris": ["salle-evjf-evg-paris", "salle-soiree-privee-paris"],
+    "salle-evjf-evg-paris": ["salle-anniversaire-paris", "salle-soiree-privee-paris"],
+    "salle-soiree-privee-paris": ["salle-anniversaire-paris", "salle-evjf-evg-paris"],
+  };
+
+  return eventRelations[page.slug] ?? [];
+};
+
 const getRelatedSeoLandingPages = (page: SeoLandingPage) =>
-  page.relatedSlugs
+  Array.from(new Set([...page.relatedSlugs, ...getAdjacentSeoSlugs(page)]))
     .map((slug) => getSeoLandingPage(slug))
     .filter((item): item is SeoLandingPage => Boolean(item))
     .filter((item) => item.slug !== page.slug);

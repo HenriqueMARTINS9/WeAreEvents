@@ -18,6 +18,8 @@ export type VenueInsert = {
   access_details: string[];
   useful_information: string[];
   pricing_text: string;
+  price_amount?: number | null;
+  price_type?: "per_person" | "minimum_spend" | "venue_hire" | null;
   cover_image: string;
   gallery: string[];
   video_url?: string | null;
@@ -82,7 +84,23 @@ export type BookingRequestInsert = {
   event_type: string;
   requested_spaces: string[];
   message?: string | null;
+  landing_page?: string;
+  referrer?: string;
+  traffic_source?: string;
+  utm_source?: string;
+  utm_medium?: string;
+  utm_campaign?: string;
+  interaction_source?: string;
+  review_token?: string;
+  review_email_scheduled_at?: string | null;
+  review_email_sent_at?: string | null;
   status: string;
+};
+
+export type VenueReviewInsert = {
+  review_token: string;
+  rating: number;
+  comment: string;
 };
 
 type Database = {
@@ -107,6 +125,19 @@ type Database = {
         Insert: BookingRequestInsert;
         Row: BookingRequestInsert & { created_at: string; updated_at: string };
         Update: Partial<BookingRequestInsert>;
+      };
+      venue_reviews: {
+        Insert: VenueReviewInsert;
+        Row: VenueReviewInsert & {
+          id: string;
+          booking_request_id: string;
+          venue_id: string;
+          author_name: string;
+          published: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Update: Partial<VenueReviewInsert & { published: boolean }>;
       };
     };
   };

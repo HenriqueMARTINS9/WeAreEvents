@@ -1,7 +1,6 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { getReviewsByVenueId } from "@/data/venues";
-import { fetchVenues } from "@/lib/supabase-data";
+import { fetchVenueReviews, fetchVenues } from "@/lib/supabase-data";
 import { ArrowRight, Building2, Cake, Clock3, Euro, ExternalLink, Images, MapPin, Music2, Play, Route, ShieldCheck, Sparkles, Star, Tag, UtensilsCrossed, Users } from "lucide-react";
 import { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -12,6 +11,16 @@ import VenueDetailSheet from "@/components/VenueDetailSheet";
 import VenueFaq from "@/components/VenueFaq";
 import VenueMediaLightbox, { type VenueMediaItem } from "@/components/VenueMediaLightbox";
 import Seo, { siteUrl } from "@/components/Seo";
+import {
+  formatVenueCapacity,
+  formatVenuePrice,
+  getSimilarVenues,
+  getVenueImageAlt,
+  getVenueLocationLabel,
+  getVenueLocationSeoPath,
+  hasVenueRating,
+} from "@/lib/venue-display";
+import { buildVenueFaqItems } from "@/components/VenueFaq";
 
 const filledItems = (items: Array<string | null | undefined>) => items.filter((item): item is string => Boolean(item?.trim()));
 const hasItems = (items: Array<string | null | undefined>) => filledItems(items).length > 0;
@@ -39,6 +48,11 @@ const VenueDetail = () => {
   const isMobile = useIsMobile();
   const { data: venues = [], isLoading } = useQuery({ queryKey: ["venues"], queryFn: fetchVenues });
   const venue = venues.find((item) => item.slug === slug);
+  const { data: reviews = [] } = useQuery({
+    queryKey: ["venue-reviews", venue?.id],
+    queryFn: () => fetchVenueReviews(venue!.id),
+    enabled: Boolean(venue?.id),
+  });
   const [bookingOpen, setBookingOpen] = useState(false);
   const [activeMediaIndex, setActiveMediaIndex] = useState<number | null>(null);
 
@@ -63,6 +77,60 @@ const VenueDetail = () => {
 
   const seoTitle = venue.seoTitle?.trim() || getVenueSeoTitle(venue.title);
   const seoDescription = venue.metaDescription?.trim() || getVenueSeoDescription(venue);
+  const showRating = hasVenueRating(venue);
+  const similarVenues = getSimilarVenues(venue, venues);
+  const locationSeoPath = getVenueLocationSeoPath(venue);
+  const locationLabel = getVenueLocationLabel(venue);
+  const faqItems = buildVenueFaqItems(venue);
+  const seoJsonLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "EventVenue",
+      name: venue.title,
+      description: venue.description || venue.tagline,
+      image: [venue.coverImage, ...venue.gallery].filter(Boolean),
+      url: `${siteUrl}/salle/${venue.slug}`,
+      address: {
+        "@type": "PostalAddress",
+        streetAddress: venue.address,
+        addressLocality: venue.city,
+        addressCountry: "FR",
+      },
+      geo: venue.location.lat && venue.location.lng ? {
+        "@type": "GeoCoordinates",
+        latitude: venue.location.lat,
+        longitude: venue.location.lng,
+      } : undefined,
+      aggregateRating: showRating
+        ? { "@type": "AggregateRating", ratingValue: venue.rating, reviewCount: venue.reviewCount }
+        : undefined,
+      maximumAttendeeCapacity: venue.maxCapacity || undefined,
+      offers: venue.priceAmount ? {
+        "@type": "Offer",
+        price: venue.priceAmount,
+        priceCurrency: "EUR",
+        description: formatVenuePrice(venue),
+      } : undefined,
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Accueil", item: siteUrl },
+        { "@type": "ListItem", position: 2, name: locationLabel, item: `${siteUrl}${locationSeoPath}` },
+        { "@type": "ListItem", position: 3, name: venue.title, item: `${siteUrl}/salle/${venue.slug}` },
+      ],
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: faqItems.map((item) => ({
+        "@type": "Question",
+        name: item.question,
+        acceptedAnswer: { "@type": "Answer", text: item.answer },
+      })),
+    },
+  ];
 
   if (isMobile) {
     return (
@@ -72,14 +140,14 @@ const VenueDetail = () => {
           description={seoDescription}
           path={`/salle/${venue.slug}`}
           image={venue.coverImage}
+          jsonLd={seoJsonLd}
         />
-        <VenueDetailSheet venue={venue} onClose={() => navigate(-1)} onBooking={() => setBookingOpen(true)} />
+        <VenueDetailSheet venue={venue} reviews={reviews} onClose={() => navigate(-1)} onBooking={() => setBookingOpen(true)} />
         {bookingOpen && <BookingModal venue={venue} onClose={() => setBookingOpen(false)} source="venue_detail_mobile" />}
       </>
     );
   }
 
-  const reviews = getReviewsByVenueId(venue.id);
   const galleryImages = [venue.coverImage, ...venue.gallery.filter((image) => image !== venue.coverImage)];
   const mediaItems: VenueMediaItem[] = [
     ...(venue.videoUrl ? [{
@@ -97,7 +165,7 @@ const VenueDetail = () => {
   ];
   const imageMediaOffset = venue.videoUrl ? 1 : 0;
   const reservationSpaces = venue.spaces;
-  const averageCapacity = `${venue.minCapacity}–${venue.maxCapacity} pers.`;
+  const averageCapacity = formatVenueCapacity(venue, "pers.");
   const closingLabel = formatClosingLabel(venue.closingTime);
   const hasAmbianceSection = hasItems(venue.ambianceTypes) || hasItems(venue.externalOptions);
   const hasUsefulInformation = hasItems(venue.usefulInformation);
@@ -118,34 +186,7 @@ const VenueDetail = () => {
         description={seoDescription}
         path={`/salle/${venue.slug}`}
         image={venue.coverImage}
-        jsonLd={{
-          "@context": "https://schema.org",
-          "@type": "EventVenue",
-          name: venue.title,
-          description: venue.description || venue.tagline,
-          image: [venue.coverImage, ...venue.gallery].filter(Boolean),
-          url: `${siteUrl}/salle/${venue.slug}`,
-          address: {
-            "@type": "PostalAddress",
-            streetAddress: venue.address,
-            addressLocality: venue.city,
-            addressCountry: "FR",
-          },
-          geo: {
-            "@type": "GeoCoordinates",
-            latitude: venue.location.lat,
-            longitude: venue.location.lng,
-          },
-          aggregateRating: venue.reviewCount
-            ? {
-                "@type": "AggregateRating",
-                ratingValue: venue.rating,
-                reviewCount: venue.reviewCount,
-              }
-            : undefined,
-          maximumAttendeeCapacity: venue.maxCapacity,
-          email: venue.contactEmail,
-        }}
+        jsonLd={seoJsonLd}
       />
       <DesktopNav />
 
@@ -153,9 +194,9 @@ const VenueDetail = () => {
         <section className="bg-background px-6 pb-8">
           <div className="mx-auto max-w-7xl xl:px-2">
             <div className="mb-5 flex flex-wrap items-center gap-2 text-sm font-body text-muted-foreground">
-              <button type="button" onClick={() => navigate("/")} className="hover:text-foreground">Accueil</button>
+              <Link to="/" className="hover:text-foreground">Accueil</Link>
               <span>/</span>
-              <button type="button" onClick={() => navigate("/recherche")} className="hover:text-foreground">Salles</button>
+              <Link to={locationSeoPath} className="hover:text-foreground">{locationLabel}</Link>
               <span>/</span>
               <span className="text-foreground">{venue.title}</span>
             </div>
@@ -173,7 +214,9 @@ const VenueDetail = () => {
                 <div className="mt-4 flex flex-wrap items-center gap-4 text-sm font-body text-muted-foreground">
                   <span className="flex items-center gap-1.5"><MapPin className="h-4 w-4 text-primary" />{venue.address}</span>
                   {venue.metroAccess && <span className="flex items-center gap-1.5"><Route className="h-4 w-4 text-primary" />{venue.metroAccess}</span>}
-                  <span className="flex items-center gap-1.5"><Star className="h-4 w-4 fill-accent text-accent" />{venue.rating}/5 ({venue.reviewCount} avis)</span>
+                  {showRating && (
+                    <span className="flex items-center gap-1.5"><Star className="h-4 w-4 fill-accent text-accent" />{venue.rating}/5 ({venue.reviewCount} avis)</span>
+                  )}
                 </div>
               </div>
               <button
@@ -192,7 +235,7 @@ const VenueDetail = () => {
                 className="group relative h-full overflow-hidden rounded-2xl text-left"
                 aria-label="Ouvrir la photo principale"
               >
-                <img src={galleryImages[0]} alt={venue.title} className="h-full w-full object-cover image-grade-luxe transition-transform duration-700 group-hover:scale-105" />
+                <img src={galleryImages[0]} alt={getVenueImageAlt(venue)} width={1200} height={800} className="h-full w-full object-cover image-grade-luxe transition-transform duration-700 group-hover:scale-105" />
               </button>
               <div className="grid h-full grid-cols-2 content-start gap-3">
                 {galleryImages.slice(1, 5).map((image, index) => (
@@ -203,7 +246,7 @@ const VenueDetail = () => {
                     className="group aspect-square w-full overflow-hidden rounded-2xl"
                     aria-label={`Ouvrir la photo ${index + 2}`}
                   >
-                    <img src={image} alt="" className="h-full w-full object-cover image-grade-luxe transition-transform duration-700 group-hover:scale-105" />
+                    <img src={image} alt={getVenueImageAlt(venue, index + 1)} width={600} height={600} className="h-full w-full object-cover image-grade-luxe transition-transform duration-700 group-hover:scale-105" loading="lazy" />
                   </button>
                 ))}
               </div>
@@ -211,7 +254,7 @@ const VenueDetail = () => {
                 {[
                   `${venue.spaces.length} espace${venue.spaces.length > 1 ? "s" : ""}`,
                   averageCapacity,
-                  venue.pricingText,
+                  formatVenuePrice(venue),
                 ].map((item) => (
                   <span key={item} className="rounded-md bg-primary-foreground/10 px-3 py-1.5 text-xs font-body font-semibold">
                     {item}
@@ -248,7 +291,7 @@ const VenueDetail = () => {
                 hasAmbianceSection ? ["#ambiance", "Ambiance"] : null,
                 hasUsefulInfoSection ? ["#infos", "Informations utiles"] : null,
                 ["#acces", "Se rendre"],
-                ["#avis", `Avis (${reviews.length})`],
+                showRating || reviews.length ? ["#avis", "Avis"] : null,
                 ["#faq", "FAQ"],
               ].filter((item): item is [string, string] => Boolean(item)).map(([href, label]) => (
                 <a
@@ -324,7 +367,7 @@ const VenueDetail = () => {
                       <div className={`grid grid-cols-1 ${space.imageUrl ? "md:grid-cols-[13rem_minmax(0,1fr)]" : ""}`}>
                         {space.imageUrl && (
                           <div className="h-44 md:h-full">
-                            <img src={space.imageUrl} alt={space.name} className="h-full w-full object-cover image-grade-luxe" loading="lazy" />
+                            <img src={space.imageUrl} alt={`${space.name} au ${venue.title}`} width={640} height={480} className="h-full w-full object-cover image-grade-luxe" loading="lazy" />
                           </div>
                         )}
                         <div className="flex items-start justify-between gap-4 p-5">
@@ -399,17 +442,25 @@ const VenueDetail = () => {
                 </div>
               </section>
 
-              <section id="avis" className="scroll-mt-28 rounded-lg border border-border bg-background p-6">
+              {(showRating || reviews.length > 0) && <section id="avis" className="scroll-mt-28 rounded-lg border border-border bg-background p-6">
                 <div className="mb-5 flex items-end justify-between gap-4">
                   <div>
                     <h2 className="font-heading text-3xl font-semibold">Avis</h2>
-                    <p className="mt-2 text-sm font-body text-muted-foreground">Tous les retours affichés proviennent des demandes enregistrées.</p>
+                    <p className="mt-2 text-sm font-body text-muted-foreground">La note Google et les avis clients Wearevents sont identifiés séparément.</p>
                   </div>
-                  <div className="text-right">
-                    <p className="font-heading text-4xl font-semibold text-primary">{venue.rating}/5</p>
-                    <p className="text-xs font-body text-muted-foreground">{venue.reviewCount} avis</p>
-                  </div>
+                  {showRating && (
+                    <div className="text-right">
+                      <p className="font-heading text-4xl font-semibold text-primary">{venue.rating}/5</p>
+                      <p className="text-xs font-body text-muted-foreground">{venue.reviewCount} avis Google</p>
+                      {venue.googleReviewUrl && (
+                        <a href={venue.googleReviewUrl} target="_blank" rel="noreferrer" className="mt-1 inline-block text-xs font-body font-semibold text-primary underline-offset-4 hover:underline">
+                          Voir les avis Google
+                        </a>
+                      )}
+                    </div>
+                  )}
                 </div>
+                {reviews.length > 0 && <h3 className="mb-3 font-body text-sm font-semibold">Avis clients Wearevents</h3>}
                 <div className="space-y-3">
                   {reviews.map((review) => (
                     <div key={review.id} className="rounded-lg border border-border bg-card p-5">
@@ -424,13 +475,30 @@ const VenueDetail = () => {
                       <p className="text-sm font-body leading-relaxed text-foreground/70">{review.comment}</p>
                     </div>
                   ))}
-                  {reviews.length === 0 && (
-                    <div className="rounded-lg border border-border bg-card p-6 text-sm font-body text-muted-foreground">Aucun avis pour le moment.</div>
-                  )}
                 </div>
-              </section>
+              </section>}
 
               <VenueFaq venue={venue} />
+
+              {similarVenues.length > 0 && (
+                <section className="rounded-lg border border-border bg-background p-6">
+                  <p className="font-body text-sm font-semibold text-primary">À proximité</p>
+                  <h2 className="mt-2 font-heading text-3xl font-semibold">Autres lieux similaires</h2>
+                  <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    {similarVenues.map((candidate, index) => (
+                      <Link key={candidate.id} to={`/salle/${candidate.slug}`} className="group overflow-hidden rounded-lg border border-border bg-card transition-colors hover:border-primary/50">
+                        {candidate.coverImage && (
+                          <img src={candidate.coverImage} alt={getVenueImageAlt(candidate, index)} width={640} height={400} loading="lazy" className="h-36 w-full object-cover image-grade-luxe transition-transform duration-500 group-hover:scale-[1.03]" />
+                        )}
+                        <div className="p-4">
+                          <h3 className="font-heading text-xl font-semibold">{candidate.title}</h3>
+                          <p className="mt-1 text-xs font-body text-muted-foreground">{candidate.city} · {formatVenueCapacity(candidate, "pers.")}</p>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </section>
+              )}
             </div>
 
             <aside className="lg:sticky lg:top-28 lg:self-start">

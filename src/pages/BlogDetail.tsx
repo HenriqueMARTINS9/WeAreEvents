@@ -81,7 +81,7 @@ const BlogDetail = () => {
         image={post.image || undefined}
         type="article"
         keywords={secondaryKeywords}
-        jsonLd={{
+        jsonLd={[{
           "@context": "https://schema.org",
           "@type": "BlogPosting",
           headline: post.title,
@@ -102,7 +102,15 @@ const BlogDetail = () => {
             },
           },
           mainEntityOfPage: `${siteUrl}/blog/${post.slug}`,
-        }}
+        }, {
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Accueil", item: siteUrl },
+            { "@type": "ListItem", position: 2, name: "Blog", item: `${siteUrl}/blog` },
+            { "@type": "ListItem", position: 3, name: post.title, item: `${siteUrl}/blog/${post.slug}` },
+          ],
+        }]}
       />
       {isMobile ? (
         <MobileHeader onCodeSearch={() => setShowCodeSearch(true)} withBackground />
@@ -145,7 +153,9 @@ const BlogDetail = () => {
             <div className="mx-auto max-w-7xl xl:px-2">
               <img
                 src={post.image}
-                alt=""
+                alt={`Illustration de l'article ${post.title}`}
+                width={1400}
+                height={800}
                 className="h-[360px] w-full rounded-2xl object-cover image-grade-luxe xl:h-[560px]"
               />
             </div>
@@ -205,7 +215,7 @@ const BlogDetail = () => {
                     rel="noopener noreferrer"
                     className="group overflow-hidden rounded-lg border border-border bg-card transition-transform hover:-translate-y-1"
                   >
-                    <img src={relatedPost.image} alt="" className="h-52 w-full object-cover image-grade-luxe" />
+                    <img src={relatedPost.image} alt={`Illustration de l'article ${relatedPost.title}`} width={720} height={416} loading="lazy" className="h-52 w-full object-cover image-grade-luxe" />
                     <div className="px-5 pb-5 pt-4">
                       <div className="mb-2.5 flex items-center justify-between gap-3 text-xs font-body font-semibold text-muted-foreground">
                         <span className="text-primary">{relatedPost.category}</span>

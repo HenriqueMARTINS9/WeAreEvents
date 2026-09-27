@@ -524,6 +524,7 @@ const SearchResults = () => {
         title="Trouver une salle événementielle - Recherche Wearevents"
         description="Recherchez une salle par ville, capacité, type d'événement, ambiance et budget. Comparez les lieux et envoyez une demande gratuite."
         path="/recherche"
+        noindex
         jsonLd={{
           "@context": "https://schema.org",
           "@type": "CollectionPage",
