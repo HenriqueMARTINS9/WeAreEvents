@@ -26,6 +26,7 @@ export const SEO_EVENT_TYPES = [
   "Shooting",
   "Défilé",
   "Concert",
+  "Événement étudiant",
 ];
 
 export const slugifySeoValue = (value) =>

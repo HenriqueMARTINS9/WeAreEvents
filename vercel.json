@@ -6,6 +6,90 @@
   },
   "routes": [
     {
+      "src": "/salle-diner-d-affaires-paris",
+      "status": 301,
+      "headers": {
+        "Location": "/salle-repas-d-entreprise-paris"
+      }
+    },
+    {
+      "src": "/salle-lancement-paris",
+      "status": 301,
+      "headers": {
+        "Location": "/salle-lancement-de-produit-paris"
+      }
+    },
+    {
+      "src": "/salle-remise-de-diplome-paris",
+      "status": 301,
+      "headers": {
+        "Location": "/salle-evenement-etudiant-paris"
+      }
+    },
+    {
+      "src": "/salle-formation-paris",
+      "status": 301,
+      "headers": {
+        "Location": "/salle-de-conference-paris"
+      }
+    },
+    {
+      "src": "/salle/gate-club",
+      "status": 301,
+      "headers": {
+        "Location": "/discotheque-paris"
+      }
+    },
+    {
+      "src": "/salle/upstairs-haussmann",
+      "status": 301,
+      "headers": {
+        "Location": "/salle/club-haussmann"
+      }
+    },
+    {
+      "src": "/salle/workshow-paris",
+      "status": 301,
+      "headers": {
+        "Location": "/bar-privatisable-paris"
+      }
+    },
+    {
+      "src": "/blog/location-de-salle-de-seminaire-a-paris-le-guide-complet-pour-organiser-un-evenement-professionnel-reussi",
+      "status": 301,
+      "headers": {
+        "Location": "/salle-seminaire-paris"
+      }
+    },
+    {
+      "src": "/blog/location-de-salle-anniversaire-a-paris-le-guide-complet-pour-trouver-le-lieu-ideal",
+      "status": 301,
+      "headers": {
+        "Location": "/blog/location-salle-anniversaire-paris"
+      }
+    },
+    {
+      "src": "/blog/combien-coute-la-location-d-une-salle-d-anniversaire-a-paris-le-guide-des-prix-en-2026",
+      "status": 301,
+      "headers": {
+        "Location": "/blog/combien-coute-location-salle-anniversaire-paris"
+      }
+    },
+    {
+      "src": "/blog/combien-coute-la-location-d-une-salle-d-anniversaire-a-paris",
+      "status": 301,
+      "headers": {
+        "Location": "/blog/combien-coute-location-salle-anniversaire-paris"
+      }
+    },
+    {
+      "src": "/blog/les-10-erreurs-a-eviter-lors-de-la-privatisation-d-un-lieu-pour-un-evenement",
+      "status": 301,
+      "headers": {
+        "Location": "/blog/erreurs-a-eviter-avant-reserver-salle-anniversaire"
+      }
+    },
+    {
       "src": "/location-salle-20-personnes-paris",
       "status": 308,
       "headers": {
@@ -49,21 +133,21 @@
     },
     {
       "src": "/rooftop-paris",
-      "status": 308,
+      "status": 301,
       "headers": {
-        "Location": "/restaurant-privatisable-paris"
+        "Location": "/terrasse-evenement-paris"
       }
     },
     {
       "src": "/rooftop-evenement-paris",
-      "status": 308,
+      "status": 301,
       "headers": {
         "Location": "/terrasse-evenement-paris"
       }
     },
     {
       "src": "/salle-ambiance-club-paris",
-      "status": 308,
+      "status": 301,
       "headers": {
         "Location": "/salle-ambiance-festive-paris"
       }

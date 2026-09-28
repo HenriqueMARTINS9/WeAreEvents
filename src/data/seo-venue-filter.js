@@ -24,6 +24,7 @@ const eventAliases = {
   "Repas d'entreprise": ["Corporate", "Dîner d'affaires"],
   Tournage: ["Shooting / tournage"],
   Shooting: ["Shooting / tournage"],
+  "Événement étudiant": ["Gala", "Concert"],
 };
 
 export const venueMatchesSeoFilters = (venue, filters = {}) => {

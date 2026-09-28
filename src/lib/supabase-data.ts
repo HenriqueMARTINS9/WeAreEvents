@@ -40,6 +40,7 @@ const EVENT_TYPE_ALIASES: Record<string, string[]> = {
   "Repas d'entreprise": ["Corporate", "Dîner d'affaires"],
   Tournage: ["Shooting / tournage"],
   Shooting: ["Shooting / tournage"],
+  "Événement étudiant": ["Gala", "Concert"],
 };
 
 const expandEventTypes = (eventTypes: string[]) =>
