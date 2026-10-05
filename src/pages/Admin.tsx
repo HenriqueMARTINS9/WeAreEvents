@@ -1672,6 +1672,40 @@ const BlogsView = ({ posts, onCreate, onEdit, onDelete }: any) => (
   />
 );
 
+const ReviewEmailStatus = ({ request }: { request: any }) => {
+  if (request.review_email_sent_at) {
+    return (
+      <div className="min-w-[170px] font-body text-xs">
+        <span className="inline-flex rounded-full bg-emerald-100 px-2.5 py-1 font-semibold text-emerald-800">Envoyé</span>
+        <p className="mt-2 text-muted-foreground">{formatAdminDateTime(request.review_email_sent_at)}</p>
+        <p className="mt-1 text-muted-foreground">{request.review_email_attempts || 1} tentative{Number(request.review_email_attempts || 1) > 1 ? "s" : ""}</p>
+      </div>
+    );
+  }
+
+  if (request.review_email_last_error) {
+    return (
+      <div className="min-w-[190px] font-body text-xs">
+        <span className="inline-flex rounded-full bg-destructive/10 px-2.5 py-1 font-semibold text-destructive">Erreur</span>
+        <p className="mt-2 line-clamp-3 text-destructive" title={request.review_email_last_error}>{request.review_email_last_error}</p>
+        <p className="mt-1 text-muted-foreground">{request.review_email_attempts || 0} tentative{Number(request.review_email_attempts || 0) > 1 ? "s" : ""}</p>
+      </div>
+    );
+  }
+
+  if (request.review_email_scheduled_at) {
+    return (
+      <div className="min-w-[170px] font-body text-xs">
+        <span className="inline-flex rounded-full bg-sky-100 px-2.5 py-1 font-semibold text-sky-800">Planifié</span>
+        <p className="mt-2 text-muted-foreground">{formatAdminDateTime(request.review_email_scheduled_at)}</p>
+        {Number(request.review_email_attempts || 0) > 0 && <p className="mt-1 text-muted-foreground">Tentatives : {request.review_email_attempts}</p>}
+      </div>
+    );
+  }
+
+  return <span className="inline-flex min-w-[130px] rounded-full bg-secondary px-2.5 py-1 font-body text-xs font-semibold text-muted-foreground">Non planifié</span>;
+};
+
 const BookingRequestsView = ({
   requests,
   updatingRequestId,
@@ -1699,10 +1733,10 @@ const BookingRequestsView = ({
 
     <div className="overflow-hidden rounded-lg border border-border bg-card luxury-shadow">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[1360px] text-left">
+        <table className="w-full min-w-[1540px] text-left">
           <thead className="border-b border-border bg-secondary/70">
             <tr>
-              {["Demande", "Lieu", "Date", "Invités", "Contact", "Origine", "Espaces", "Statut", "Créée le"].map((column) => (
+              {["Demande", "Lieu", "Date", "Invités", "Contact", "Origine", "Espaces", "Statut", "Email avis", "Créée le"].map((column) => (
                 <th key={column} className="px-4 py-3 text-xs font-body font-semibold uppercase text-muted-foreground">{column}</th>
               ))}
             </tr>
@@ -1710,7 +1744,7 @@ const BookingRequestsView = ({
           <tbody className="divide-y divide-border">
             {requests.length === 0 ? (
               <tr>
-                <td colSpan={9} className="px-4 py-10 text-center text-sm font-body text-muted-foreground">
+                <td colSpan={10} className="px-4 py-10 text-center text-sm font-body text-muted-foreground">
                   Aucune demande pour le moment.
                 </td>
               </tr>
@@ -1737,6 +1771,9 @@ const BookingRequestsView = ({
                         {[request.venue_code, request.venue_city].filter(Boolean).join(" · ") || "-"}
                       </p>
                     </div>
+                  </td>
+                  <td className="px-4 py-4">
+                    <ReviewEmailStatus request={request} />
                   </td>
                   <td className="px-4 py-4 text-sm font-body text-foreground/80">
                     <div className="min-w-[130px]">
