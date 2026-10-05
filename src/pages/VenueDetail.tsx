@@ -18,6 +18,7 @@ import {
   getVenueImageAlt,
   getVenueLocationLabel,
   getVenueLocationSeoPath,
+  getVenueTypeSeoPath,
   hasVenueRating,
 } from "@/lib/venue-display";
 import { buildVenueFaqItems } from "@/components/VenueFaq";
@@ -80,12 +81,17 @@ const VenueDetail = () => {
   const showRating = hasVenueRating(venue);
   const similarVenues = getSimilarVenues(venue, venues);
   const locationSeoPath = getVenueLocationSeoPath(venue);
+  const venueTypeSeoPath = getVenueTypeSeoPath(venue);
   const locationLabel = getVenueLocationLabel(venue);
   const faqItems = buildVenueFaqItems(venue);
-  const seoJsonLd = [
+  const weareventsRating = reviews.length
+    ? reviews.reduce((total, review) => total + review.rating, 0) / reviews.length
+    : 0;
+  const seoJsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
     {
-      "@context": "https://schema.org",
-      "@type": "EventVenue",
+      "@type": ["EventVenue", "LocalBusiness"],
       name: venue.title,
       description: venue.description || venue.tagline,
       image: [venue.coverImage, ...venue.gallery].filter(Boolean),
@@ -101,9 +107,13 @@ const VenueDetail = () => {
         latitude: venue.location.lat,
         longitude: venue.location.lng,
       } : undefined,
-      aggregateRating: showRating
-        ? { "@type": "AggregateRating", ratingValue: venue.rating, reviewCount: venue.reviewCount }
+      priceRange: venue.pricingText || venue.priceTier,
+      openingHours: venue.closingTime ? `Mo-Su 00:00-${venue.closingTime}` : undefined,
+      amenityFeature: [...venue.services, ...venue.optionFeatures].map((name) => ({ "@type": "LocationFeatureSpecification", name, value: true })),
+      aggregateRating: weareventsRating > 0
+        ? { "@type": "AggregateRating", ratingValue: Number(weareventsRating.toFixed(1)), reviewCount: reviews.length }
         : undefined,
+      review: reviews.map((review) => ({ "@type": "Review", author: { "@type": "Person", name: review.authorName }, reviewRating: { "@type": "Rating", ratingValue: review.rating, bestRating: 5 }, reviewBody: review.comment, datePublished: review.createdAt })),
       maximumAttendeeCapacity: venue.maxCapacity || undefined,
       offers: venue.priceAmount ? {
         "@type": "Offer",
@@ -113,7 +123,6 @@ const VenueDetail = () => {
       } : undefined,
     },
     {
-      "@context": "https://schema.org",
       "@type": "BreadcrumbList",
       itemListElement: [
         { "@type": "ListItem", position: 1, name: "Accueil", item: siteUrl },
@@ -122,7 +131,6 @@ const VenueDetail = () => {
       ],
     },
     {
-      "@context": "https://schema.org",
       "@type": "FAQPage",
       mainEntity: faqItems.map((item) => ({
         "@type": "Question",
@@ -130,7 +138,7 @@ const VenueDetail = () => {
         acceptedAnswer: { "@type": "Answer", text: item.answer },
       })),
     },
-  ];
+  ]};
 
   if (isMobile) {
     return (
@@ -142,7 +150,7 @@ const VenueDetail = () => {
           image={venue.coverImage}
           jsonLd={seoJsonLd}
         />
-        <VenueDetailSheet venue={venue} reviews={reviews} onClose={() => navigate(-1)} onBooking={() => setBookingOpen(true)} />
+        <VenueDetailSheet venue={venue} reviews={reviews} similarVenues={similarVenues} onClose={() => navigate(-1)} onBooking={() => setBookingOpen(true)} />
         {bookingOpen && <BookingModal venue={venue} onClose={() => setBookingOpen(false)} source="venue_detail_mobile" />}
       </>
     );
@@ -210,7 +218,12 @@ const VenueDetail = () => {
                     </span>
                   ))}
                 </div>
-                <h1 className="font-heading text-5xl font-semibold leading-none xl:text-6xl">{venue.title}</h1>
+                <h1 className="font-heading text-5xl font-semibold leading-none xl:text-6xl">
+                  <span className="block">{venue.title}</span>
+                  <span className="mt-3 block font-body text-xl font-medium leading-snug text-muted-foreground xl:text-2xl">
+                    {venue.venueTypes[0] || "Lieu événementiel"} à privatiser à {locationLabel}
+                  </span>
+                </h1>
                 <div className="mt-4 flex flex-wrap items-center gap-4 text-sm font-body text-muted-foreground">
                   <span className="flex items-center gap-1.5"><MapPin className="h-4 w-4 text-primary" />{venue.address}</span>
                   {venue.metroAccess && <span className="flex items-center gap-1.5"><Route className="h-4 w-4 text-primary" />{venue.metroAccess}</span>}
@@ -290,7 +303,7 @@ const VenueDetail = () => {
                 ["#options", "Options"],
                 hasAmbianceSection ? ["#ambiance", "Ambiance"] : null,
                 hasUsefulInfoSection ? ["#infos", "Informations utiles"] : null,
-                ["#acces", "Se rendre"],
+                ["#acces", "Accès"],
                 showRating || reviews.length ? ["#avis", "Avis"] : null,
                 ["#faq", "FAQ"],
               ].filter((item): item is [string, string] => Boolean(item)).map(([href, label]) => (
@@ -421,7 +434,7 @@ const VenueDetail = () => {
               )}
 
               <section id="acces" className="scroll-mt-28 rounded-lg border border-border bg-background p-6">
-                <h2 className="font-heading text-3xl font-semibold">Se rendre au {venue.title}</h2>
+                <h2 className="font-heading text-3xl font-semibold">Accès</h2>
                 <div className="mt-5 rounded-lg border border-border bg-card p-5">
                   <div className="flex items-start gap-3">
                     <MapPin className="mt-0.5 h-5 w-5 text-primary" />
@@ -499,6 +512,15 @@ const VenueDetail = () => {
                   </div>
                 </section>
               )}
+
+              <nav aria-label="Recherches de lieux associées" className="flex flex-wrap gap-3 rounded-lg border border-border bg-background p-6">
+                <Link to={locationSeoPath} className="font-body text-sm font-semibold text-primary underline underline-offset-4">
+                  Voir les lieux à {locationLabel}
+                </Link>
+                <Link to={venueTypeSeoPath} className="font-body text-sm font-semibold text-primary underline underline-offset-4">
+                  Voir les lieux de type {venue.venueTypes[0]?.toLowerCase() || "événementiel"} à privatiser
+                </Link>
+              </nav>
             </div>
 
             <aside className="lg:sticky lg:top-28 lg:self-start">

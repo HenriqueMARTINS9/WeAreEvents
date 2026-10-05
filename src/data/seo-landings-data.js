@@ -77,7 +77,7 @@ export const SEO_CAPACITY_RANGES = [
 
 const buildFaq = (intentLabel, locationLabel) => [
   {
-    question: `Comment trouver ${intentLabel.toLowerCase()} à ${locationLabel} ?`,
+    question: `Comment trouver un lieu adapté pour ${intentLabel.toLowerCase()} à ${locationLabel} ?`,
     answer: `Sélectionnez une salle qui correspond à votre capacité, votre date et l'ambiance recherchée, puis envoyez une demande gratuite. L'équipe Wearevents qualifie votre besoin et vous accompagne jusqu'à la réservation.`,
   },
   {
@@ -98,6 +98,7 @@ const createPage = ({
   filters,
   intro,
   relatedSlugs = [],
+  indexable = true,
 }) => ({
   slug,
   title: `${h1} | Wearevents`,
@@ -128,7 +129,20 @@ const createPage = ({
   }),
   faq: buildFaq(intentLabel, locationLabel),
   relatedSlugs,
+  indexable,
 });
+
+const feminineEventTypes = new Set([
+  "Baby shower",
+  "Communion",
+  "Conférence",
+  "Exposition",
+  "Fête de fin d'année",
+  "Journée d'étude",
+  "Soirée privée",
+]);
+
+const eventArticle = (eventType) => feminineEventTypes.has(eventType) ? "une" : "un";
 
 const parisRelated = [
   "salle-anniversaire-paris",
@@ -171,7 +185,7 @@ const eventPages = SEO_EVENT_TYPES.map((eventType) =>
     intentLabel: `Salle pour ${eventType.toLowerCase()}`,
     locationLabel: "Paris",
     filters: { locationQuery: "Paris", eventType },
-    intro: `Vous organisez un ${eventType.toLowerCase()} à Paris ? Wearevents sélectionne des lieux adaptés à votre format : capacité, ambiance, horaires, restauration, musique et conditions de privatisation. Envoyez une demande gratuite et recevez un retour qualifié.`,
+    intro: `Vous organisez ${eventArticle(eventType)} ${eventType.toLowerCase()} à Paris ? Wearevents sélectionne des lieux adaptés à votre format : capacité, ambiance, horaires, restauration, musique et conditions de privatisation. Envoyez une demande gratuite et recevez un retour qualifié.`,
     relatedSlugs: ["location-salle-paris", "bar-privatisable-paris", "restaurant-privatisable-paris"],
   }),
 );
@@ -541,7 +555,32 @@ const servicePages = [
   }),
 );
 
-export const seoLandingPages = [
+const curatedPages = [
+  createPage({
+    slug: "rooftop-a-privatiser-paris",
+    h1: "Rooftop à privatiser à Paris",
+    intentLabel: "Rooftop à privatiser",
+    locationLabel: "Paris",
+    filters: {
+      venueSlugs: ["le-flow", "fluctuart", "le-concorde-atlantique", "le-diamant-bleu", "le-poseidon", "l-olivia", "solum"],
+    },
+    intro: "Privatiser un rooftop à Paris permet de réunir vos invités dans un cadre ouvert et marquant, avec vue sur la capitale ou sur la Seine. Découvrez une sélection de lieux réellement adaptés aux cocktails, anniversaires, soirées privées et événements professionnels.",
+    relatedSlugs: ["salle-avec-terrasse-paris", "salle-cocktail-paris", "salle-soiree-privee-paris"],
+  }),
+  createPage({
+    slug: "lieu-evenementiel-ile-de-france",
+    h1: "Lieu événementiel en Île-de-France",
+    intentLabel: "Lieu événementiel",
+    locationLabel: "Île-de-France",
+    filters: {
+      venueSlugs: ["villa-elysia", "villa-utopia", "manoir-loft-92", "les-petites-canailles", "asko", "kama"],
+    },
+    intro: "Aux portes de Paris, l’Île-de-France propose des villas, lofts et domaines capables d’accueillir des événements plus confidentiels ou de plus grande ampleur. Cette sélection réunit des lieux vérifiés, accessibles et adaptés aux réceptions privées comme aux rendez-vous professionnels.",
+    relatedSlugs: ["location-salle-paris", "villa-evenement-paris", "loft-evenement-paris"],
+  }),
+];
+
+const allSeoLandingPages = [
   parisMainPage,
   ...parisArrondissementPages,
   ...eventPages,
@@ -555,6 +594,31 @@ export const seoLandingPages = [
   ...dispositionPages,
   ...optionPages,
   ...servicePages,
+  ...curatedPages,
 ];
+
+const retainedSecondarySlugs = new Set([
+  "salle-ou-danser-paris",
+  "salle-avec-terrasse-paris",
+  "salle-avec-jardin-paris",
+  "salle-ouverte-apres-2h-paris",
+  "location-seche-salle-paris",
+  "salle-traiteur-externe-paris",
+  "rooftop-a-privatiser-paris",
+  "lieu-evenementiel-ile-de-france",
+]);
+
+const isCoreSeoPage = (page) =>
+  page.slug === "location-salle-paris" ||
+  /^location-salle-paris-(?:[1-9]|1\d|20)(?:er|e)$/.test(page.slug) ||
+  Boolean(page.filters.eventType) ||
+  Boolean(page.filters.maxCapacityLimit || page.filters.maxCapacityGreaterThan) ||
+  Boolean(page.filters.venueTypes?.length) ||
+  retainedSecondarySlugs.has(page.slug);
+
+export const seoLandingPages = allSeoLandingPages.map((page) => ({
+  ...page,
+  indexable: isCoreSeoPage(page),
+}));
 
 export const seoLandingPageSlugs = seoLandingPages.map((page) => page.slug);

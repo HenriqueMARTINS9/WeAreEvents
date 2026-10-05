@@ -1,2 +1,5 @@
 [functions.send-booking-request]
 verify_jwt = false
+
+[functions.send-review-followups]
+verify_jwt = false

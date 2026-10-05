@@ -45,7 +45,7 @@ const SeoIndex = () => {
 
   const groups = useMemo<SeoGroup[]>(() => {
     const pagesBySlug = new Map(
-      seoLandingPages.map((page) => [
+      seoLandingPages.filter((page) => page.indexable !== false).map((page) => [
         page.slug,
         { slug: page.slug, h1: page.h1, description: page.description },
       ]),
@@ -229,7 +229,7 @@ const SeoIndex = () => {
           pagesBySlug,
         ),
       },
-    ];
+    ].filter((group) => group.links.length > 0);
   }, []);
 
   const allLinks = Array.from(new Map(groups.flatMap((group) => group.links).map((link) => [link.slug, link])).values());

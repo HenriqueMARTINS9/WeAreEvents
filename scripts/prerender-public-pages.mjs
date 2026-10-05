@@ -34,21 +34,21 @@ const escapeJsonForHtml = (value) => JSON.stringify(value)
   .replace(/>/g, "\\u003e")
   .replace(/&/g, "\\u0026");
 
-const blogHtmlToSafeText = (value = "") => String(value)
-  .replace(/<script[\s\S]*?<\/script>/gi, " ")
-  .replace(/<style[\s\S]*?<\/style>/gi, " ")
-  .replace(/<\/(p|h1|h2|h3|li|blockquote)>/gi, "\n")
-  .replace(/<br\s*\/?>/gi, "\n")
-  .replace(/<[^>]+>/g, " ")
-  .replace(/&nbsp;/gi, " ")
-  .replace(/&amp;/gi, "&")
-  .replace(/&lt;/gi, "<")
-  .replace(/&gt;/gi, ">")
-  .replace(/&quot;/gi, '"')
-  .replace(/&#39;/gi, "'")
-  .replace(/[ \t]+/g, " ")
-  .replace(/\n{3,}/g, "\n\n")
-  .trim();
+const sanitizeBlogHtml = (value = "") => String(value)
+  .replace(/<script[\s\S]*?<\/script>/gi, "")
+  .replace(/<style[\s\S]*?<\/style>/gi, "")
+  .replace(/<!--([\s\S]*?)-->/g, "")
+  .replace(/<\/?([a-z0-9]+)([^>]*)>/gi, (tag, rawName, attributes) => {
+    const name = rawName.toLowerCase();
+    const allowed = new Set(["p", "h1", "h2", "h3", "strong", "b", "em", "i", "ul", "ol", "li", "blockquote", "br", "a"]);
+    if (!allowed.has(name)) return "";
+    if (tag.startsWith("</")) return `</${name}>`;
+    if (name === "br") return "<br>";
+    if (name !== "a") return `<${name}>`;
+    const href = attributes.match(/href\s*=\s*["']([^"']+)["']/i)?.[1] ?? "";
+    const safeHref = /^(https?:\/\/|\/|#)/i.test(href) ? href : "";
+    return safeHref ? `<a href="${escapeHtml(safeHref)}">` : "<a>";
+  });
 
 const normalizePath = (value = "/") => {
   const path = String(value).split(/[?#]/)[0] || "/";
@@ -71,7 +71,8 @@ const fetchRows = async (table, params) => {
 const [venues, posts, metadataRows] = await Promise.all([
   fetchRows("venues", { select: "*", active: "eq.true", order: "updated_at.desc", limit: "1000" }),
   fetchRows("blog_posts", { select: "*", published: "eq.true", order: "published_at.desc", limit: "1000" }),
-  fetchRows("seo_metadata", { select: "page_path,title,description", active: "eq.true", limit: "1000" }),
+  fetchRows("seo_metadata", { select: "page_path,title,description,intro,guide,faq", active: "eq.true", limit: "1000" })
+    .catch(() => fetchRows("seo_metadata", { select: "page_path,title,description", active: "eq.true", limit: "1000" })),
 ]);
 
 const metadataOverrides = new Map(metadataRows.map((row) => [normalizePath(row.page_path), row]));
@@ -80,6 +81,9 @@ const metadataFor = (path, title, description) => {
   return {
     title: String(override?.title || title).trim(),
     description: String(override?.description || description).trim(),
+    intro: String(override?.intro || "").trim(),
+    guide: String(override?.guide || "").trim(),
+    faq: Array.isArray(override?.faq) ? override.faq : [],
   };
 };
 
@@ -144,26 +148,32 @@ const organizationJsonLd = {
   sameAs: ["https://www.instagram.com/wearevents.fr/", "https://www.tiktok.com/@wearevents.fr", "https://www.linkedin.com/company/wearevents/"],
 };
 
+const indexableSeoPages = getIndexableSeoPages(venues, seoLandingPages);
+
 await writePage("/", applyDocument(template, {
   path: "/",
   title: "Wearevents | Location de salle pour votre événement",
   description: "Découvrez des lieux événementiels vérifiés, comparez les options et envoyez une demande de disponibilité gratuite en quelques clics.",
   jsonLd: organizationJsonLd,
-  body: pageLayout(`<h1 style="font-family:Georgia,serif;font-size:64px;line-height:1;">Le lieu idéal pour votre événement.</h1><p style="font-size:18px;line-height:1.7;max-width:760px;">Des lieux premium, vérifiés et adaptés à votre événement, avec une demande simple et gratuite.</p>${venueLinkGrid(venues.slice(0, 12))}<p style="margin-top:40px;"><a href="/inspirations">Explorer toutes les inspirations</a></p>`),
+  body: pageLayout(`<h1 style="font-family:Georgia,serif;font-size:64px;line-height:1;">Le lieu idéal pour votre événement à Paris.</h1><p style="font-size:18px;line-height:1.7;max-width:760px;">Des lieux premium, vérifiés et adaptés à votre événement, avec une demande simple et gratuite.</p>${venueLinkGrid(venues.slice(0, 12))}<section><h2>Trouvez votre lieu</h2>${indexableSeoPages.map((page) => `<a href="/${escapeHtml(page.slug)}" style="display:inline-block;margin:4px 8px 4px 0;">${escapeHtml(page.h1)}</a>`).join("")}</section><p style="margin-top:40px;"><a href="/inspirations">Explorer toutes les inspirations</a></p>`),
 }));
 
-const indexableSeoPages = getIndexableSeoPages(venues, seoLandingPages);
 for (const rawPage of seoLandingPages) {
   const path = `/${rawPage.slug}`;
   const page = { ...rawPage, ...metadataFor(path, rawPage.title, rawPage.description) };
   const matchingVenues = getMatchingSeoVenues(venues, page);
-  const isIndexable = matchingVenues.length >= 3;
+  const isIndexable = rawPage.indexable !== false && matchingVenues.length >= 3;
+  const activeFaq = page.faq?.length ? page.faq : rawPage.faq;
+  const activeIntro = page.intro || rawPage.intro;
+  const guide = page.guide ? `<section style="margin-top:48px;"><h2>Bien choisir votre lieu</h2><div style="white-space:pre-line;line-height:1.8;">${escapeHtml(page.guide)}</div></section>` : "";
   const jsonLd = [
-    { "@context": "https://schema.org", "@type": "CollectionPage", name: page.h1, description: page.description, url: `${siteUrl}${path}`, mainEntity: { "@type": "ItemList", itemListElement: matchingVenues.slice(0, 12).map((venue, index) => ({ "@type": "ListItem", position: index + 1, name: venue.title, url: `${siteUrl}/salle/${venue.slug}` })) } },
-    { "@context": "https://schema.org", "@type": "FAQPage", mainEntity: page.faq.map((item) => ({ "@type": "Question", name: item.question, acceptedAnswer: { "@type": "Answer", text: item.answer } })) },
+    { "@context": "https://schema.org", "@type": "CollectionPage", name: page.h1, description: page.description, url: `${siteUrl}${path}`, mainEntity: { "@type": "ItemList", itemListElement: matchingVenues.slice(0, 24).map((venue, index) => ({ "@type": "ListItem", position: index + 1, name: venue.title, url: `${siteUrl}/salle/${venue.slug}` })) } },
+    { "@context": "https://schema.org", "@type": "FAQPage", mainEntity: activeFaq.map((item) => ({ "@type": "Question", name: item.question, acceptedAnswer: { "@type": "Answer", text: item.answer } })) },
     { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [{ "@type": "ListItem", position: 1, name: "Accueil", item: siteUrl }, { "@type": "ListItem", position: 2, name: "Inspirations", item: `${siteUrl}/inspirations` }, { "@type": "ListItem", position: 3, name: page.h1, item: `${siteUrl}${path}` }] },
   ];
-  const faq = `<section style="margin-top:48px;"><h2>Questions fréquentes</h2>${page.faq.map((item) => `<article style="border-top:1px solid #e5e5e5;padding:16px 0;"><h3>${escapeHtml(item.question)}</h3><p>${escapeHtml(item.answer)}</p></article>`).join("")}</section>`;
+  const faq = `<section style="margin-top:48px;"><h2>Questions fréquentes</h2>${activeFaq.map((item) => `<article style="border-top:1px solid #e5e5e5;padding:16px 0;"><h3>${escapeHtml(item.question)}</h3><p>${escapeHtml(item.answer)}</p></article>`).join("")}</section>`;
+  const pageCount = Math.ceil(matchingVenues.length / 24);
+  const pagination = pageCount > 1 ? `<nav aria-label="Pagination">${Array.from({ length: pageCount }, (_, index) => `<a href="${path}${index ? `?page=${index + 1}` : ""}" style="margin-right:10px;">${index + 1}</a>`).join("")}</nav>` : "";
   await writePage(path, applyDocument(template, {
     path,
     title: page.title,
@@ -171,7 +181,7 @@ for (const rawPage of seoLandingPages) {
     noindex: !isIndexable,
     image: matchingVenues[0]?.cover_image || defaultImage,
     jsonLd,
-    body: pageLayout(`${breadcrumbs([{ label: "Accueil", href: "/" }, { label: "Inspirations", href: "/inspirations" }, { label: page.h1 }])}<h1 style="font-family:Georgia,serif;font-size:58px;line-height:1;">${escapeHtml(page.h1)}</h1><p style="font-size:18px;line-height:1.7;max-width:760px;">${escapeHtml(page.intro)}</p>${venueLinkGrid(matchingVenues.slice(0, 12))}${faq}`),
+    body: pageLayout(`${breadcrumbs([{ label: "Accueil", href: "/" }, { label: "Inspirations", href: "/inspirations" }, { label: page.h1 }])}<h1 style="font-family:Georgia,serif;font-size:58px;line-height:1;">${escapeHtml(page.h1)}</h1><p style="font-size:18px;line-height:1.7;max-width:760px;">${escapeHtml(activeIntro)}</p>${venueLinkGrid(matchingVenues.slice(0, 24))}${pagination}${guide}${faq}`),
   }));
 }
 
@@ -196,7 +206,7 @@ for (const post of posts) {
   const path = `/blog/${post.slug}`;
   const title = post.seo_title || `${post.title} - Blog Wearevents`;
   const description = post.meta_description || post.excerpt || "Conseils événementiels Wearevents.";
-  const safeContent = escapeHtml(blogHtmlToSafeText(post.content));
+  const safeContent = sanitizeBlogHtml(post.content);
   await writePage(path, applyDocument(template, {
     path,
     title,
@@ -204,7 +214,7 @@ for (const post of posts) {
     image: post.image || defaultImage,
     type: "article",
     jsonLd: [{ "@context": "https://schema.org", "@type": "BlogPosting", headline: post.title, description, image: post.image || defaultImage, datePublished: post.published_at, dateModified: post.updated_at, mainEntityOfPage: `${siteUrl}${path}`, publisher: { "@type": "Organization", name: "Wearevents", url: siteUrl } }, { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [{ "@type": "ListItem", position: 1, name: "Accueil", item: siteUrl }, { "@type": "ListItem", position: 2, name: "Blog", item: `${siteUrl}/blog` }, { "@type": "ListItem", position: 3, name: post.title, item: `${siteUrl}${path}` }] }],
-    body: pageLayout(`${breadcrumbs([{ label: "Accueil", href: "/" }, { label: "Blog", href: "/blog" }, { label: post.title }])}<article><h1 style="font-family:Georgia,serif;font-size:56px;line-height:1;">${escapeHtml(post.title)}</h1>${post.image ? `<img src="${escapeHtml(post.image)}" alt="Illustration de l'article ${escapeHtml(post.title)}" width="1200" height="675" style="width:100%;height:auto;border-radius:8px;">` : ""}<div style="max-width:760px;font-size:17px;line-height:1.8;white-space:pre-line;">${safeContent}</div></article>`),
+    body: pageLayout(`${breadcrumbs([{ label: "Accueil", href: "/" }, { label: "Blog", href: "/blog" }, { label: post.title }])}<article><h1 style="font-family:Georgia,serif;font-size:56px;line-height:1;">${escapeHtml(post.title)}</h1>${post.image ? `<img src="${escapeHtml(post.image)}" alt="Illustration de l'article ${escapeHtml(post.title)}" width="1200" height="675" style="width:100%;height:auto;border-radius:8px;">` : ""}<div style="max-width:760px;font-size:17px;line-height:1.8;">${safeContent}</div></article>`),
   }));
 }
 
@@ -236,6 +246,8 @@ for (const venue of venues) {
 const staticPages = [
   { path: "/faq", title: "FAQ - Questions fréquentes sur la réservation de lieux", description: "Fonctionnement de Wearevents, gratuité du service, types de lieux, délais de réservation et formats de privatisation.", h1: "Questions fréquentes", text: "Tout ce qu'il faut savoir pour rechercher, comparer et réserver un lieu avec Wearevents." },
   { path: "/reseaux-sociaux", title: "Réseaux sociaux Wearevents", description: "Retrouvez Wearevents sur Instagram, TikTok et LinkedIn pour découvrir nos lieux et inspirations événementielles.", h1: "Suivez Wearevents", text: "Découvrez les visites de lieux, nouveautés et conseils événementiels de Wearevents sur les réseaux sociaux." },
+  { path: "/qui-sommes-nous", title: "Qui sommes-nous ? | Wearevents", description: "Découvrez Wearevents, notre sélection de lieux et l'accompagnement proposé aux organisateurs à Paris et en Île-de-France.", h1: "Wearevents simplifie la recherche de lieux événementiels", text: "Nous aidons particuliers, entreprises et agences à trouver un lieu fiable, adapté et disponible." },
+  { path: "/entreprises", title: "Événements d'entreprise à Paris | Wearevents", description: "Trouvez un lieu pour votre séminaire, conférence, cocktail, lancement de produit ou soirée d'entreprise à Paris.", h1: "Un lieu adapté à chaque événement professionnel", text: "Recevez des propositions cohérentes avec votre format, votre capacité et votre budget." },
   { path: "/mentions-legales", title: "Mentions légales - Wearevents", description: "Informations relatives à l'éditeur et à l'hébergement du site Wearevents.", h1: "Mentions légales", text: "Informations légales relatives à l'édition, à l'hébergement et à l'utilisation du site Wearevents." },
   { path: "/cgu", title: "Conditions générales d'utilisation - Wearevents", description: "Conditions d'accès et d'utilisation du site Wearevents.", h1: "Conditions générales d'utilisation", text: "Les présentes conditions encadrent l'accès et l'utilisation des services proposés par Wearevents." },
   { path: "/politique-confidentialite", title: "Politique de confidentialité - Wearevents", description: "Informations sur la collecte et l'utilisation des données personnelles par Wearevents.", h1: "Politique de confidentialité", text: "Cette page explique quelles données sont collectées via les formulaires et comment exercer vos droits." },

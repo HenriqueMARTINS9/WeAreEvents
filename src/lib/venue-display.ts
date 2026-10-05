@@ -52,6 +52,20 @@ export const getVenueLocationLabel = (venue: Pick<Venue, "address" | "city">) =>
   return `Paris ${number === 1 ? "1er" : `${number}e`}`;
 };
 
+const venueTypeSeoPaths: Record<string, string> = {
+  Bar: "/bar-privatisable-paris",
+  Restaurant: "/restaurant-privatisable-paris",
+  Discothèque: "/discotheque-paris",
+  Rooftop: "/rooftop-a-privatiser-paris",
+  Villa: "/villa-evenement-paris",
+  Loft: "/loft-evenementiel-paris",
+};
+
+export const getVenueTypeSeoPath = (venue: Pick<Venue, "venueTypes">) => {
+  const venueType = venue.venueTypes.find((type) => venueTypeSeoPaths[type]);
+  return venueType ? venueTypeSeoPaths[venueType] : "/location-salle-paris";
+};
+
 export const getSimilarVenues = (venue: Venue, venues: Venue[], limit = 4) => {
   const postalCode = getVenuePostalCode(venue.address);
   const normalizedCity = venue.city.trim().toLowerCase();

@@ -50,6 +50,8 @@ const SiteFooter = ({ variant = "light" }: SiteFooterProps) => {
             <Link to="/inspirations" className={`block transition-colors ${isDark ? "hover:text-primary-foreground" : "hover:text-foreground"}`}>Inspirations</Link>
             <Link to="/blog" className={`block transition-colors ${isDark ? "hover:text-primary-foreground" : "hover:text-foreground"}`}>Blog</Link>
             <Link to="/faq" className={`block transition-colors ${isDark ? "hover:text-primary-foreground" : "hover:text-foreground"}`}>FAQ</Link>
+            <Link to="/qui-sommes-nous" className={`block transition-colors ${isDark ? "hover:text-primary-foreground" : "hover:text-foreground"}`}>Qui sommes-nous ?</Link>
+            <Link to="/entreprises" className={`block transition-colors ${isDark ? "hover:text-primary-foreground" : "hover:text-foreground"}`}>Entreprises</Link>
             <Link to="/reseaux-sociaux" className={`block transition-colors ${isDark ? "hover:text-primary-foreground" : "hover:text-foreground"}`}>Réseaux sociaux</Link>
             <button type="button" onClick={openModal} className={`block transition-colors ${isDark ? "hover:text-primary-foreground" : "hover:text-foreground"}`}>
               Référencer mon établissement

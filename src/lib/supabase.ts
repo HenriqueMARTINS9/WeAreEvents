@@ -64,6 +64,9 @@ export type SeoMetadataInsert = {
   page_path: string;
   title: string;
   description: string;
+  intro?: string;
+  guide?: string;
+  faq?: Array<{ question: string; answer: string }>;
   active: boolean;
 };
 
@@ -94,6 +97,8 @@ export type BookingRequestInsert = {
   review_token?: string;
   review_email_scheduled_at?: string | null;
   review_email_sent_at?: string | null;
+  review_email_attempts?: number;
+  review_email_last_error?: string | null;
   status: string;
 };
 

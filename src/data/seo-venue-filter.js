@@ -13,10 +13,10 @@ const parseClosingTime = (time = "") => {
   return (hours < 8 ? hours + 24 : hours) * 60 + minutes;
 };
 
-const matchesOne = (selected = [], available = [], searchable = "") =>
+const matchesOne = (selected = [], available = []) =>
   !selected.length || selected.some((item) => {
     const normalizedItem = normalize(item);
-    return available.some((value) => normalize(value) === normalizedItem) || searchable.includes(normalizedItem);
+    return available.some((value) => normalize(value) === normalizedItem);
   });
 
 const eventAliases = {
@@ -29,6 +29,7 @@ const eventAliases = {
 
 export const venueMatchesSeoFilters = (venue, filters = {}) => {
   if (venue.active === false) return false;
+  if (filters.venueSlugs?.length && !filters.venueSlugs.includes(venue.slug)) return false;
 
   const minCapacity = Number(venue.min_capacity ?? venue.minCapacity ?? 0);
   const maxCapacity = Number(venue.max_capacity ?? venue.maxCapacity ?? 0);
@@ -41,24 +42,7 @@ export const venueMatchesSeoFilters = (venue, filters = {}) => {
   const guestDispositions = values(venue, "guest_dispositions").length ? values(venue, "guest_dispositions") : values(venue, "guestDispositions");
   const spaceTypes = values(venue, "space_types").length ? values(venue, "space_types") : values(venue, "spaceTypes");
   const optionFeatures = values(venue, "option_features").length ? values(venue, "option_features") : values(venue, "optionFeatures");
-  const spaces = values(venue, "spaces");
-  const searchable = normalize([
-    venue.title,
-    venue.tagline,
-    venue.description,
-    venue.pricing_text ?? venue.pricingText,
-    ...eventCategories,
-    ...venueTypes,
-    ...services,
-    ...ambianceTypes,
-    ...externalOptions,
-    ...privatizationTypes,
-    ...guestDispositions,
-    ...spaceTypes,
-    ...optionFeatures,
-    ...spaces.map((space) => `${space?.name ?? ""} ${space?.description ?? ""}`),
-  ].join(" "));
-  const hasText = (value) => searchable.includes(normalize(value));
+  const hasExact = (available, value) => available.some((item) => normalize(item) === normalize(value));
 
   if (filters.locationQuery) {
     const location = normalize(`${venue.city ?? ""} ${venue.address ?? ""}`);
@@ -80,29 +64,36 @@ export const venueMatchesSeoFilters = (venue, filters = {}) => {
   if (filters.closingTimeFilter === "Jusqu'à 2h" && (closingMinutes === null || closingMinutes >= 26 * 60 + 1)) return false;
   if (filters.closingTimeFilter === "Après 2h" && (closingMinutes === null || closingMinutes < 26 * 60 + 1)) return false;
 
-  if (!matchesOne(filters.venueTypes, venueTypes, searchable)) return false;
-  if (!matchesOne(filters.ambianceTypes, ambianceTypes, searchable)) return false;
-  if (!matchesOne(filters.privatizationTypes, privatizationTypes, searchable)) return false;
-  if (!matchesOne(filters.guestDispositions, guestDispositions, searchable)) return false;
-  if (!matchesOne(filters.spaceTypes, spaceTypes, searchable)) return false;
+  if (!matchesOne(filters.venueTypes, venueTypes)) return false;
+  if (!matchesOne(filters.ambianceTypes, ambianceTypes)) return false;
+  if (!matchesOne(filters.privatizationTypes, privatizationTypes)) return false;
+  if (!matchesOne(filters.guestDispositions, guestDispositions)) return false;
+  if (!matchesOne(filters.spaceTypes, spaceTypes)) return false;
 
   for (const option of filters.optionFilters ?? []) {
-    if (option === "Possibilité de mettre sa musique" && !["dj", "musique"].some(hasText)) return false;
-    if (option === "Possibilité de ramener sa nourriture" && !externalOptions.includes(option) && !hasText("traiteur externe")) return false;
-    if (option === "Possibilité de ramener ses boissons" && !externalOptions.includes(option) && !hasText("boissons externes")) return false;
-    if (option === "Possibilité de ramener son gâteau" && !externalOptions.includes(option) && !hasText("gateau externe") && !hasText("gâteau externe")) return false;
-    if (option === "Possibilité de danser" && !["festif", "anime", "animé", "dj", "musique", "piste de danse"].some(hasText)) return false;
-    if (option === "Matériel de projection" && !["projecteur", "projection", "écran"].some(hasText)) return false;
-    if (option === "Jeux (baby-foot / ping-pong / etc.)" && !["jeu", "baby-foot", "ping-pong"].some(hasText)) return false;
-    if (!["Possibilité de mettre sa musique", "Possibilité de ramener sa nourriture", "Possibilité de ramener ses boissons", "Possibilité de ramener son gâteau", "Possibilité de danser", "Matériel de projection", "Jeux (baby-foot / ping-pong / etc.)"].includes(option) && !hasText(option)) return false;
+    if (!hasExact([...optionFeatures, ...externalOptions], option)) return false;
   }
 
-  if ((filters.equipmentFilters ?? []).some((item) => !hasText(item))) return false;
+  if ((filters.equipmentFilters ?? []).some((item) => !hasExact(services, item))) return false;
   return true;
 };
 
+const stablePageScore = (pageSlug, venueSlug) => {
+  const value = `${pageSlug}:${venueSlug}`;
+  let hash = 2166136261;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+};
+
 export const getMatchingSeoVenues = (venues, page) =>
-  venues.filter((venue) => venueMatchesSeoFilters(venue, page.filters));
+  venues
+    .filter((venue) => venueMatchesSeoFilters(venue, page.filters))
+    .sort((left, right) =>
+      stablePageScore(page.slug, left.slug) - stablePageScore(page.slug, right.slug),
+    );
 
 export const getIndexableSeoPages = (venues, pages, minimumVenueCount = 3) =>
-  pages.filter((page) => getMatchingSeoVenues(venues, page).length >= minimumVenueCount);
+  pages.filter((page) => page.indexable !== false && getMatchingSeoVenues(venues, page).length >= minimumVenueCount);

@@ -27,6 +27,9 @@ const assertPageBasics = (path, html, { noindexAllowed = false } = {}) => {
 const homeHtml = await readPage("/");
 assertPageBasics("/", homeHtml);
 if (!/"@type":"Organization"/.test(homeHtml)) failures.push("/: schema Organization absent");
+if (!/href="\/[^"?]+"/i.test(homeHtml) || !/Explorer toutes les inspirations/i.test(homeHtml)) {
+  failures.push("/: liens internes du bloc d'inspirations absents du HTML");
+}
 
 const inspirationsHtml = await readPage("/inspirations");
 assertPageBasics("/inspirations", inspirationsHtml);
@@ -38,6 +41,7 @@ for (const page of seoLandingPages) {
   const html = await readPage(path);
   assertPageBasics(path, html, { noindexAllowed: true });
   const isNoindex = /name="robots"\s+content="noindex/i.test(html);
+  if (page.indexable === false && !isNoindex) failures.push(`${path}: page secondaire encore indexable`);
   if (isNoindex) {
     thinSeoPages += 1;
   } else {
@@ -45,6 +49,9 @@ for (const page of seoLandingPages) {
     if (!/href="\/salle\//i.test(html)) failures.push(`${path}: aucun lien HTML vers une fiche lieu`);
     if (!/"@type":"ItemList"/.test(html)) failures.push(`${path}: schema ItemList absent`);
     if (!/"@type":"FAQPage"/.test(html)) failures.push(`${path}: schema FAQPage absent`);
+    const venueLinkCount = (html.match(/href="\/salle\//gi) || []).length;
+    if (venueLinkCount > 24) failures.push(`${path}: plus de 24 lieux sur la première page`);
+    if (/Les résultats sont filtrés selon cette page SEO/i.test(html)) failures.push(`${path}: ancienne phrase technique encore visible`);
   }
 }
 

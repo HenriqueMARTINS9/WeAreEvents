@@ -195,8 +195,9 @@ const DesktopHome = () => {
               <br />
               pour votre{" "}
               <span key={activeHero.label} className="hero-copy-enter text-primary">
-                {activeHero.noun}.
+                {activeHero.noun}
               </span>
+              <span>. à Paris</span>
             </h1>
             <p className="max-w-3xl text-lg font-body leading-relaxed text-primary-foreground/80 xl:text-xl">
               Des lieux fiables, réactifs et adaptés à votre événement, avec une réservation simple et rapide.
@@ -246,7 +247,7 @@ const DesktopHome = () => {
             {[
               { icon: <ShieldCheck className="w-4 h-4" />, label: "Lieux vérifiés" },
               { icon: <Clock3 className="w-4 h-4" />, label: "Réponse sous 24h" },
-              { icon: <Star className="w-4 h-4" />, label: "4,8/5 sur les demandes" },
+              { icon: <Star className="w-4 h-4" />, label: "Demande 100 % gratuite" },
             ].map((item) => (
               <div key={item.label} className="flex items-center gap-2 rounded-lg border border-primary-foreground/20 bg-primary-foreground/10 px-3 py-2 text-sm font-body text-primary-foreground/80 backdrop-blur-md">
                 <span className="text-luxe-gold">{item.icon}</span>

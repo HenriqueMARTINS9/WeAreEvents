@@ -46,7 +46,7 @@ const Faq = () => {
       )}
 
       <main className="pt-20 md:pt-24">
-        <FaqSection compact={isMobile} />
+        <FaqSection compact={isMobile} pageTitle />
       </main>
 
       <SiteFooter variant="dark" />

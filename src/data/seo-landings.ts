@@ -26,6 +26,7 @@ export type SeoLandingFilters = {
   optionFilters?: string[];
   equipmentFilters?: string[];
   guestDispositions?: string[];
+  venueSlugs?: string[];
 };
 
 export type SeoLandingPage = {
@@ -41,6 +42,7 @@ export type SeoLandingPage = {
   searchUrl: string;
   faq: Array<{ question: string; answer: string }>;
   relatedSlugs: string[];
+  indexable: boolean;
 };
 
 const typedSeoLandingPages = seoLandingPages as SeoLandingPage[];
@@ -79,6 +81,7 @@ const getRelatedSeoLandingPages = (page: SeoLandingPage) =>
   Array.from(new Set([...page.relatedSlugs, ...getAdjacentSeoSlugs(page)]))
     .map((slug) => getSeoLandingPage(slug))
     .filter((item): item is SeoLandingPage => Boolean(item))
+    .filter((item) => item.indexable !== false)
     .filter((item) => item.slug !== page.slug);
 
 const getPrimaryVenueImage = (venues: Venue[]) =>

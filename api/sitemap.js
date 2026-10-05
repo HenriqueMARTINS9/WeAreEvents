@@ -11,6 +11,8 @@ const staticUrls = [
   { path: "/inspirations", changefreq: "weekly", priority: "0.7" },
   { path: "/faq", changefreq: "monthly", priority: "0.5" },
   { path: "/reseaux-sociaux", changefreq: "monthly", priority: "0.4" },
+  { path: "/qui-sommes-nous", changefreq: "monthly", priority: "0.6" },
+  { path: "/entreprises", changefreq: "monthly", priority: "0.7" },
   { path: "/mentions-legales", changefreq: "yearly", priority: "0.3" },
   { path: "/cgu", changefreq: "yearly", priority: "0.3" },
   { path: "/politique-confidentialite", changefreq: "yearly", priority: "0.3" },
@@ -95,7 +97,7 @@ const getDynamicUrls = async () => {
   return [
     ...seoUrls,
     ...venues
-      .filter((venue) => venue.slug)
+      .filter((venue) => venue.slug && !["l'étage-du-mirasol", "l’étage-du-mirasol"].includes(venue.slug))
       .map((venue) => ({
         path: `/salle/${venue.slug}`,
         lastmod: getDate(venue.updated_at),

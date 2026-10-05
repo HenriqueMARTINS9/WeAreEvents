@@ -83,7 +83,7 @@ export const addGoogleConsentChangeListener = (listener: () => void) => {
 };
 
 const ensureGoogleTag = () => {
-  if (!canUseDom() || !isGoogleTagConfigured || !hasGoogleTrackingConsent()) return;
+  if (!canUseDom() || !isGoogleTagConfigured) return;
 
   window.dataLayer = window.dataLayer || [];
   window.gtag = window.gtag || function gtag() {
@@ -91,7 +91,7 @@ const ensureGoogleTag = () => {
   };
 
   if (!googleTagInitialized) {
-    window.gtag("consent", "default", getConsentParams("granted"));
+    window.gtag("consent", "default", getConsentParams(getStoredConsentChoice() ?? "denied"));
     window.gtag("js", new Date());
 
     getGoogleTagIds().forEach((tagId) => {
@@ -111,16 +111,14 @@ const ensureGoogleTag = () => {
   }
 };
 
+export const initializeGoogleTag = ensureGoogleTag;
+
 export const setGoogleConsentChoice = (choice: GoogleConsentChoice) => {
   if (!canUseDom() || !isGoogleTagConfigured) return;
   window.localStorage.setItem(consentStorageKey, choice);
 
-  if (choice === "granted") {
-    ensureGoogleTag();
-    window.gtag?.("consent", "update", getConsentParams("granted"));
-  } else if (window.gtag) {
-    window.gtag("consent", "update", getConsentParams("denied"));
-  }
+  ensureGoogleTag();
+  window.gtag?.("consent", "update", getConsentParams(choice));
 
   dispatchConsentChange();
 };

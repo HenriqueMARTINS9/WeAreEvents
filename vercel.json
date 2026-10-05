@@ -48,13 +48,6 @@
       }
     },
     {
-      "src": "/salle/workshow-paris",
-      "status": 301,
-      "headers": {
-        "Location": "/bar-privatisable-paris"
-      }
-    },
-    {
       "src": "/blog/location-de-salle-de-seminaire-a-paris-le-guide-complet-pour-organiser-un-evenement-professionnel-reussi",
       "status": 301,
       "headers": {
@@ -135,14 +128,28 @@
       "src": "/rooftop-paris",
       "status": 301,
       "headers": {
-        "Location": "/terrasse-evenement-paris"
+        "Location": "/rooftop-a-privatiser-paris"
       }
     },
     {
       "src": "/rooftop-evenement-paris",
       "status": 301,
       "headers": {
-        "Location": "/terrasse-evenement-paris"
+        "Location": "/rooftop-a-privatiser-paris"
+      }
+    },
+    {
+      "src": "/salle/l'étage-du-mirasol",
+      "status": 301,
+      "headers": {
+        "Location": "/salle/letage-du-mirasol"
+      }
+    },
+    {
+      "src": "/salle/l’étage-du-mirasol",
+      "status": 301,
+      "headers": {
+        "Location": "/salle/letage-du-mirasol"
       }
     },
     {

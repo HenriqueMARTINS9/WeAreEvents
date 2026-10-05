@@ -1,13 +1,15 @@
 import { X, Star, MapPin, Users, Tag, Wifi, Car, UtensilsCrossed, Music, Camera, TreePine, Waves, ChefHat, Snowflake, Projector, ShirtIcon, ShieldCheck, ExternalLink, Play, Images } from "lucide-react";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import type { Review, Venue } from "@/types/venue";
 import VenueMediaLightbox, { type VenueMediaItem } from "./VenueMediaLightbox";
 import VenueFaq from "./VenueFaq";
-import { formatVenueCapacity, formatVenuePrice, getVenueImageAlt, hasVenueRating } from "@/lib/venue-display";
+import { formatVenueCapacity, formatVenuePrice, getVenueImageAlt, getVenueLocationLabel, getVenueLocationSeoPath, getVenueTypeSeoPath, hasVenueRating } from "@/lib/venue-display";
 
 interface VenueDetailSheetProps {
   venue: Venue;
   reviews?: Review[];
+  similarVenues?: Venue[];
   onClose: () => void;
   onBooking: () => void;
 }
@@ -39,7 +41,7 @@ const formatClosingLabel = (value: string) => {
   return `Jusqu'à ${hourLabel}h${minutes && minutes !== "00" ? minutes : ""}`;
 };
 
-const VenueDetailSheet = ({ venue, reviews = [], onClose, onBooking }: VenueDetailSheetProps) => {
+const VenueDetailSheet = ({ venue, reviews = [], similarVenues = [], onClose, onBooking }: VenueDetailSheetProps) => {
   const [activeMediaIndex, setActiveMediaIndex] = useState<number | null>(null);
   const showRating = hasVenueRating(venue);
   const heroImages = [venue.coverImage, ...venue.gallery.filter((image) => image !== venue.coverImage)];
@@ -100,7 +102,10 @@ const VenueDetailSheet = ({ venue, reviews = [], onClose, onBooking }: VenueDeta
             Code TikTok · {venue.venueCode}
           </span>
           <h1 className="mt-3 font-heading text-3xl font-semibold leading-none text-primary-foreground">
-            {venue.title}
+            <span className="block">{venue.title}</span>
+            <span className="mt-2 block font-body text-sm font-medium leading-snug text-primary-foreground/75">
+              {venue.venueTypes[0] || "Lieu événementiel"} à privatiser à {getVenueLocationLabel(venue)}
+            </span>
           </h1>
           <div className="mt-4 flex gap-2">
             {venue.videoUrl && (
@@ -316,6 +321,31 @@ const VenueDetailSheet = ({ venue, reviews = [], onClose, onBooking }: VenueDeta
         )}
 
         <VenueFaq venue={venue} compact />
+
+        {similarVenues.length > 0 && (
+          <section className="mt-6">
+            <h2 className="mb-3 font-heading text-xl font-semibold">Lieux similaires</h2>
+            <div className="grid grid-cols-2 gap-3">
+              {similarVenues.map((candidate, index) => (
+                <Link key={candidate.id} to={`/salle/${candidate.slug}`} className="overflow-hidden rounded-lg border border-border bg-background">
+                  {candidate.coverImage && (
+                    <img src={candidate.coverImage} alt={getVenueImageAlt(candidate, index)} width={480} height={320} loading="lazy" className="h-24 w-full object-cover" />
+                  )}
+                  <span className="block p-3 font-body text-xs font-semibold leading-snug">{candidate.title}</span>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
+        <nav aria-label="Recherches de lieux associées" className="mt-6 flex flex-col gap-3 rounded-lg border border-border bg-background p-4">
+          <Link to={getVenueLocationSeoPath(venue)} className="font-body text-sm font-semibold text-primary underline underline-offset-4">
+            Voir les lieux à {getVenueLocationLabel(venue)}
+          </Link>
+          <Link to={getVenueTypeSeoPath(venue)} className="font-body text-sm font-semibold text-primary underline underline-offset-4">
+            Voir les lieux de type {venue.venueTypes[0]?.toLowerCase() || "événementiel"} à privatiser
+          </Link>
+        </nav>
       </div>
 
       {/* Fixed bottom CTA */}

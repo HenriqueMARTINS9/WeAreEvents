@@ -6,9 +6,10 @@ import { faqItems } from "@/data/faq";
 interface FaqSectionProps {
   compact?: boolean;
   variant?: "light" | "dark";
+  pageTitle?: boolean;
 }
 
-const FaqSection = ({ compact = false, variant = "light" }: FaqSectionProps) => {
+const FaqSection = ({ compact = false, variant = "light", pageTitle = false }: FaqSectionProps) => {
   const [openIndex, setOpenIndex] = useState(0);
   const isDark = variant === "dark";
 
@@ -23,9 +24,11 @@ const FaqSection = ({ compact = false, variant = "light" }: FaqSectionProps) => 
             <HelpCircle className="h-6 w-6" />
           </div>
           <p className="mb-3 font-body text-sm font-semibold text-primary">Questions fréquentes</p>
-          <h2 className="font-heading text-4xl font-semibold leading-[1.02] md:text-5xl">
-            Tout savoir avant de réserver.
-          </h2>
+          {pageTitle ? (
+            <h1 className="font-heading text-4xl font-semibold leading-[1.02] md:text-5xl">Tout savoir avant de réserver.</h1>
+          ) : (
+            <h2 className="font-heading text-4xl font-semibold leading-[1.02] md:text-5xl">Tout savoir avant de réserver.</h2>
+          )}
           <p className={`mt-5 max-w-xl font-body leading-relaxed ${isDark ? "text-primary-foreground/65" : "text-muted-foreground"}`}>
             Fonctionnement, gratuité, types de lieux, délais et formats de privatisation : les réponses aux questions les plus courantes.
           </p>

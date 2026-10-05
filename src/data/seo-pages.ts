@@ -6,6 +6,9 @@ export type EditableSeoPage = {
   group: string;
   defaultTitle: string;
   defaultDescription: string;
+  defaultIntro?: string;
+  defaultGuide?: string;
+  defaultFaq?: Array<{ question: string; answer: string }>;
 };
 
 const staticSeoPages: EditableSeoPage[] = [
@@ -58,6 +61,20 @@ const staticSeoPages: EditableSeoPage[] = [
       "Retrouvez Wearevents sur Instagram, TikTok et LinkedIn pour découvrir nos lieux, vidéos et inspirations événementielles.",
   },
   {
+    path: "/qui-sommes-nous",
+    label: "Qui sommes-nous ?",
+    group: "Pages principales",
+    defaultTitle: "Qui sommes-nous ? | Wearevents",
+    defaultDescription: "Découvrez Wearevents, notre sélection de lieux événementiels et l'accompagnement proposé aux organisateurs à Paris et en Île-de-France.",
+  },
+  {
+    path: "/entreprises",
+    label: "Entreprises",
+    group: "Pages principales",
+    defaultTitle: "Événements d'entreprise à Paris | Wearevents",
+    defaultDescription: "Trouvez un lieu pour votre séminaire, conférence, cocktail, lancement de produit ou soirée d'entreprise à Paris.",
+  },
+  {
     path: "/mentions-legales",
     label: "Mentions légales",
     group: "Pages légales",
@@ -99,12 +116,15 @@ const getSeoLandingGroup = (page: (typeof seoLandingPages)[number]) => {
   return "SEO - Autres";
 };
 
-const seoLandingEditablePages: EditableSeoPage[] = seoLandingPages.map((page) => ({
+const seoLandingEditablePages: EditableSeoPage[] = seoLandingPages.filter((page) => page.indexable !== false).map((page) => ({
   path: `/${page.slug}`,
   label: page.h1,
   group: getSeoLandingGroup(page),
   defaultTitle: page.title,
   defaultDescription: page.description,
+  defaultIntro: page.intro,
+  defaultGuide: "",
+  defaultFaq: page.faq,
 }));
 
 export const editableSeoPages = [...staticSeoPages, ...seoLandingEditablePages];

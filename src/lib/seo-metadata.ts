@@ -5,6 +5,9 @@ export type SeoMetadata = {
   pagePath: string;
   title: string;
   description: string;
+  intro: string;
+  guide: string;
+  faq: Array<{ question: string; answer: string }>;
 };
 
 export const isSeoMetadataConfigured = Boolean(supabaseUrl && supabasePublishable);
@@ -19,7 +22,7 @@ export const fetchSeoMetadataByPath = async (path: string): Promise<SeoMetadata 
   if (!isSeoMetadataConfigured) return null;
 
   const url = new URL(`${String(supabaseUrl).replace(/\/$/, "")}/rest/v1/seo_metadata`);
-  url.searchParams.set("select", "page_path,title,description");
+  url.searchParams.set("select", "page_path,title,description,intro,guide,faq");
   url.searchParams.set("page_path", `eq.${normalizeSeoPath(path)}`);
   url.searchParams.set("active", "eq.true");
   url.searchParams.set("limit", "1");
@@ -34,12 +37,22 @@ export const fetchSeoMetadataByPath = async (path: string): Promise<SeoMetadata 
 
   if (!response.ok) throw new Error(`Impossible de charger les métadonnées SEO (${response.status}).`);
 
-  const [row] = (await response.json()) as Array<{ page_path: string; title: string; description: string }>;
+  const [row] = (await response.json()) as Array<{
+    page_path: string;
+    title: string;
+    description: string;
+    intro: string;
+    guide: string;
+    faq: Array<{ question: string; answer: string }>;
+  }>;
   if (!row) return null;
 
   return {
     pagePath: row.page_path,
     title: row.title,
     description: row.description,
+    intro: row.intro ?? "",
+    guide: row.guide ?? "",
+    faq: Array.isArray(row.faq) ? row.faq : [],
   };
 };

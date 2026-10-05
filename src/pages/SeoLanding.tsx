@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, CheckCircle2, MapPin, Search, ShieldCheck, Sparkles } from "lucide-react";
 import DesktopNav from "@/components/DesktopNav";
@@ -15,13 +15,16 @@ import {
   getSeoLandingPage,
 } from "@/data/seo-landings";
 import { fetchVenues, filterVenues } from "@/lib/supabase-data";
+import { fetchSeoMetadataByPath } from "@/lib/seo-metadata";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-const shuffleVenues = <T,>(items: T[]) => {
+const seededShuffle = <T,>(items: T[], seedValue: string) => {
   const shuffled = [...items];
+  let seed = Array.from(seedValue).reduce((value, character) => ((value * 31) + character.charCodeAt(0)) >>> 0, 2166136261);
 
   for (let index = shuffled.length - 1; index > 0; index -= 1) {
-    const randomIndex = Math.floor(Math.random() * (index + 1));
+    seed = (seed * 1664525 + 1013904223) >>> 0;
+    const randomIndex = seed % (index + 1);
     [shuffled[index], shuffled[randomIndex]] = [shuffled[randomIndex], shuffled[index]];
   }
 
@@ -31,9 +34,17 @@ const shuffleVenues = <T,>(items: T[]) => {
 const SeoLanding = () => {
   const { seoSlug } = useParams();
   const page = getSeoLandingPage(seoSlug);
+  const [searchParams] = useSearchParams();
   const isMobile = useIsMobile();
   const [showCodeSearch, setShowCodeSearch] = useState(false);
   const { data: venues = [], isLoading: venuesLoading } = useQuery({ queryKey: ["venues"], queryFn: fetchVenues });
+  const pagePath = page ? `/${page.slug}` : "/";
+  const { data: seoMetadata } = useQuery({
+    queryKey: ["seo-metadata", pagePath],
+    queryFn: () => fetchSeoMetadataByPath(pagePath),
+    enabled: Boolean(page),
+    staleTime: 60_000,
+  });
 
   const matchingVenues = useMemo(() => {
     if (!page) return [];
@@ -55,23 +66,30 @@ const SeoLanding = () => {
       optionFilters: page.filters.optionFilters,
       equipmentFilters: page.filters.equipmentFilters,
       guestDispositions: page.filters.guestDispositions,
+      venueSlugs: page.filters.venueSlugs,
+      strictTags: true,
     });
   }, [page, venues]);
 
-  const venuesToDisplay = useMemo(
-    () => shuffleVenues(matchingVenues).slice(0, 12),
-    [matchingVenues],
-  );
+  const pageNumber = Math.max(1, Number.parseInt(searchParams.get("page") ?? "1", 10) || 1);
+  const pageSize = 24;
+  const orderedVenues = useMemo(() => seededShuffle(matchingVenues, page?.slug ?? "wearevents"), [matchingVenues, page?.slug]);
+  const pageCount = Math.max(1, Math.ceil(orderedVenues.length / pageSize));
+  const currentPage = Math.min(pageNumber, pageCount);
+  const venuesToDisplay = orderedVenues.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   useEffect(() => {
     if (!page?.slug) return;
 
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-  }, [page?.slug]);
+  }, [page?.slug, currentPage]);
 
   if (!page) return <NotFound />;
   const relatedPages = getRelatedSeoLandingPages(page);
   const image = getPrimaryVenueImage(venuesToDisplay);
+  const intro = seoMetadata?.intro?.trim() || page.intro;
+  const guide = seoMetadata?.guide?.trim() || "";
+  const faq = seoMetadata?.faq?.length ? seoMetadata.faq : page.faq;
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -80,7 +98,7 @@ const SeoLanding = () => {
         description={page.description}
         path={`/${page.slug}`}
         image={image}
-        noindex={!venuesLoading && matchingVenues.length < 3}
+        noindex={page.indexable === false || (!venuesLoading && matchingVenues.length < 3)}
         jsonLd={[
           {
             "@context": "https://schema.org",
@@ -100,7 +118,7 @@ const SeoLanding = () => {
           {
             "@context": "https://schema.org",
             "@type": "FAQPage",
-            mainEntity: page.faq.map((item) => ({
+            mainEntity: faq.map((item) => ({
               "@type": "Question",
               name: item.question,
               acceptedAnswer: {
@@ -141,7 +159,7 @@ const SeoLanding = () => {
                 {page.h1}
               </h1>
               <p className="mt-6 max-w-3xl font-body text-lg leading-relaxed text-primary-foreground/75">
-                {page.intro}
+                {intro}
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
                 <Link
@@ -192,9 +210,6 @@ const SeoLanding = () => {
                   {matchingVenues.length} lieu{matchingVenues.length !== 1 ? "x" : ""} à découvrir
                 </h2>
               </div>
-              <p className="max-w-xl font-body text-sm leading-relaxed text-muted-foreground">
-                Les résultats sont filtrés selon cette page SEO. Vous pouvez affiner ensuite par capacité, prix, ambiance ou équipements.
-              </p>
             </div>
 
             {venuesToDisplay.length > 0 ? (
@@ -211,8 +226,40 @@ const SeoLanding = () => {
                 </p>
               </div>
             )}
+
+            {pageCount > 1 && (
+              <nav aria-label="Pagination des lieux" className="mt-10 flex flex-wrap justify-center gap-2">
+                {Array.from({ length: pageCount }, (_, index) => index + 1).map((number) => (
+                  <Link
+                    key={number}
+                    to={number === 1 ? `/${page.slug}` : `/${page.slug}?page=${number}`}
+                    aria-current={number === currentPage ? "page" : undefined}
+                    className={`flex h-10 min-w-10 items-center justify-center rounded-lg border px-3 font-body text-sm font-semibold transition-colors ${
+                      number === currentPage
+                        ? "border-foreground bg-foreground text-background"
+                        : "border-border bg-background hover:border-foreground"
+                    }`}
+                  >
+                    {number}
+                  </Link>
+                ))}
+              </nav>
+            )}
           </div>
         </section>
+
+        {guide && (
+          <section className="border-t border-border bg-background px-6 py-16">
+            <div className="mx-auto max-w-4xl xl:px-2">
+              <h2 className="font-heading text-4xl font-semibold leading-tight">
+                Bien choisir votre lieu
+              </h2>
+              <div className="mt-6 whitespace-pre-line font-body leading-relaxed text-muted-foreground">
+                {guide}
+              </div>
+            </div>
+          </section>
+        )}
 
         <section data-header-theme="light" className="bg-foreground px-6 py-16 text-primary-foreground">
           <div className="mx-auto grid max-w-7xl grid-cols-1 gap-8 xl:grid-cols-[0.78fr_1.22fr] xl:px-2">
@@ -247,7 +294,7 @@ const SeoLanding = () => {
               Avant de réserver
             </h2>
             <div className="mt-8 space-y-3">
-              {page.faq.map((item) => (
+              {faq.map((item) => (
                 <article key={item.question} className="rounded-lg border border-border bg-card p-5">
                   <h3 className="font-body text-base font-semibold">{item.question}</h3>
                   <p className="mt-3 font-body text-sm leading-relaxed text-muted-foreground">{item.answer}</p>

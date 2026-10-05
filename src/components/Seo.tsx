@@ -95,7 +95,7 @@ const Seo = ({
     upsertLink("canonical", canonical);
 
     const scriptId = "wearevents-jsonld";
-    document.getElementById(scriptId)?.remove();
+    [scriptId, "wearevents-prerender-jsonld", "wearevents-runtime-jsonld"].forEach((id) => document.getElementById(id)?.remove());
 
     if (jsonLd) {
       const script = document.createElement("script");

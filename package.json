@@ -10,6 +10,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "export:seo": "node scripts/export-seo-searches.mjs",
+    "images:convert": "node scripts/convert-existing-images-to-webp.mjs",
     "audit:seo": "node scripts/audit-seo.mjs",
     "test": "vitest run",
     "test:watch": "vitest"
@@ -84,6 +85,7 @@
     "globals": "^15.15.0",
     "jsdom": "^20.0.3",
     "postcss": "^8.5.6",
+    "sharp": "^0.35.5",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.38.0",

@@ -4,6 +4,7 @@ import {
   addGoogleConsentChangeListener,
   getGoogleConsentChoice,
   isGoogleTagConfigured,
+  initializeGoogleTag,
   setGoogleConsentChoice,
   trackPageView,
 } from "@/lib/analytics";
@@ -16,6 +17,7 @@ const GoogleTagTracker = () => {
 
   useEffect(() => {
     getBookingAttribution();
+    initializeGoogleTag();
 
     return addGoogleConsentChangeListener(() => {
       setConsentChoice(getGoogleConsentChoice());

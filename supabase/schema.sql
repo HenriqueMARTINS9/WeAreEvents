@@ -68,6 +68,10 @@ alter table public.venues add column if not exists guest_dispositions text[] not
 alter table public.venues add column if not exists space_types text[] not null default '{}';
 alter table public.venues add column if not exists option_features text[] not null default '{}';
 alter table public.venues add column if not exists metro_access text;
+
+update public.venues
+set slug = 'letage-du-mirasol'
+where slug in ('l''étage-du-mirasol', 'l’étage-du-mirasol');
 alter table public.venues add column if not exists seo_title text not null default '';
 alter table public.venues add column if not exists meta_description text not null default '';
 alter table public.venues add column if not exists price_amount numeric(10, 2);
@@ -112,10 +116,17 @@ create table if not exists public.seo_metadata (
   page_path text not null unique,
   title text not null default '',
   description text not null default '',
+  intro text not null default '',
+  guide text not null default '',
+  faq jsonb not null default '[]'::jsonb,
   active boolean not null default true,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.seo_metadata add column if not exists intro text not null default '';
+alter table public.seo_metadata add column if not exists guide text not null default '';
+alter table public.seo_metadata add column if not exists faq jsonb not null default '[]'::jsonb;
 
 create table if not exists public.booking_requests (
   id text primary key,
@@ -144,6 +155,8 @@ create table if not exists public.booking_requests (
   review_token uuid not null default gen_random_uuid(),
   review_email_scheduled_at timestamptz,
   review_email_sent_at timestamptz,
+  review_email_attempts integer not null default 0,
+  review_email_last_error text,
   status text not null default 'new',
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -175,9 +188,81 @@ alter table public.booking_requests add column if not exists interaction_source 
 alter table public.booking_requests add column if not exists review_token uuid not null default gen_random_uuid();
 alter table public.booking_requests add column if not exists review_email_scheduled_at timestamptz;
 alter table public.booking_requests add column if not exists review_email_sent_at timestamptz;
+alter table public.booking_requests add column if not exists review_email_attempts integer not null default 0;
+alter table public.booking_requests add column if not exists review_email_last_error text;
 
 create unique index if not exists booking_requests_review_token_idx
 on public.booking_requests (review_token);
+
+create index if not exists booking_requests_review_followups_due_idx
+on public.booking_requests (review_email_scheduled_at)
+where status = 'confirmed' and review_email_sent_at is null;
+
+create or replace function public.schedule_booking_review_followup()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+begin
+  if new.status = 'confirmed'
+    and (tg_op = 'INSERT' or old.status is distinct from 'confirmed')
+    and new.review_email_sent_at is null
+  then
+    if new.desired_date is not null then
+      new.review_email_scheduled_at = greatest(
+        ((new.desired_date + 2)::date + time '10:00') at time zone 'Europe/Paris',
+        now()
+      );
+    else
+      new.review_email_scheduled_at = now() + interval '2 days';
+    end if;
+    new.review_email_last_error = null;
+  elsif new.status <> 'confirmed' and new.review_email_sent_at is null then
+    new.review_email_scheduled_at = null;
+    new.review_email_last_error = null;
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists booking_requests_schedule_review_followup on public.booking_requests;
+create trigger booking_requests_schedule_review_followup
+before insert or update of status, desired_date on public.booking_requests
+for each row execute function public.schedule_booking_review_followup();
+
+create or replace function public.claim_due_review_followups(batch_size integer default 50)
+returns setof public.booking_requests
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  return query
+  with due as (
+    select booking_requests.id
+    from public.booking_requests
+    where status = 'confirmed'
+      and review_email_sent_at is null
+      and review_email_scheduled_at is not null
+      and review_email_scheduled_at <= now()
+    order by review_email_scheduled_at asc
+    for update skip locked
+    limit greatest(1, least(batch_size, 100))
+  )
+  update public.booking_requests as booking
+  set
+    review_email_scheduled_at = now() + interval '15 minutes',
+    review_email_attempts = booking.review_email_attempts + 1,
+    review_email_last_error = null
+  from due
+  where booking.id = due.id
+  returning booking.*;
+end;
+$$;
+
+revoke all on function public.claim_due_review_followups(integer) from public, anon, authenticated;
+grant execute on function public.claim_due_review_followups(integer) to service_role;
 
 create table if not exists public.venue_reviews (
   id uuid primary key default gen_random_uuid(),

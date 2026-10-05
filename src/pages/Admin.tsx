@@ -623,7 +623,26 @@ const createEmptyBlogForm = () => ({
   published: true,
 });
 
-type SeoMetadataFormState = Record<string, { title: string; description: string }>;
+type SeoMetadataFormField = "title" | "description" | "intro" | "guide" | "faq";
+type SeoMetadataFormState = Record<string, Record<SeoMetadataFormField, string>>;
+
+const serializeSeoFaq = (faq: Array<{ question?: string; answer?: string }> = []) =>
+  faq
+    .filter((item) => item.question && item.answer)
+    .map((item) => `${item.question} | ${item.answer}`)
+    .join("\n");
+
+const parseSeoFaq = (value: string) =>
+  value
+    .split("\n")
+    .map((line) => {
+      const separator = line.indexOf("|");
+      if (separator < 0) return null;
+      const question = line.slice(0, separator).trim();
+      const answer = line.slice(separator + 1).trim();
+      return question && answer ? { question, answer } : null;
+    })
+    .filter((item): item is { question: string; answer: string } => Boolean(item));
 
 const buildSeoMetadataForms = (rows: any[] = []): SeoMetadataFormState => {
   const rowsByPath = new Map(rows.map((row) => [String(row.page_path), row]));
@@ -637,6 +656,9 @@ const buildSeoMetadataForms = (rows: any[] = []): SeoMetadataFormState => {
         {
           title: String(row?.title || page.defaultTitle),
           description: String(row?.description || page.defaultDescription),
+          intro: String(row?.intro || page.defaultIntro || ""),
+          guide: String(row?.guide || page.defaultGuide || ""),
+          faq: serializeSeoFaq(row?.faq?.length ? row.faq : page.defaultFaq),
         },
       ];
     }),
@@ -1240,9 +1262,29 @@ const Admin = () => {
     setMessage("");
 
     try {
+      const currentRequest = adminBookingRequests.find((request) => request.id === requestId);
+      const shouldScheduleReview = status === "confirmed"
+        && currentRequest?.desired_date
+        && !currentRequest?.review_email_sent_at;
+      const eventFollowUpDate = shouldScheduleReview
+        ? new Date(`${currentRequest.desired_date}T10:00:00Z`)
+        : null;
+
+      if (eventFollowUpDate) eventFollowUpDate.setUTCDate(eventFollowUpDate.getUTCDate() + 2);
+
+      const reviewEmailScheduledAt = eventFollowUpDate
+        ? new Date(Math.max(eventFollowUpDate.getTime(), Date.now())).toISOString()
+        : status === "confirmed"
+          ? currentRequest?.review_email_scheduled_at ?? null
+          : null;
+      const updatePayload = {
+        status,
+        review_email_scheduled_at: reviewEmailScheduledAt,
+        review_email_last_error: null,
+      };
       const { error } = await supabase
         .from("booking_requests")
-        .update({ status })
+        .update(updatePayload)
         .eq("id", requestId);
 
       if (error) throw error;
@@ -1250,7 +1292,11 @@ const Admin = () => {
       setAdminBookingRequests((current) =>
         current.map((request) =>
           request.id === requestId
-            ? { ...request, status, updated_at: new Date().toISOString() }
+            ? {
+                ...request,
+                ...updatePayload,
+                updated_at: new Date().toISOString(),
+              }
             : request,
         ),
       );
@@ -1262,18 +1308,24 @@ const Admin = () => {
     }
   };
 
-  const updateSeoForm = (path: string, field: "title" | "description", value: string) => {
+  const updateSeoForm = (path: string, field: SeoMetadataFormField, value: string) => {
     setSeoForms((current) => ({
       ...current,
       [path]: {
-        ...(current[path] ?? { title: "", description: "" }),
+        ...(current[path] ?? { title: "", description: "", intro: "", guide: "", faq: "" }),
         [field]: value,
       },
     }));
   };
 
   const buildSeoPayload = (page: EditableSeoPage): SeoMetadataInsert => {
-    const form = seoForms[page.path] ?? { title: page.defaultTitle, description: page.defaultDescription };
+    const form = seoForms[page.path] ?? {
+      title: page.defaultTitle,
+      description: page.defaultDescription,
+      intro: page.defaultIntro ?? "",
+      guide: page.defaultGuide ?? "",
+      faq: serializeSeoFaq(page.defaultFaq),
+    };
     const title = form.title.trim();
     const description = form.description.trim();
 
@@ -1284,6 +1336,9 @@ const Admin = () => {
       page_path: page.path,
       title,
       description,
+      intro: form.intro.trim(),
+      guide: form.guide.trim(),
+      faq: parseSeoFaq(form.faq),
       active: true,
     };
   };
@@ -1777,7 +1832,7 @@ const SeoMetadataView = ({
   rows: any[];
   forms: SeoMetadataFormState;
   savingPath: string | null;
-  onChange: (path: string, field: "title" | "description", value: string) => void;
+  onChange: (path: string, field: SeoMetadataFormField, value: string) => void;
   onSave: (page: EditableSeoPage) => void;
   onSaveAll: () => void;
 }) => {
@@ -1787,7 +1842,13 @@ const SeoMetadataView = ({
   const groups = ["Toutes", ...Array.from(new Set(pages.map((page) => page.group)))];
   const normalizedQuery = normalizeAdminText(query);
   const visiblePages = pages.filter((page) => {
-    const form = forms[page.path] ?? { title: page.defaultTitle, description: page.defaultDescription };
+    const form = forms[page.path] ?? {
+      title: page.defaultTitle,
+      description: page.defaultDescription,
+      intro: page.defaultIntro ?? "",
+      guide: page.defaultGuide ?? "",
+      faq: serializeSeoFaq(page.defaultFaq),
+    };
     const matchesGroup = group === "Toutes" || page.group === group;
     const matchesQuery = !normalizedQuery || normalizeAdminText(`${page.label} ${page.path} ${form.title} ${form.description}`).includes(normalizedQuery);
 
@@ -1836,7 +1897,13 @@ const SeoMetadataView = ({
 
       <div className="space-y-4">
         {visiblePages.map((page) => {
-          const form = forms[page.path] ?? { title: page.defaultTitle, description: page.defaultDescription };
+          const form = forms[page.path] ?? {
+            title: page.defaultTitle,
+            description: page.defaultDescription,
+            intro: page.defaultIntro ?? "",
+            guide: page.defaultGuide ?? "",
+            faq: serializeSeoFaq(page.defaultFaq),
+          };
           const savedRow = rowsByPath.get(page.path);
           const isSaving = savingPath === page.path;
 
@@ -1884,6 +1951,44 @@ const SeoMetadataView = ({
                   <span className="mt-1 block text-[11px] font-body text-muted-foreground">{form.description.trim().length} caractères</span>
                 </label>
               </div>
+
+              {page.group.startsWith("SEO -") && (
+                <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-2">
+                  <label className="block xl:col-span-2">
+                    <span className="mb-2 block text-xs font-body font-semibold text-muted-foreground">Introduction (80 à 120 mots)</span>
+                    <textarea
+                      value={form.intro}
+                      onChange={(event) => onChange(page.path, "intro", event.target.value)}
+                      rows={5}
+                      className="w-full rounded-lg border border-border bg-background px-3 py-3 text-sm font-body leading-relaxed outline-none focus:border-primary"
+                    />
+                    <span className="mt-1 block text-[11px] font-body text-muted-foreground">{form.intro.trim() ? form.intro.trim().split(/\s+/).length : 0} mots</span>
+                  </label>
+
+                  <label className="block xl:col-span-2">
+                    <span className="mb-2 block text-xs font-body font-semibold text-muted-foreground">Guide (300 à 400 mots, affiché sous un H2)</span>
+                    <textarea
+                      value={form.guide}
+                      onChange={(event) => onChange(page.path, "guide", event.target.value)}
+                      rows={10}
+                      className="w-full rounded-lg border border-border bg-background px-3 py-3 text-sm font-body leading-relaxed outline-none focus:border-primary"
+                    />
+                    <span className="mt-1 block text-[11px] font-body text-muted-foreground">{form.guide.trim() ? form.guide.trim().split(/\s+/).length : 0} mots</span>
+                  </label>
+
+                  <label className="block xl:col-span-2">
+                    <span className="mb-2 block text-xs font-body font-semibold text-muted-foreground">FAQ (4 à 6 questions)</span>
+                    <textarea
+                      value={form.faq}
+                      onChange={(event) => onChange(page.path, "faq", event.target.value)}
+                      rows={8}
+                      placeholder="Question | Réponse (une paire par ligne)"
+                      className="w-full rounded-lg border border-border bg-background px-3 py-3 text-sm font-body leading-relaxed outline-none focus:border-primary"
+                    />
+                    <span className="mt-1 block text-[11px] font-body text-muted-foreground">Format : une ligne par question, séparée de sa réponse par |</span>
+                  </label>
+                </div>
+              )}
             </article>
           );
         })}
