@@ -197,7 +197,7 @@ const DesktopHome = () => {
               <span key={activeHero.label} className="hero-copy-enter text-primary">
                 {activeHero.noun}
               </span>
-              <span>. à Paris.</span>
+              <span> à Paris.</span>
             </h1>
             <p className="max-w-3xl text-lg font-body leading-relaxed text-primary-foreground/80 xl:text-xl">
               Décrivez votre événement, nous trouvons les lieux qui lui correspondent et vous accompagnons jusqu’à la réservation.

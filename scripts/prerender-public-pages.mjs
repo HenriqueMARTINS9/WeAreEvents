@@ -129,6 +129,18 @@ const rawVenuePrice = (venue) => {
   return `Location à partir de ${amount} €`;
 };
 
+const publicFaqItems = [
+  ["Comment fonctionne Wearevents ?", "Wearevents vous permet de trouver et réserver facilement le lieu idéal pour votre événement. Envoyez une demande en précisant la date, le nombre d'invités et les grandes lignes de votre projet, puis notre équipe vous accompagne jusqu'à la réservation."],
+  ["Est-ce que le service est gratuit pour les organisateurs ?", "Oui, le service est entièrement gratuit pour les organisateurs. Wearevents est rémunéré directement par les établissements partenaires une fois la réservation confirmée."],
+  ["Quels types de lieux peut-on réserver ?", "Wearevents propose des bars, restaurants, clubs, rooftops, lofts, salles de réception, espaces extérieurs et lieux atypiques pour des événements privés ou professionnels."],
+  ["Quels sont les différents types de privatisation ?", "Selon les établissements, une privatisation complète ou une semi-privatisation dans un espace dédié est possible. Notre équipe vous aide à choisir la formule adaptée à vos invités et à votre budget."],
+  ["Combien de temps à l'avance faut-il réserver ?", "Nous recommandons deux à quatre semaines pour la majorité des événements, et un à trois mois pour les événements importants ou les périodes très demandées."],
+  ["Que se passe-t-il après ma demande ?", "Notre équipe échange avec vous sur votre événement, vérifie la disponibilité et les conditions du lieu, puis vous propose des alternatives adaptées si nécessaire jusqu'à la confirmation de la réservation."],
+  ["Les lieux sont-ils vérifiés ?", "Oui. Notre équipe sélectionne ses établissements partenaires et vérifie régulièrement la qualité des espaces, l'ambiance, l'accueil et leur adéquation avec les événements proposés."],
+  ["Qui peut privatiser une salle ?", "Particuliers, entreprises, associations, écoles et agences événementielles peuvent réserver un lieu via Wearevents."],
+  ["Quelle est la différence entre une location sèche et un forfait consommation ?", "La location sèche facture la privatisation du lieu, tandis que le forfait consommation repose sur un montant minimum de dépenses en boissons ou restauration pendant l'événement."],
+].map(([question, answer]) => ({ question, answer }));
+
 const venueLinkGrid = (items) => items.length ? `<section style="margin-top:46px;"><h2>Lieux à découvrir</h2><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;">${items.map((venue) => `<article style="border:1px solid #e5e5e5;border-radius:8px;overflow:hidden;"><a href="/salle/${escapeHtml(venue.slug)}" style="display:block;color:#171717;text-decoration:none;">${venue.cover_image ? `<img src="${escapeHtml(venue.cover_image)}" alt="Espace principal de ${escapeHtml(venue.title)} à ${escapeHtml(venue.city)}" width="640" height="420" loading="lazy" style="width:100%;height:190px;object-fit:cover;">` : ""}<div style="padding:16px;"><strong>${escapeHtml(venue.title)}</strong><span style="display:block;margin-top:7px;color:#666;">${escapeHtml(venue.city)} · Jusqu'à ${Number(venue.max_capacity || 0)} personnes</span><span style="display:block;margin-top:7px;color:#D94F6D;">${escapeHtml(rawVenuePrice(venue))}</span></div></a></article>`).join("")}</div></section>` : "";
 
 const template = await readFile(join(distDir, "index.html"), "utf8");
@@ -244,7 +256,7 @@ for (const venue of venues) {
 }
 
 const staticPages = [
-  { path: "/faq", title: "FAQ - Questions fréquentes sur la réservation de lieux", description: "Fonctionnement de Wearevents, gratuité du service, types de lieux, délais de réservation et formats de privatisation.", h1: "Questions fréquentes", text: "Tout ce qu'il faut savoir pour rechercher, comparer et réserver un lieu avec Wearevents." },
+  { path: "/faq", title: "FAQ - Questions fréquentes sur la réservation de lieux", description: "Fonctionnement de Wearevents, gratuité du service, types de lieux, délais de réservation et formats de privatisation.", h1: "Questions fréquentes", text: "Tout ce qu'il faut savoir pour rechercher, comparer et réserver un lieu avec Wearevents.", faq: publicFaqItems },
   { path: "/reseaux-sociaux", title: "Réseaux sociaux Wearevents", description: "Retrouvez Wearevents sur Instagram, TikTok et LinkedIn pour découvrir nos lieux et inspirations événementielles.", h1: "Suivez Wearevents", text: "Découvrez les visites de lieux, nouveautés et conseils événementiels de Wearevents sur les réseaux sociaux." },
   { path: "/qui-sommes-nous", title: "Qui sommes-nous ? | Wearevents", description: "Découvrez Wearevents, notre sélection de lieux et l'accompagnement proposé aux organisateurs à Paris et en Île-de-France.", h1: "Wearevents simplifie la recherche de lieux événementiels", text: "Nous aidons particuliers, entreprises et agences à trouver un lieu fiable, adapté et disponible." },
   { path: "/entreprises", title: "Événements d'entreprise à Paris | Wearevents", description: "Trouvez un lieu pour votre séminaire, conférence, cocktail, lancement de produit ou soirée d'entreprise à Paris.", h1: "Un lieu adapté à chaque événement professionnel", text: "Recevez des propositions cohérentes avec votre format, votre capacité et votre budget." },
@@ -254,10 +266,17 @@ const staticPages = [
 ];
 
 for (const page of staticPages) {
+  const faqBody = page.faq?.length
+    ? `<section><h2>Vos questions sur la réservation</h2>${page.faq.map((item) => `<article><h3>${escapeHtml(item.question)}</h3><p>${escapeHtml(item.answer)}</p></article>`).join("")}</section>`
+    : "";
+  const jsonLd = [
+    { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [{ "@type": "ListItem", position: 1, name: "Accueil", item: siteUrl }, { "@type": "ListItem", position: 2, name: page.h1, item: `${siteUrl}${page.path}` }] },
+    ...(page.faq?.length ? [{ "@context": "https://schema.org", "@type": "FAQPage", mainEntity: page.faq.map((item) => ({ "@type": "Question", name: item.question, acceptedAnswer: { "@type": "Answer", text: item.answer } })) }] : []),
+  ];
   await writePage(page.path, applyDocument(template, {
     ...page,
-    jsonLd: { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [{ "@type": "ListItem", position: 1, name: "Accueil", item: siteUrl }, { "@type": "ListItem", position: 2, name: page.h1, item: `${siteUrl}${page.path}` }] },
-    body: pageLayout(`${breadcrumbs([{ label: "Accueil", href: "/" }, { label: page.h1 }])}<h1 style="font-family:Georgia,serif;font-size:58px;">${escapeHtml(page.h1)}</h1><p style="font-size:18px;line-height:1.7;">${escapeHtml(page.text)}</p>`),
+    jsonLd,
+    body: pageLayout(`${breadcrumbs([{ label: "Accueil", href: "/" }, { label: page.h1 }])}<h1 style="font-family:Georgia,serif;font-size:58px;">${escapeHtml(page.h1)}</h1><p style="font-size:18px;line-height:1.7;">${escapeHtml(page.text)}</p>${faqBody}`),
   }));
 }
 

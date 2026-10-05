@@ -264,6 +264,27 @@ const fetchSeoMetadata = async (path) => {
 
 const venueCardGrid = (venues) => `<section><h2>Lieux à découvrir</h2><div>${venues.map((venue) => `<article><h3><a href="/salle/${escapeHtml(venue.slug)}">${escapeHtml(venue.title)}</a></h3><p>${escapeHtml(venue.city || "Paris")} · Jusqu'à ${Number(venue.max_capacity || 0)} personnes</p></article>`).join("")}</div></section>`;
 
+const venueTypePaths = {
+  Bar: "/bar-privatisable-paris",
+  Restaurant: "/restaurant-privatisable-paris",
+  "Discothèque": "/discotheque-paris",
+  Rooftop: "/rooftop-a-privatiser-paris",
+  Villa: "/villa-evenement-paris",
+  Loft: "/loft-evenementiel-paris",
+};
+
+const getVenueLocation = (venue) => {
+  const postalCode = String(venue.address || "").match(/\b\d{5}\b/)?.[0] || "";
+  const arrondissement = postalCode === "75116"
+    ? 16
+    : Number(postalCode.match(/^750(0[1-9]|1\d|20)$/)?.[1] || 0);
+
+  if (!arrondissement) return { label: venue.city || "Paris", path: "/location-salle-paris" };
+
+  const suffix = arrondissement === 1 ? "1er" : `${arrondissement}e`;
+  return { label: `Paris ${suffix}`, path: `/location-salle-paris-${suffix}` };
+};
+
 const fetchSeoLandingMetadata = async (path, requestedPage = 1) => {
   const page = seoLandingPages.find((candidate) => `/${candidate.slug}` === path);
   if (!page) return null;
@@ -338,6 +359,8 @@ const fetchVenueMetadata = async (slug) => {
   const reviewCount = reviews.length;
   const eventCategories = Array.isArray(venue.event_categories) ? venue.event_categories : [];
   const venueTypes = Array.isArray(venue.venue_types) ? venue.venue_types : [];
+  const location = getVenueLocation(venue);
+  const typePath = venueTypePaths[venueTypes[0]] || "/location-salle-paris";
   const priceAmount = Number(venue.price_amount ?? 0);
   const venueSchema = {
     "@type": ["EventVenue", "LocalBusiness"],
@@ -354,7 +377,6 @@ const fetchVenueMetadata = async (slug) => {
     maximumAttendeeCapacity: maxCapacity || undefined,
     geo: venue.location?.lat && venue.location?.lng ? { "@type": "GeoCoordinates", latitude: venue.location.lat, longitude: venue.location.lng } : undefined,
     priceRange: venue.price_tier || undefined,
-    openingHours: venue.closing_time ? `Mo-Su 00:00-${venue.closing_time}` : undefined,
     amenityFeature: [...(venue.services || []), ...(venue.option_features || [])].map((name) => ({ "@type": "LocationFeatureSpecification", name, value: true })),
     aggregateRating: rating > 0 && reviewCount > 0
       ? { "@type": "AggregateRating", ratingValue: rating, reviewCount }
@@ -365,7 +387,7 @@ const fetchVenueMetadata = async (slug) => {
       : undefined,
   };
   const runtimeBody = `<main style="font-family:Arial,sans-serif;max-width:1120px;margin:0 auto;padding:64px 24px;color:#171717;">
-    <nav aria-label="Fil d'Ariane" style="font-size:13px;margin-bottom:26px;"><a href="/">Accueil</a> / <a href="/inspirations">Inspirations</a> / ${escapeHtml(venue.title)}</nav>
+    <nav aria-label="Fil d'Ariane" style="font-size:13px;margin-bottom:26px;"><a href="/">Accueil</a> / <a href="${location.path}">${escapeHtml(location.label)}</a> / ${escapeHtml(venue.title)}</nav>
     <article>
       <h1 style="font-family:Georgia,serif;font-size:58px;line-height:1;">${escapeHtml(venue.title)}<small style="display:block;margin-top:14px;font-family:Arial,sans-serif;font-size:22px;font-weight:500;">${escapeHtml(venueTypes[0] || "Lieu événementiel")} à privatiser à ${escapeHtml(venue.city)}</small></h1>
       <p>${escapeHtml(address)} · ${escapeHtml(capacity)}</p>
@@ -373,7 +395,7 @@ const fetchVenueMetadata = async (slug) => {
       <p style="max-width:780px;font-size:17px;line-height:1.8;white-space:pre-line;">${escapeHtml(venue.description || venue.tagline || "")}</p>
       ${eventCategories.length ? `<section><h2>Événements adaptés</h2><p>${escapeHtml(eventCategories.join(", "))}</p></section>` : ""}
       <section><h2>Lieux similaires</h2>${nearbyVenues.filter((candidate) => candidate.id !== venue.id).slice(0, 6).map((candidate) => `<article><h3><a href="/salle/${escapeHtml(candidate.slug)}">${escapeHtml(candidate.title)}</a></h3></article>`).join("")}</section>
-      <nav aria-label="Recherches associées"><a href="/location-salle-paris">Lieux à ${escapeHtml(venue.city)}</a> · <a href="/inspirations">Lieux de type ${escapeHtml(venueTypes[0] || "événementiel")}</a></nav>
+      <nav aria-label="Recherches associées"><a href="${location.path}">Lieux à ${escapeHtml(location.label)}</a> · <a href="${typePath}">${escapeHtml(venueTypes[0] || "Lieux événementiels")} à privatiser</a></nav>
       <p><a href="/recherche">Voir les autres lieux disponibles</a></p>
     </article>
   </main>`;
@@ -390,7 +412,7 @@ const fetchVenueMetadata = async (slug) => {
         "@type": "BreadcrumbList",
         itemListElement: [
           { "@type": "ListItem", position: 1, name: "Accueil", item: siteUrl },
-          { "@type": "ListItem", position: 2, name: "Inspirations", item: `${siteUrl}/inspirations` },
+          { "@type": "ListItem", position: 2, name: location.label, item: `${siteUrl}${location.path}` },
           { "@type": "ListItem", position: 3, name: venue.title, item: `${siteUrl}${path}` },
         ],
       },

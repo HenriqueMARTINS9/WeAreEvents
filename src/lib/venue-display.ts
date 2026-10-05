@@ -31,25 +31,29 @@ export const getVenueImageAlt = (venue: Pick<Venue, "title" | "city">, index = 0
 
 export const getVenuePostalCode = (address: string) => address.match(/\b\d{5}\b/)?.[0] ?? "";
 
-export const getVenueLocationSeoPath = (venue: Pick<Venue, "address" | "city">) => {
-  const postalCode = getVenuePostalCode(venue.address);
-  const arrondissement = postalCode.match(/^750(0[1-9]|1\d|20)$/)?.[1];
+const getParisArrondissement = (address: string) => {
+  const postalCode = getVenuePostalCode(address);
+  if (postalCode === "75116") return 16;
 
-  if (arrondissement) {
-    const number = Number(arrondissement);
-    return `/location-salle-paris-${number === 1 ? "1er" : `${number}e`}`;
+  const arrondissement = postalCode.match(/^750(0[1-9]|1\d|20)$/)?.[1];
+  return arrondissement ? Number(arrondissement) : null;
+};
+
+export const getVenueLocationSeoPath = (venue: Pick<Venue, "address" | "city">) => {
+  const arrondissement = getParisArrondissement(venue.address);
+
+  if (arrondissement !== null) {
+    return `/location-salle-paris-${arrondissement === 1 ? "1er" : `${arrondissement}e`}`;
   }
 
   return venue.city.toLowerCase().includes("paris") ? "/location-salle-paris" : "/inspirations";
 };
 
 export const getVenueLocationLabel = (venue: Pick<Venue, "address" | "city">) => {
-  const postalCode = getVenuePostalCode(venue.address);
-  const arrondissement = postalCode.match(/^750(0[1-9]|1\d|20)$/)?.[1];
+  const arrondissement = getParisArrondissement(venue.address);
 
-  if (!arrondissement) return venue.city || "Lieux";
-  const number = Number(arrondissement);
-  return `Paris ${number === 1 ? "1er" : `${number}e`}`;
+  if (arrondissement === null) return venue.city || "Lieux";
+  return `Paris ${arrondissement === 1 ? "1er" : `${arrondissement}e`}`;
 };
 
 const venueTypeSeoPaths: Record<string, string> = {

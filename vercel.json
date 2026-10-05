@@ -6,6 +6,19 @@
   },
   "routes": [
     {
+      "src": "/(.*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "wearevents.fr"
+        }
+      ],
+      "status": 301,
+      "headers": {
+        "Location": "https://www.wearevents.fr/$1"
+      }
+    },
+    {
       "src": "/salle-diner-d-affaires-paris",
       "status": 301,
       "headers": {

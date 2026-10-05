@@ -108,7 +108,6 @@ const VenueDetail = () => {
         longitude: venue.location.lng,
       } : undefined,
       priceRange: venue.priceTier,
-      openingHours: venue.closingTime ? `Mo-Su 00:00-${venue.closingTime}` : undefined,
       amenityFeature: [...venue.services, ...venue.optionFeatures].map((name) => ({ "@type": "LocationFeatureSpecification", name, value: true })),
       aggregateRating: weareventsRating > 0
         ? { "@type": "AggregateRating", ratingValue: Number(weareventsRating.toFixed(1)), reviewCount: reviews.length }
