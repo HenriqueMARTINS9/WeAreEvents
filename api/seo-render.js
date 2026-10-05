@@ -530,8 +530,22 @@ export default async function handler(request, response) {
   }
 
   const rawPath = Array.isArray(request.query.path) ? request.query.path[0] : request.query.path;
-  const path = normalizeSeoPath(rawPath || "/");
+  let decodedRawPath = rawPath || "/";
+  try {
+    decodedRawPath = decodeURIComponent(decodedRawPath);
+  } catch {
+    // Keep the original value when an incoming URL contains malformed encoding.
+  }
+  const path = normalizeSeoPath(decodedRawPath);
   const requestedPage = Math.max(1, Number.parseInt(String(request.query.page || "1"), 10) || 1);
+
+  if (["/salle/l'étage-du-mirasol", "/salle/l’étage-du-mirasol"].includes(path.toLowerCase())) {
+    response.statusCode = 301;
+    response.setHeader("Location", "/salle/letage-du-mirasol");
+    response.setHeader("Cache-Control", "public, max-age=0, s-maxage=86400");
+    response.end();
+    return;
+  }
 
   try {
     const [documentResult, metadata] = await Promise.all([
