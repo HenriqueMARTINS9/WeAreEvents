@@ -191,14 +191,14 @@ const applyHtmlMetadata = (html, metadata) => {
     type = "website",
     noindex,
   } = metadata;
-  const canonical = canonicalUrl(path);
+  const canonical = canonicalUrl(metadata.canonicalPath || path);
   let nextHtml = html;
 
   nextHtml = nextHtml.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(title)}</title>`);
   nextHtml = replaceOrInsertHeadTag(nextHtml, /<link\s+rel="canonical"\s+href="[^"]*"\s*\/?>/i, `<link rel="canonical" href="${escapeHtml(canonical)}" />`);
   nextHtml = replaceOrInsertHeadTag(nextHtml, /<meta\s+name="description"\s+content="[^"]*"\s*\/?>/i, `<meta name="description" content="${escapeHtml(description)}">`);
   if (typeof noindex === "boolean") {
-    nextHtml = replaceOrInsertHeadTag(nextHtml, /<meta\s+name="robots"\s+content="[^"]*"\s*\/?>/i, `<meta name="robots" content="${noindex ? "noindex, nofollow" : "index, follow"}" />`);
+    nextHtml = replaceOrInsertHeadTag(nextHtml, /<meta\s+name="robots"\s+content="[^"]*"\s*\/?>/i, `<meta name="robots" content="${noindex ? "noindex, follow" : "index, follow"}" />`);
   }
   nextHtml = replaceOrInsertHeadTag(nextHtml, /<meta\s+property="og:type"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:type" content="${escapeHtml(type)}" />`);
   nextHtml = replaceOrInsertHeadTag(nextHtml, /<meta\s+property="og:url"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:url" content="${escapeHtml(canonical)}" />`);
@@ -292,6 +292,7 @@ const fetchSeoLandingMetadata = async (path, requestedPage = 1) => {
     description: override?.description || page.description,
     image: displayedVenues[0]?.cover_image || defaultImage,
     noindex: page.indexable === false || matchingVenues.length < 3,
+    canonicalPath: currentPage > 1 ? `${path}?page=${currentPage}` : path,
     runtimeBody,
     jsonLd: {
       "@context": "https://schema.org",
@@ -306,7 +307,7 @@ const fetchSeoLandingMetadata = async (path, requestedPage = 1) => {
 
 const fetchVenueMetadata = async (slug) => {
   let [venue] = await fetchSupabaseRows("venues", {
-    select: "id,title,slug,tagline,description,address,city,max_capacity,cover_image,gallery,event_categories,venue_types,services,option_features,location,closing_time,rating,review_count,price_amount,price_type,pricing_text,seo_title,meta_description",
+    select: "id,title,slug,tagline,description,address,city,max_capacity,cover_image,gallery,event_categories,venue_types,services,option_features,location,closing_time,rating,review_count,price_amount,price_type,pricing_text,price_tier,seo_title,meta_description",
     slug: `eq.${slug}`,
     active: "eq.true",
     limit: "1",
@@ -314,7 +315,7 @@ const fetchVenueMetadata = async (slug) => {
 
   if (!venue && slug === "letage-du-mirasol") {
     [venue] = await fetchSupabaseRows("venues", {
-      select: "id,title,slug,tagline,description,address,city,max_capacity,cover_image,gallery,event_categories,venue_types,services,option_features,location,closing_time,rating,review_count,price_amount,price_type,pricing_text,seo_title,meta_description",
+      select: "id,title,slug,tagline,description,address,city,max_capacity,cover_image,gallery,event_categories,venue_types,services,option_features,location,closing_time,rating,review_count,price_amount,price_type,pricing_text,price_tier,seo_title,meta_description",
       slug: "in.(l'étage-du-mirasol,l’étage-du-mirasol)",
       active: "eq.true",
       limit: "1",
@@ -352,7 +353,7 @@ const fetchVenueMetadata = async (slug) => {
     },
     maximumAttendeeCapacity: maxCapacity || undefined,
     geo: venue.location?.lat && venue.location?.lng ? { "@type": "GeoCoordinates", latitude: venue.location.lat, longitude: venue.location.lng } : undefined,
-    priceRange: venue.pricing_text || undefined,
+    priceRange: venue.price_tier || undefined,
     openingHours: venue.closing_time ? `Mo-Su 00:00-${venue.closing_time}` : undefined,
     amenityFeature: [...(venue.services || []), ...(venue.option_features || [])].map((name) => ({ "@type": "LocationFeatureSpecification", name, value: true })),
     aggregateRating: rating > 0 && reviewCount > 0
@@ -538,6 +539,15 @@ export default async function handler(request, response) {
   }
   const path = normalizeSeoPath(decodedRawPath);
   const requestedPage = Math.max(1, Number.parseInt(String(request.query.page || "1"), 10) || 1);
+
+  if (decodedRawPath.length > 1 && decodedRawPath.endsWith("/")) {
+    const query = requestedPage > 1 ? `?page=${requestedPage}` : "";
+    response.statusCode = 301;
+    response.setHeader("Location", `${path}${query}`);
+    response.setHeader("Cache-Control", "public, max-age=0, s-maxage=86400");
+    response.end();
+    return;
+  }
 
   if (["/salle/l'étage-du-mirasol", "/salle/l’étage-du-mirasol"].includes(path.toLowerCase())) {
     response.statusCode = 301;

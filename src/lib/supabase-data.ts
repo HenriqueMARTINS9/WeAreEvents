@@ -32,23 +32,9 @@ const closesAtOrAfter = (time: string, threshold: string) => {
 const getLegacySpaceTypes = (options: string[] = []) =>
   options.filter((option) => ["Espace clos", "Espace ouvert"].includes(option));
 const normalizeKnownValues = (values: string[] = [], options: readonly string[]) => {
-  const joinedValues = values.join(", ");
-  return options.filter((option) => values.includes(option) || joinedValues.includes(option));
+  const normalizedValues = new Set(values.map(normalizeSearchValue));
+  return options.filter((option) => normalizedValues.has(normalizeSearchValue(option)));
 };
-const EVENT_TYPE_ALIASES: Record<string, string[]> = {
-  "Lancement de produit": ["Lancement"],
-  "Repas d'entreprise": ["Corporate", "Dîner d'affaires"],
-  Tournage: ["Shooting / tournage"],
-  Shooting: ["Shooting / tournage"],
-  "Événement étudiant": ["Gala", "Concert"],
-};
-
-const expandEventTypes = (eventTypes: string[]) =>
-  Array.from(
-    new Set(
-      eventTypes.flatMap((eventType) => [eventType, ...(EVENT_TYPE_ALIASES[eventType] ?? [])]),
-    ),
-  );
 
 const mapVenue = (row: any): Venue => ({
   id: row.id,
@@ -150,13 +136,14 @@ export const filterVenues = (
       const address = normalizeSearchValue(venue.address);
       const postalCode = getPostalCodeFromAddress(venue.address);
 
-      if (!city.includes(locationQuery) && !address.includes(locationQuery) && !postalCode.startsWith(locationQuery)) {
+      const paris16Postcodes = new Set(["75016", "75116"]);
+      const matchesParis16 = paris16Postcodes.has(locationQuery) && paris16Postcodes.has(postalCode);
+
+      if (!matchesParis16 && !city.includes(locationQuery) && !address.includes(locationQuery) && !postalCode.startsWith(locationQuery)) {
         return false;
       }
     }
-    const selectedEventTypes = expandEventTypes(
-      Array.from(new Set([filters.eventType, ...(filters.eventTypes ?? [])].filter(Boolean))),
-    );
+    const selectedEventTypes = Array.from(new Set([filters.eventType, ...(filters.eventTypes ?? [])].filter(Boolean)));
 
     if (
       selectedEventTypes.length &&
@@ -183,56 +170,27 @@ export const filterVenues = (
     ) return false;
     if (filters.externalOption && !venue.externalOptions.includes(filters.externalOption)) return false;
 
-    const searchable = normalizeSearchValue(
-      [
-        venue.title,
-        venue.tagline,
-        venue.description,
-        venue.pricingText,
-        ...venue.eventCategories,
-        ...venue.venueTypes,
-        ...venue.services,
-        ...venue.ambianceTypes,
-        ...venue.externalOptions,
-        ...venue.privatizationTypes,
-        ...venue.guestDispositions,
-        ...venue.spaceTypes,
-        ...venue.optionFeatures,
-        ...venue.spaces.map((space) => `${space.name} ${space.description}`),
-      ].join(" "),
-    );
-    const hasText = (value: string) => searchable.includes(normalizeSearchValue(value));
-    const hasAnyExactOrText = (selected: string[] | undefined, values: string[]) =>
+    const hasExactValue = (values: string[], item: string) =>
+      values.some((value) => normalizeSearchValue(value) === normalizeSearchValue(item));
+    const hasAnyExact = (selected: string[] | undefined, values: string[]) =>
       !selected?.length ||
-      selected.some((item) =>
-        values.some((value) => normalizeSearchValue(value) === normalizeSearchValue(item)) ||
-        (!filters.strictTags && hasText(item)),
-      );
+      selected.some((item) => hasExactValue(values, item));
 
-    if (!hasAnyExactOrText(filters.venueTypes, venue.venueTypes)) return false;
-    if (!hasAnyExactOrText(filters.privatizationTypes, venue.privatizationTypes)) return false;
-    if (!hasAnyExactOrText(filters.guestDispositions, venue.guestDispositions)) return false;
-    if (!hasAnyExactOrText(filters.spaceTypes, venue.spaceTypes)) return false;
+    if (!hasAnyExact(filters.venueTypes, venue.venueTypes)) return false;
+    if (!hasAnyExact(filters.privatizationTypes, venue.privatizationTypes)) return false;
+    if (!hasAnyExact(filters.guestDispositions, venue.guestDispositions)) return false;
+    if (!hasAnyExact(filters.spaceTypes, venue.spaceTypes)) return false;
 
     const hasExactOption = (option: string) =>
       [...venue.optionFeatures, ...venue.externalOptions].some(
         (value) => normalizeSearchValue(value) === normalizeSearchValue(option),
       );
-    const optionMatches = (option: string, fallbacks: string[]) =>
-      hasExactOption(option) || (!filters.strictTags && fallbacks.some(hasText));
+    const optionMatches = (option: string) => hasExactOption(option);
 
-    if (filters.optionFilters?.includes("Possibilité de mettre sa musique") && !optionMatches("Possibilité de mettre sa musique", ["dj", "musique"])) return false;
-    if (filters.optionFilters?.includes("Possibilité de ramener sa nourriture") && !optionMatches("Possibilité de ramener sa nourriture", ["traiteur externe"])) return false;
-    if (filters.optionFilters?.includes("Possibilité de ramener ses boissons") && !optionMatches("Possibilité de ramener ses boissons", ["boissons externes"])) return false;
-    if (filters.optionFilters?.includes("Possibilité de ramener son gâteau") && !optionMatches("Possibilité de ramener son gâteau", ["gateau externe", "gâteau externe"])) return false;
-    if (filters.optionFilters?.includes("Possibilité de danser") && !optionMatches("Possibilité de danser", ["festif", "anime", "animé", "dj", "musique", "piste de danse"])) return false;
-    if (filters.optionFilters?.includes("Matériel de projection") && !["projecteur", "projection"].some(hasText)) return false;
-    if (filters.optionFilters?.includes("Jeux (baby-foot / ping-pong / etc.)") && !["jeu", "baby-foot", "ping-pong"].some(hasText)) return false;
+    if (filters.optionFilters?.some((option) => !optionMatches(option))) return false;
     if (
       filters.equipmentFilters?.some((item) =>
-        filters.strictTags
-          ? !venue.services.some((service) => normalizeSearchValue(service) === normalizeSearchValue(item))
-          : !hasText(item),
+        !venue.services.some((service) => normalizeSearchValue(service) === normalizeSearchValue(item)),
       )
     ) return false;
     return true;

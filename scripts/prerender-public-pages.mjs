@@ -97,7 +97,7 @@ const applyDocument = (template, { path, title, description, image = defaultImag
   const tags = [
     [/<link\s+rel="canonical"\s+href="[^"]*"\s*\/?>/i, `<link rel="canonical" href="${escapeHtml(canonical)}" />`],
     [/<meta\s+name="description"\s+content="[^"]*"\s*\/?>/i, `<meta name="description" content="${escapeHtml(metadata.description)}">`],
-    [/<meta\s+name="robots"\s+content="[^"]*"\s*\/?>/i, `<meta name="robots" content="${noindex ? "noindex, nofollow" : "index, follow"}" />`],
+    [/<meta\s+name="robots"\s+content="[^"]*"\s*\/?>/i, `<meta name="robots" content="${noindex ? "noindex, follow" : "index, follow"}" />`],
     [/<meta\s+property="og:type"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:type" content="${escapeHtml(type)}" />`],
     [/<meta\s+property="og:url"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:url" content="${escapeHtml(canonical)}" />`],
     [/<meta\s+property="og:title"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:title" content="${escapeHtml(metadata.title)}">`],
@@ -155,7 +155,7 @@ await writePage("/", applyDocument(template, {
   title: "Wearevents | Location de salle pour votre événement",
   description: "Découvrez des lieux événementiels vérifiés, comparez les options et envoyez une demande de disponibilité gratuite en quelques clics.",
   jsonLd: organizationJsonLd,
-  body: pageLayout(`<h1 style="font-family:Georgia,serif;font-size:64px;line-height:1;">Le lieu idéal pour votre événement à Paris.</h1><p style="font-size:18px;line-height:1.7;max-width:760px;">Des lieux premium, vérifiés et adaptés à votre événement, avec une demande simple et gratuite.</p>${venueLinkGrid(venues.slice(0, 12))}<section><h2>Trouvez votre lieu</h2>${indexableSeoPages.map((page) => `<a href="/${escapeHtml(page.slug)}" style="display:inline-block;margin:4px 8px 4px 0;">${escapeHtml(page.h1)}</a>`).join("")}</section><p style="margin-top:40px;"><a href="/inspirations">Explorer toutes les inspirations</a></p>`),
+  body: pageLayout(`<h1 style="font-family:Georgia,serif;font-size:64px;line-height:1;">Le lieu idéal pour votre événement à Paris.</h1><p style="font-size:18px;line-height:1.7;max-width:760px;">Décrivez votre événement, nous trouvons les lieux qui lui correspondent et vous accompagnons jusqu’à la réservation.</p>${venueLinkGrid(venues.slice(0, 12))}<section><h2>Trouvez votre lieu</h2>${indexableSeoPages.map((page) => `<a href="/${escapeHtml(page.slug)}" style="display:inline-block;margin:4px 8px 4px 0;">${escapeHtml(page.h1)}</a>`).join("")}</section><p style="margin-top:40px;"><a href="/inspirations">Explorer toutes les inspirations</a></p>`),
 }));
 
 for (const rawPage of seoLandingPages) {

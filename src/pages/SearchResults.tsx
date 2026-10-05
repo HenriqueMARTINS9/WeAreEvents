@@ -41,6 +41,19 @@ type FilterGroupProps = {
 const toggleValue = (values: string[], value: string) =>
   values.includes(value) ? values.filter((item) => item !== value) : [...values, value];
 
+const normalizeFilterValue = (value: string) =>
+  value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+
+const keepAvailableOptions = (
+  options: readonly string[],
+  availableValues: string[],
+  selectedValues: string[] = [],
+) => {
+  const available = new Set(availableValues.map(normalizeFilterValue));
+  const selected = new Set(selectedValues.map(normalizeFilterValue));
+  return options.filter((option) => available.has(normalizeFilterValue(option)) || selected.has(normalizeFilterValue(option)));
+};
+
 const shuffleList = <T,>(items: T[]) => {
   const shuffled = [...items];
 
@@ -163,6 +176,18 @@ const SearchResults = () => {
   const codeParam = searchParams.get("code");
   const { data: venues = [] } = useQuery({ queryKey: ["venues"], queryFn: fetchVenues });
   const locationOptions = getVenueLocationSuggestionsFromVenues(venues);
+  const availableFilterOptions = useMemo(() => ({
+    eventTypes: keepAvailableOptions(EVENT_TYPES, venues.flatMap((venue) => venue.eventCategories), [eventType, ...eventCategoryFilters]),
+    venueTypes: keepAvailableOptions(VENUE_TYPES, venues.flatMap((venue) => venue.venueTypes), venueTypes),
+    prices: keepAvailableOptions(PRICE_TIERS, venues.map((venue) => venue.priceTier), priceTier ? [priceTier] : []),
+    ambiances: keepAvailableOptions(AMBIANCE_TYPES, venues.flatMap((venue) => venue.ambianceTypes), ambianceFilters),
+    privatizations: keepAvailableOptions(PRIVATIZATION_TYPES, venues.flatMap((venue) => venue.privatizationTypes), privatizationTypes),
+    spaces: keepAvailableOptions(SPACE_TYPES, venues.flatMap((venue) => venue.spaceTypes), spaceTypes),
+    options: keepAvailableOptions([...EXTERNAL_OPTIONS, ...OPTION_FEATURES], venues.flatMap((venue) => [...venue.externalOptions, ...venue.optionFeatures]), optionFilters),
+    dispositions: keepAvailableOptions(GUEST_DISPOSITIONS, venues.flatMap((venue) => venue.guestDispositions), guestDispositions),
+    equipment: keepAvailableOptions(SERVICES, venues.flatMap((venue) => venue.services), equipmentFilters),
+    closingTimes: CLOSING_TIME_OPTIONS.filter((option) => option === closingFilter || filterVenues(venues, { closingTimeFilter: option }).length > 0),
+  }), [ambianceFilters, closingFilter, equipmentFilters, eventCategoryFilters, eventType, guestDispositions, optionFilters, priceTier, privatizationTypes, spaceTypes, venueTypes, venues]);
 
   useEffect(() => {
     setLocationQuery(parsedSearchFilters.locationQuery);
@@ -577,7 +602,7 @@ const SearchResults = () => {
                       onChange={setEventType}
                       placeholder="Type"
                       emptyLabel="Tous les types"
-                      options={EVENT_TYPES}
+                      options={availableFilterOptions.eventTypes}
                       icon={<Sparkles className="w-4 h-4" />}
                       className="h-8 border-0 bg-transparent px-0 hover:border-transparent focus:ring-0"
                     />
@@ -841,7 +866,7 @@ const SearchResults = () => {
                   onChange={setEventType}
                   placeholder="Type d'événement"
                   emptyLabel="Tous les types"
-                  options={EVENT_TYPES}
+                  options={availableFilterOptions.eventTypes}
                   icon={<Sparkles className="w-4 h-4" />}
                   className="h-12"
                 />
@@ -921,16 +946,16 @@ const SearchResults = () => {
             </div>
 
             <div className="grid flex-1 gap-8 overflow-y-auto p-5 md:grid-cols-2">
-              <FilterGroup title="Catégories d'événements" options={EVENT_TYPES} values={eventCategoryFilters} onToggle={toggleEventCategoryFilter} />
-              <FilterGroup title="Type de lieu" options={VENUE_TYPES} values={venueTypes} onToggle={toggleVenueType} />
-              <FilterGroup title="Prix" options={PRICE_TIERS} value={priceTier} onSelect={setPriceTier} />
-              <FilterGroup title="Ambiances" options={AMBIANCE_TYPES} values={ambianceFilters} onToggle={toggleAmbianceFilter} />
-              <FilterGroup title="Type de privatisation" options={PRIVATIZATION_TYPES} values={privatizationTypes} onToggle={togglePrivatizationType} />
-              <FilterGroup title="Horaires" options={CLOSING_TIME_OPTIONS} value={closingFilter} onSelect={setClosingFilter} />
-              <FilterGroup title="Type d'espace" options={SPACE_TYPES} values={spaceTypes} onToggle={toggleSpaceType} />
-              <FilterGroup title="Options" options={[...EXTERNAL_OPTIONS, ...OPTION_FEATURES]} values={optionFilters} onToggle={toggleOptionFilter} />
-              <FilterGroup title="Disposition des invités" options={GUEST_DISPOSITIONS} values={guestDispositions} onToggle={toggleGuestDisposition} />
-              <FilterGroup title="Équipements & services" options={SERVICES} values={equipmentFilters} onToggle={toggleEquipmentFilter} />
+              <FilterGroup title="Catégories d'événements" options={availableFilterOptions.eventTypes} values={eventCategoryFilters} onToggle={toggleEventCategoryFilter} />
+              <FilterGroup title="Type de lieu" options={availableFilterOptions.venueTypes} values={venueTypes} onToggle={toggleVenueType} />
+              <FilterGroup title="Prix" options={availableFilterOptions.prices} value={priceTier} onSelect={setPriceTier} />
+              <FilterGroup title="Ambiances" options={availableFilterOptions.ambiances} values={ambianceFilters} onToggle={toggleAmbianceFilter} />
+              <FilterGroup title="Type de privatisation" options={availableFilterOptions.privatizations} values={privatizationTypes} onToggle={togglePrivatizationType} />
+              <FilterGroup title="Horaires" options={availableFilterOptions.closingTimes} value={closingFilter} onSelect={setClosingFilter} />
+              <FilterGroup title="Type d'espace" options={availableFilterOptions.spaces} values={spaceTypes} onToggle={toggleSpaceType} />
+              <FilterGroup title="Options" options={availableFilterOptions.options} values={optionFilters} onToggle={toggleOptionFilter} />
+              <FilterGroup title="Disposition des invités" options={availableFilterOptions.dispositions} values={guestDispositions} onToggle={toggleGuestDisposition} />
+              <FilterGroup title="Équipements & services" options={availableFilterOptions.equipment} values={equipmentFilters} onToggle={toggleEquipmentFilter} />
             </div>
 
             <div className="flex flex-col gap-3 border-t border-border p-5 sm:flex-row sm:items-center sm:justify-between">

@@ -81,7 +81,7 @@ const Seo = ({
     } else {
       document.head.querySelector('meta[name="keywords"]')?.remove();
     }
-    upsertMeta('meta[name="robots"]', { name: "robots", content: noindex ? "noindex, nofollow" : "index, follow" });
+    upsertMeta('meta[name="robots"]', { name: "robots", content: noindex ? "noindex, follow" : "index, follow" });
     upsertMeta('meta[property="og:type"]', { property: "og:type", content: type });
     upsertMeta('meta[property="og:title"]', { property: "og:title", content: appliedTitle });
     upsertMeta('meta[property="og:description"]', { property: "og:description", content: appliedDescription });

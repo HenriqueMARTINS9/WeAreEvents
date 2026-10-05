@@ -90,13 +90,14 @@ const SeoLanding = () => {
   const intro = seoMetadata?.intro?.trim() || page.intro;
   const guide = seoMetadata?.guide?.trim() || "";
   const faq = seoMetadata?.faq?.length ? seoMetadata.faq : page.faq;
+  const canonicalPath = currentPage > 1 ? `/${page.slug}?page=${currentPage}` : `/${page.slug}`;
 
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Seo
         title={page.title}
         description={page.description}
-        path={`/${page.slug}`}
+        path={canonicalPath}
         image={image}
         noindex={page.indexable === false || (!venuesLoading && matchingVenues.length < 3)}
         jsonLd={[
@@ -105,7 +106,7 @@ const SeoLanding = () => {
             "@type": "CollectionPage",
             name: page.h1,
             description: page.description,
-            url: `${siteUrl}/${page.slug}`,
+            url: `${siteUrl}${canonicalPath}`,
             mainEntity: {
               "@type": "ItemList",
               itemListElement: venuesToDisplay.map((venue, index) => ({

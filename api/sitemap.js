@@ -135,6 +135,6 @@ export default async function handler(_request, response) {
   }
 
   response.setHeader("Content-Type", "application/xml; charset=utf-8");
-  response.setHeader("Cache-Control", "s-maxage=3600, stale-while-revalidate=86400");
+  response.setHeader("Cache-Control", "no-store, max-age=0");
   response.status(200).send(buildSitemap([...staticUrls, ...dynamicUrls]));
 }

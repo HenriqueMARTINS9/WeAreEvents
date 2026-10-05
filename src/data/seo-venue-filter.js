@@ -19,14 +19,6 @@ const matchesOne = (selected = [], available = []) =>
     return available.some((value) => normalize(value) === normalizedItem);
   });
 
-const eventAliases = {
-  "Lancement de produit": ["Lancement"],
-  "Repas d'entreprise": ["Corporate", "Dîner d'affaires"],
-  Tournage: ["Shooting / tournage"],
-  Shooting: ["Shooting / tournage"],
-  "Événement étudiant": ["Gala", "Concert"],
-};
-
 export const venueMatchesSeoFilters = (venue, filters = {}) => {
   if (venue.active === false) return false;
   if (filters.venueSlugs?.length && !filters.venueSlugs.includes(venue.slug)) return false;
@@ -46,11 +38,13 @@ export const venueMatchesSeoFilters = (venue, filters = {}) => {
 
   if (filters.locationQuery) {
     const location = normalize(`${venue.city ?? ""} ${venue.address ?? ""}`);
-    if (!location.includes(normalize(filters.locationQuery))) return false;
+    const query = normalize(filters.locationQuery);
+    const isParis16Query = ["75016", "75116", "paris 16", "paris 16e"].includes(query);
+    const isParis16Venue = /\b(?:75016|75116)\b/.test(location);
+    if (!(isParis16Query && isParis16Venue) && !location.includes(query)) return false;
   }
   if (filters.eventType) {
-    const acceptedEvents = [filters.eventType, ...(eventAliases[filters.eventType] ?? [])].map(normalize);
-    if (!eventCategories.some((item) => acceptedEvents.includes(normalize(item)))) return false;
+    if (!eventCategories.some((item) => normalize(item) === normalize(filters.eventType))) return false;
   }
   if (filters.minGuests && (minCapacity > filters.minGuests || maxCapacity < filters.minGuests)) return false;
   if (filters.guestRangeMin && maxCapacity < filters.guestRangeMin) return false;
