@@ -118,31 +118,31 @@ export const buildVenueFaqItems = (venue: Venue): VenueFaqItem[] => {
   return [
     {
       question: "Peut-on privatiser ce lieu ?",
-      answer: `Oui, le ${venue.title} peut être privatisé via Wearevents. Selon les conditions du lieu, la privatisation peut concerner l'ensemble de l'établissement ou un espace dédié.`,
+      answer: `Oui, ${venue.title} peut être privatisé via Wearevents. Selon les conditions du lieu, la privatisation peut concerner l'ensemble de l'établissement ou un espace dédié.`,
     },
     {
       question: "Quels types d'événements peut-on organiser ici ?",
-      answer: `Le ${venue.title} accueille notamment ${joinList(eventCategories)}. Notre équipe vérifie avec vous que le format, les horaires et la configuration correspondent bien à votre événement.`,
+      answer: `${venue.title} accueille notamment ${joinList(eventCategories)}. Notre équipe vérifie avec vous que le format, les horaires et la configuration correspondent bien à votre événement.`,
     },
     {
       question: "Le lieu propose-t-il des boissons ou de la restauration ?",
-      answer: `Oui, le ${venue.title} propose des boissons et/ou une offre de restauration selon le format de votre événement. Les formules disponibles sont confirmées lors de votre demande.`,
+      answer: `Oui, ${venue.title} propose des boissons et/ou une offre de restauration selon le format de votre événement. Les formules disponibles sont confirmées lors de votre demande.`,
     },
     {
       question: "Peut-on mettre sa propre musique ?",
-      answer: `Oui, le ${venue.title} permet de prévoir votre musique selon les conditions du lieu. Nous confirmons les modalités techniques avec l'établissement avant la réservation.`,
+      answer: `Oui, ${venue.title} permet de prévoir votre musique selon les conditions du lieu. Nous confirmons les modalités techniques avec l'établissement avant la réservation.`,
     },
     {
       question: "Comment réserver ce lieu avec Wearevents ?",
-      answer: `Oui, vous pouvez réserver le ${venue.title} avec Wearevents en envoyant une demande de disponibilité depuis cette fiche. Notre équipe revient ensuite vers vous pour qualifier votre besoin et avancer jusqu'à la confirmation.`,
+      answer: `Oui, vous pouvez réserver ${venue.title} avec Wearevents en envoyant une demande de disponibilité depuis cette fiche. Notre équipe revient ensuite vers vous pour qualifier votre besoin et avancer jusqu'à la confirmation.`,
     },
     {
       question: "Le lieu dispose-t-il d'une terrasse, d'un rooftop ou d'un espace extérieur ?",
-      answer: `Oui, le ${venue.title} dispose d'un espace extérieur, d'une terrasse ou d'un rooftop selon la configuration indiquée sur sa fiche. Nous confirmons les conditions d'accès lors de la demande.`,
+      answer: `Oui, ${venue.title} dispose d'un espace extérieur, d'une terrasse ou d'un rooftop selon la configuration indiquée sur sa fiche. Nous confirmons les conditions d'accès lors de la demande.`,
     },
     {
       question: "Le lieu permet-il de danser ou d'organiser une soirée festive ?",
-      answer: `Oui, le ${venue.title} permet d'organiser une soirée festive ou de danser selon les conditions du lieu, les horaires et le format de privatisation retenu.`,
+      answer: `Oui, ${venue.title} permet d'organiser une soirée festive ou de danser selon les conditions du lieu, les horaires et le format de privatisation retenu.`,
     },
   ].filter((item) => {
     if (item.question === "Quels types d'événements peut-on organiser ici ?") return eventCategories.length > 0;

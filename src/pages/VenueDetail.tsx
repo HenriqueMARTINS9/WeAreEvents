@@ -22,7 +22,6 @@ import {
   hasVenueRating,
 } from "@/lib/venue-display";
 import { buildVenueFaqItems } from "@/components/VenueFaq";
-import { getOptimizedImageUrl, getResponsiveImageSrcSet } from "@/lib/image-delivery";
 
 const filledItems = (items: Array<string | null | undefined>) => items.filter((item): item is string => Boolean(item?.trim()));
 const hasItems = (items: Array<string | null | undefined>) => filledItems(items).length > 0;
@@ -249,9 +248,7 @@ const VenueDetail = () => {
                 aria-label="Ouvrir la photo principale"
               >
                 <img
-                  src={getOptimizedImageUrl(galleryImages[0], 1200)}
-                  srcSet={getResponsiveImageSrcSet(galleryImages[0])}
-                  sizes="(min-width: 1280px) calc(100vw - 540px), 100vw"
+                  src={galleryImages[0]}
                   alt={getVenueImageAlt(venue)}
                   width={1200}
                   height={800}
@@ -270,7 +267,7 @@ const VenueDetail = () => {
                     className="group aspect-square w-full overflow-hidden rounded-2xl"
                     aria-label={`Ouvrir la photo ${index + 2}`}
                   >
-                    <img src={getOptimizedImageUrl(image, 800)} srcSet={getResponsiveImageSrcSet(image, [400, 600, 800])} sizes="234px" alt={getVenueImageAlt(venue, index + 1)} width={600} height={600} className="h-full w-full object-cover image-grade-luxe transition-transform duration-700 group-hover:scale-105" loading="lazy" decoding="async" />
+                    <img src={image} alt={getVenueImageAlt(venue, index + 1)} width={600} height={600} className="h-full w-full object-cover image-grade-luxe transition-transform duration-700 group-hover:scale-105" loading="lazy" decoding="async" />
                   </button>
                 ))}
               </div>

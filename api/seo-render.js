@@ -268,29 +268,17 @@ const venueList = (title, items) => {
   const values = arrayValue(items);
   return values.length ? `<section><h2>${escapeHtml(title)}</h2><ul>${values.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul></section>` : "";
 };
-const transformedImageUrl = (source, width) => {
-  if (!source?.includes("/storage/v1/object/public/")) return source || "";
-  const url = new URL(source);
-  url.pathname = url.pathname.replace("/storage/v1/object/public/", "/storage/v1/render/image/public/");
-  url.searchParams.set("width", String(width));
-  url.searchParams.set("quality", "78");
-  url.searchParams.set("resize", "contain");
-  return url.toString();
-};
-const imageSrcSet = (source) => source?.includes("/storage/v1/object/public/")
-  ? [480, 800, 1200].map((width) => `${escapeHtml(transformedImageUrl(source, width))} ${width}w`).join(", ")
-  : "";
 const buildVenueFaq = (venue) => {
   const events = arrayValue(venue.event_categories);
   const searchable = [...arrayValue(venue.venue_types), ...arrayValue(venue.services), ...arrayValue(venue.option_features), ...arrayValue(venue.ambiance_types), ...arrayValue(venue.external_options)].join(" ").toLowerCase();
   return [
-    { show: arrayValue(venue.spaces).length || arrayValue(venue.privatization_types).length, question: "Peut-on privatiser ce lieu ?", answer: `Oui, le ${venue.title} peut être privatisé via Wearevents, dans son ensemble ou sous la forme d'un espace dédié selon ses conditions.` },
-    { show: events.length, question: "Quels types d'événements peut-on organiser ici ?", answer: `Le ${venue.title} accueille notamment ${events.slice(0, 8).join(", ")}. Notre équipe vérifie que le format et la configuration correspondent à votre événement.` },
-    { show: /(bar|restaurant|traiteur|restauration|boisson|cuisine)/.test(searchable), question: "Le lieu propose-t-il des boissons ou de la restauration ?", answer: `Oui, le ${venue.title} propose des boissons et/ou une offre de restauration selon le format retenu.` },
-    { show: /(musique|système son|systeme son|table de mixage)/.test(searchable), question: "Peut-on mettre sa propre musique ?", answer: `Oui, le ${venue.title} permet de prévoir votre musique selon les conditions et les modalités techniques du lieu.` },
+    { show: arrayValue(venue.spaces).length || arrayValue(venue.privatization_types).length, question: "Peut-on privatiser ce lieu ?", answer: `Oui, ${venue.title} peut être privatisé via Wearevents, dans son ensemble ou sous la forme d'un espace dédié selon ses conditions.` },
+    { show: events.length, question: "Quels types d'événements peut-on organiser ici ?", answer: `${venue.title} accueille notamment ${events.slice(0, 8).join(", ")}. Notre équipe vérifie que le format et la configuration correspondent à votre événement.` },
+    { show: /(bar|restaurant|traiteur|restauration|boisson|cuisine)/.test(searchable), question: "Le lieu propose-t-il des boissons ou de la restauration ?", answer: `Oui, ${venue.title} propose des boissons et/ou une offre de restauration selon le format retenu.` },
+    { show: /(musique|système son|systeme son|table de mixage)/.test(searchable), question: "Peut-on mettre sa propre musique ?", answer: `Oui, ${venue.title} permet de prévoir votre musique selon les conditions et les modalités techniques du lieu.` },
     { show: true, question: "Comment réserver ce lieu avec Wearevents ?", answer: `Envoyez gratuitement une demande de disponibilité depuis cette fiche. Notre équipe qualifie votre besoin et vous accompagne jusqu'à la confirmation.` },
-    { show: /(terrasse|rooftop|extérieur|exterieur|jardin|patio|cour|piscine)/.test(searchable), question: "Le lieu dispose-t-il d'une terrasse, d'un rooftop ou d'un espace extérieur ?", answer: `Oui, le ${venue.title} dispose d'un espace extérieur selon la configuration indiquée sur sa fiche.` },
-    { show: /(danser|piste de danse|festif|animé|anime|club|discothèque|discotheque)/.test(searchable), question: "Le lieu permet-il de danser ou d'organiser une soirée festive ?", answer: `Oui, le ${venue.title} permet d'organiser une soirée festive ou de danser selon les conditions et les horaires du lieu.` },
+    { show: /(terrasse|rooftop|extérieur|exterieur|jardin|patio|cour|piscine)/.test(searchable), question: "Le lieu dispose-t-il d'une terrasse, d'un rooftop ou d'un espace extérieur ?", answer: `Oui, ${venue.title} dispose d'un espace extérieur selon la configuration indiquée sur sa fiche.` },
+    { show: /(danser|piste de danse|festif|animé|anime|club|discothèque|discotheque)/.test(searchable), question: "Le lieu permet-il de danser ou d'organiser une soirée festive ?", answer: `Oui, ${venue.title} permet d'organiser une soirée festive ou de danser selon les conditions et les horaires du lieu.` },
   ].filter((item) => item.show);
 };
 
@@ -422,7 +410,7 @@ const fetchVenueMetadata = async (slug) => {
     <article>
       <h1 style="font-family:Georgia,serif;font-size:58px;line-height:1;">${escapeHtml(venue.title)}<small style="display:block;margin-top:14px;font-family:Arial,sans-serif;font-size:22px;font-weight:500;">${escapeHtml(venueTypes[0] || "Lieu événementiel")} à privatiser à ${escapeHtml(venue.city)}</small></h1>
       <p>${escapeHtml(address)} · ${escapeHtml(capacity)}</p>
-      ${venue.cover_image ? `<img src="${escapeHtml(transformedImageUrl(venue.cover_image, 1200))}" srcset="${imageSrcSet(venue.cover_image)}" sizes="(max-width: 760px) 100vw, 1120px" alt="Espace principal de ${escapeHtml(venue.title)} à ${escapeHtml(venue.city)}" width="1200" height="800" fetchpriority="high" loading="eager" decoding="async" style="width:100%;height:auto;border-radius:8px;">` : ""}
+      ${venue.cover_image ? `<img src="${escapeHtml(venue.cover_image)}" alt="Espace principal de ${escapeHtml(venue.title)} à ${escapeHtml(venue.city)}" width="1200" height="800" fetchpriority="high" loading="eager" decoding="async" style="width:100%;height:auto;border-radius:8px;">` : ""}
       <section><h2>Présentation</h2><p><strong>${escapeHtml(venue.tagline || "")}</strong></p><p style="max-width:780px;font-size:17px;line-height:1.8;white-space:pre-line;">${escapeHtml(venue.description || "")}</p></section>
       <section><h2>Détails du lieu</h2>${venueList("Type de lieu", venue.venue_types)}${venueList("Type d'espace", venue.space_types)}${venueList("Type de privatisation", venue.privatization_types)}${venueList("Disposition des invités", venue.guest_dispositions)}${venueList("Options du lieu", venue.option_features)}${venue.closing_time ? `<h3>Horaires</h3><p>Fermeture : ${escapeHtml(venue.closing_time === "03:00" ? "Après 2h" : venue.closing_time)}</p>` : ""}</section>
       ${arrayValue(venue.spaces).length ? `<section><h2>Options et espaces</h2>${arrayValue(venue.spaces).map((space) => `<article><h3>${escapeHtml(space.name)}</h3><p>${Number(space.capacity || 0)} personnes${Number(space.squareMeters || 0) > 0 ? ` · ${Number(space.squareMeters)} m²` : ""}</p><p>${escapeHtml(space.description || "")}</p></article>`).join("")}</section>` : ""}

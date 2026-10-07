@@ -5,7 +5,6 @@ import type { Review, Venue } from "@/types/venue";
 import VenueMediaLightbox, { type VenueMediaItem } from "./VenueMediaLightbox";
 import VenueFaq from "./VenueFaq";
 import { formatVenueCapacity, formatVenuePrice, getVenueImageAlt, getVenueLocationLabel, getVenueLocationSeoPath, getVenueTypeSeoPath, hasVenueRating } from "@/lib/venue-display";
-import { getOptimizedImageUrl, getResponsiveImageSrcSet } from "@/lib/image-delivery";
 
 interface VenueDetailSheetProps {
   venue: Venue;
@@ -79,9 +78,7 @@ const VenueDetailSheet = ({ venue, reviews = [], similarVenues = [], onClose, on
               aria-label={`Ouvrir la photo ${index + 1}`}
             >
               <img
-                src={getOptimizedImageUrl(image, 960)}
-                srcSet={getResponsiveImageSrcSet(image, [480, 720, 960])}
-                sizes="100vw"
+                src={image}
                 alt={getVenueImageAlt(venue, index)}
                 width={960}
                 height={720}
