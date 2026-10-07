@@ -129,6 +129,39 @@ const rawVenuePrice = (venue) => {
   return `Location à partir de ${amount} €`;
 };
 
+const arrayValue = (value) => Array.isArray(value) ? value.filter((item) => String(item || "").trim()) : [];
+const venueList = (title, items) => {
+  const values = arrayValue(items);
+  return values.length ? `<section><h2>${escapeHtml(title)}</h2><ul>${values.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul></section>` : "";
+};
+const transformedImageUrl = (source, width) => {
+  if (!source?.includes("/storage/v1/object/public/")) return source || "";
+  const url = new URL(source);
+  url.pathname = url.pathname.replace("/storage/v1/object/public/", "/storage/v1/render/image/public/");
+  url.searchParams.set("width", String(width));
+  url.searchParams.set("quality", "78");
+  url.searchParams.set("resize", "contain");
+  return url.toString();
+};
+const imageSrcSet = (source) => source?.includes("/storage/v1/object/public/")
+  ? [480, 800, 1200].map((width) => `${escapeHtml(transformedImageUrl(source, width))} ${width}w`).join(", ")
+  : "";
+const buildVenueFaq = (venue) => {
+  const title = venue.title;
+  const events = arrayValue(venue.event_categories);
+  const searchable = [...arrayValue(venue.venue_types), ...arrayValue(venue.services), ...arrayValue(venue.option_features), ...arrayValue(venue.ambiance_types), ...arrayValue(venue.external_options)].join(" ").toLowerCase();
+  const items = [
+    { show: arrayValue(venue.spaces).length || arrayValue(venue.privatization_types).length, question: "Peut-on privatiser ce lieu ?", answer: `Oui, le ${title} peut être privatisé via Wearevents. Selon les conditions du lieu, la privatisation peut concerner l'ensemble de l'établissement ou un espace dédié.` },
+    { show: events.length, question: "Quels types d'événements peut-on organiser ici ?", answer: `Le ${title} accueille notamment ${events.slice(0, 8).join(", ")}. Notre équipe vérifie que le format, les horaires et la configuration correspondent à votre événement.` },
+    { show: /(bar|restaurant|traiteur|restauration|boisson|cuisine)/.test(searchable), question: "Le lieu propose-t-il des boissons ou de la restauration ?", answer: `Oui, le ${title} propose des boissons et/ou une offre de restauration selon le format de votre événement. Les formules sont confirmées lors de votre demande.` },
+    { show: /(musique|système son|systeme son|table de mixage)/.test(searchable), question: "Peut-on mettre sa propre musique ?", answer: `Oui, le ${title} permet de prévoir votre musique selon les conditions du lieu. Nous confirmons les modalités techniques avant la réservation.` },
+    { show: true, question: "Comment réserver ce lieu avec Wearevents ?", answer: `Vous pouvez réserver le ${title} en envoyant gratuitement une demande de disponibilité depuis cette fiche. Notre équipe qualifie ensuite votre besoin et vous accompagne jusqu'à la confirmation.` },
+    { show: /(terrasse|rooftop|extérieur|exterieur|jardin|patio|cour|piscine)/.test(searchable), question: "Le lieu dispose-t-il d'une terrasse, d'un rooftop ou d'un espace extérieur ?", answer: `Oui, le ${title} dispose d'un espace extérieur selon la configuration indiquée sur sa fiche. Nous confirmons ses conditions d'accès lors de la demande.` },
+    { show: /(danser|piste de danse|festif|animé|anime|club|discothèque|discotheque)/.test(searchable), question: "Le lieu permet-il de danser ou d'organiser une soirée festive ?", answer: `Oui, le ${title} permet d'organiser une soirée festive ou de danser selon les conditions du lieu, les horaires et la privatisation retenue.` },
+  ];
+  return items.filter((item) => item.show);
+};
+
 const publicFaqItems = [
   ["Comment fonctionne Wearevents ?", "Wearevents vous permet de trouver et réserver facilement le lieu idéal pour votre événement. Envoyez une demande en précisant la date, le nombre d'invités et les grandes lignes de votre projet, puis notre équipe vous accompagne jusqu'à la réservation."],
   ["Est-ce que le service est gratuit pour les organisateurs ?", "Oui, le service est entièrement gratuit pour les organisateurs. Wearevents est rémunéré directement par les établissements partenaires une fois la réservation confirmée."],
@@ -235,11 +268,7 @@ for (const venue of venues) {
   const title = venue.seo_title || `${venue.title} | Réservez rapidement`;
   const address = venue.address || venue.city || "";
   const description = venue.meta_description || `${address}. Jusqu'à ${Number(venue.max_capacity || 0)} personnes. Retrouvez les informations utiles sur la page de l'établissement.`;
-  const faq = [
-    { question: `Peut-on privatiser ${venue.title} ?`, answer: `Oui, ${venue.title} peut être privatisé selon les disponibilités et les modalités proposées par l'établissement.` },
-    { question: `Quels événements peut-on organiser chez ${venue.title} ?`, answer: `${venue.title} accueille notamment ${(venue.event_categories || []).slice(0, 6).join(", ") || "des événements privés et professionnels"}.` },
-    { question: `Comment réserver ${venue.title} ?`, answer: `Envoyez gratuitement une demande sur Wearevents. Notre équipe vérifie ensuite la disponibilité et les conditions avec le lieu.` },
-  ];
+  const faq = buildVenueFaq(venue);
   const venueSchema = { "@context": "https://schema.org", "@type": "EventVenue", name: venue.title, description: venue.description, image: [venue.cover_image, ...(venue.gallery || [])].filter(Boolean), url: `${siteUrl}${path}`, address: { "@type": "PostalAddress", streetAddress: address, addressLocality: venue.city, addressCountry: "FR" }, maximumAttendeeCapacity: Number(venue.max_capacity || 0) || undefined };
   if (Number(venue.rating) > 0 && Number(venue.review_count) > 0) venueSchema.aggregateRating = { "@type": "AggregateRating", ratingValue: Number(venue.rating), reviewCount: Number(venue.review_count) };
   if (Number(venue.price_amount) > 0) venueSchema.offers = { "@type": "Offer", price: Number(venue.price_amount), priceCurrency: "EUR", description: rawVenuePrice(venue) };
@@ -251,7 +280,7 @@ for (const venue of venues) {
     description,
     image: venue.cover_image || defaultImage,
     jsonLd: [venueSchema, { "@context": "https://schema.org", "@type": "FAQPage", mainEntity: faq.map((item) => ({ "@type": "Question", name: item.question, acceptedAnswer: { "@type": "Answer", text: item.answer } })) }, { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [{ "@type": "ListItem", position: 1, name: "Accueil", item: siteUrl }, { "@type": "ListItem", position: 2, name: `Salles à ${venue.city}`, item: `${siteUrl}${locationPath}` }, { "@type": "ListItem", position: 3, name: venue.title, item: `${siteUrl}${path}` }] }],
-    body: pageLayout(`${breadcrumbs([{ label: "Accueil", href: "/" }, { label: `Salles à ${venue.city}`, href: locationPath }, { label: venue.title }])}<article><h1 style="font-family:Georgia,serif;font-size:58px;line-height:1;">${escapeHtml(venue.title)}</h1><p>${escapeHtml(address)} · Jusqu'à ${Number(venue.max_capacity || 0)} personnes</p>${venue.cover_image ? `<img src="${escapeHtml(venue.cover_image)}" alt="${escapeHtml(venue.title)}" width="1200" height="800" style="width:100%;height:auto;border-radius:8px;">` : ""}<div style="max-width:780px;font-size:17px;line-height:1.8;white-space:pre-line;">${escapeHtml(venue.description)}</div><section><h2>Événements adaptés</h2><p>${escapeHtml((venue.event_categories || []).join(", "))}</p></section><section><h2>Questions fréquentes</h2>${faq.map((item) => `<h3>${escapeHtml(item.question)}</h3><p>${escapeHtml(item.answer)}</p>`).join("")}</section></article>${venueLinkGrid(similar)}`),
+    body: pageLayout(`${breadcrumbs([{ label: "Accueil", href: "/" }, { label: `Salles à ${venue.city}`, href: locationPath }, { label: venue.title }])}<article><h1 style="font-family:Georgia,serif;font-size:58px;line-height:1;">${escapeHtml(venue.title)}</h1><p>${escapeHtml(address)} · De ${Number(venue.min_capacity || 0)} à ${Number(venue.max_capacity || 0)} personnes · ${escapeHtml(rawVenuePrice(venue))}</p>${venue.cover_image ? `<img src="${escapeHtml(transformedImageUrl(venue.cover_image, 1200))}" srcset="${imageSrcSet(venue.cover_image)}" sizes="(max-width: 760px) 100vw, 1120px" alt="Espace principal de ${escapeHtml(venue.title)} à ${escapeHtml(venue.city)}" width="1200" height="800" fetchpriority="high" loading="eager" decoding="async" style="width:100%;height:auto;border-radius:8px;">` : ""}<section><h2>Présentation</h2><p><strong>${escapeHtml(venue.tagline || "")}</strong></p><div style="max-width:780px;font-size:17px;line-height:1.8;white-space:pre-line;">${escapeHtml(venue.description)}</div></section><section><h2>Détails du lieu</h2>${venueList("Type de lieu", venue.venue_types)}${venueList("Type d'espace", venue.space_types)}${venueList("Type de privatisation", venue.privatization_types)}${venueList("Disposition des invités", venue.guest_dispositions)}${venueList("Options du lieu", venue.option_features)}${venue.closing_time ? `<h3>Horaires</h3><p>Fermeture : ${escapeHtml(venue.closing_time === "03:00" ? "Après 2h" : venue.closing_time)}</p>` : ""}</section>${arrayValue(venue.spaces).length ? `<section><h2>Options et espaces</h2>${arrayValue(venue.spaces).map((space) => `<article><h3>${escapeHtml(space.name)}</h3><p>${Number(space.capacity || 0)} personnes${Number(space.squareMeters || 0) > 0 ? ` · ${Number(space.squareMeters)} m²` : ""}</p><p>${escapeHtml(space.description || "")}</p></article>`).join("")}</section>` : ""}${venueList("Ambiance & activités", venue.ambiance_types)}${venueList("Ce que vous pouvez apporter", venue.external_options)}<section><h2>Informations utiles</h2>${venueList("Équipements & services", venue.services)}${venueList("Parfait pour", venue.event_categories)}${venueList("À savoir", venue.useful_information)}</section><section><h2>Accès</h2><p>${escapeHtml(address)}</p>${venue.metro_access ? `<p>Métro / accès : ${escapeHtml(venue.metro_access)}</p>` : ""}<p><a href="https://www.google.com/maps/search/?api=1&amp;query=${encodeURIComponent(address)}">Voir sur la carte</a></p></section><section><h2>Questions fréquentes sur ${escapeHtml(venue.title)}</h2>${faq.map((item) => `<article><h3>${escapeHtml(item.question)}</h3><p>${escapeHtml(item.answer)}</p></article>`).join("")}</section></article>${venueLinkGrid(similar)}`),
   }));
 }
 

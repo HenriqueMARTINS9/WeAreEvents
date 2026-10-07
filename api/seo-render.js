@@ -263,6 +263,36 @@ const fetchSeoMetadata = async (path) => {
 };
 
 const venueCardGrid = (venues) => `<section><h2>Lieux à découvrir</h2><div>${venues.map((venue) => `<article><h3><a href="/salle/${escapeHtml(venue.slug)}">${escapeHtml(venue.title)}</a></h3><p>${escapeHtml(venue.city || "Paris")} · Jusqu'à ${Number(venue.max_capacity || 0)} personnes</p></article>`).join("")}</div></section>`;
+const arrayValue = (value) => Array.isArray(value) ? value.filter((item) => String(item || "").trim()) : [];
+const venueList = (title, items) => {
+  const values = arrayValue(items);
+  return values.length ? `<section><h2>${escapeHtml(title)}</h2><ul>${values.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul></section>` : "";
+};
+const transformedImageUrl = (source, width) => {
+  if (!source?.includes("/storage/v1/object/public/")) return source || "";
+  const url = new URL(source);
+  url.pathname = url.pathname.replace("/storage/v1/object/public/", "/storage/v1/render/image/public/");
+  url.searchParams.set("width", String(width));
+  url.searchParams.set("quality", "78");
+  url.searchParams.set("resize", "contain");
+  return url.toString();
+};
+const imageSrcSet = (source) => source?.includes("/storage/v1/object/public/")
+  ? [480, 800, 1200].map((width) => `${escapeHtml(transformedImageUrl(source, width))} ${width}w`).join(", ")
+  : "";
+const buildVenueFaq = (venue) => {
+  const events = arrayValue(venue.event_categories);
+  const searchable = [...arrayValue(venue.venue_types), ...arrayValue(venue.services), ...arrayValue(venue.option_features), ...arrayValue(venue.ambiance_types), ...arrayValue(venue.external_options)].join(" ").toLowerCase();
+  return [
+    { show: arrayValue(venue.spaces).length || arrayValue(venue.privatization_types).length, question: "Peut-on privatiser ce lieu ?", answer: `Oui, le ${venue.title} peut être privatisé via Wearevents, dans son ensemble ou sous la forme d'un espace dédié selon ses conditions.` },
+    { show: events.length, question: "Quels types d'événements peut-on organiser ici ?", answer: `Le ${venue.title} accueille notamment ${events.slice(0, 8).join(", ")}. Notre équipe vérifie que le format et la configuration correspondent à votre événement.` },
+    { show: /(bar|restaurant|traiteur|restauration|boisson|cuisine)/.test(searchable), question: "Le lieu propose-t-il des boissons ou de la restauration ?", answer: `Oui, le ${venue.title} propose des boissons et/ou une offre de restauration selon le format retenu.` },
+    { show: /(musique|système son|systeme son|table de mixage)/.test(searchable), question: "Peut-on mettre sa propre musique ?", answer: `Oui, le ${venue.title} permet de prévoir votre musique selon les conditions et les modalités techniques du lieu.` },
+    { show: true, question: "Comment réserver ce lieu avec Wearevents ?", answer: `Envoyez gratuitement une demande de disponibilité depuis cette fiche. Notre équipe qualifie votre besoin et vous accompagne jusqu'à la confirmation.` },
+    { show: /(terrasse|rooftop|extérieur|exterieur|jardin|patio|cour|piscine)/.test(searchable), question: "Le lieu dispose-t-il d'une terrasse, d'un rooftop ou d'un espace extérieur ?", answer: `Oui, le ${venue.title} dispose d'un espace extérieur selon la configuration indiquée sur sa fiche.` },
+    { show: /(danser|piste de danse|festif|animé|anime|club|discothèque|discotheque)/.test(searchable), question: "Le lieu permet-il de danser ou d'organiser une soirée festive ?", answer: `Oui, le ${venue.title} permet d'organiser une soirée festive ou de danser selon les conditions et les horaires du lieu.` },
+  ].filter((item) => item.show);
+};
 
 const venueTypePaths = {
   Bar: "/bar-privatisable-paris",
@@ -328,7 +358,7 @@ const fetchSeoLandingMetadata = async (path, requestedPage = 1) => {
 
 const fetchVenueMetadata = async (slug) => {
   let [venue] = await fetchSupabaseRows("venues", {
-    select: "id,title,slug,tagline,description,address,city,max_capacity,cover_image,gallery,event_categories,venue_types,services,option_features,location,closing_time,rating,review_count,price_amount,price_type,pricing_text,price_tier,seo_title,meta_description",
+    select: "id,title,slug,tagline,description,address,city,min_capacity,max_capacity,cover_image,gallery,event_categories,venue_types,services,spaces,useful_information,option_features,ambiance_types,external_options,privatization_types,guest_dispositions,space_types,metro_access,location,closing_time,rating,review_count,price_amount,price_type,pricing_text,price_tier,seo_title,meta_description",
     slug: `eq.${slug}`,
     active: "eq.true",
     limit: "1",
@@ -336,7 +366,7 @@ const fetchVenueMetadata = async (slug) => {
 
   if (!venue && slug === "letage-du-mirasol") {
     [venue] = await fetchSupabaseRows("venues", {
-      select: "id,title,slug,tagline,description,address,city,max_capacity,cover_image,gallery,event_categories,venue_types,services,option_features,location,closing_time,rating,review_count,price_amount,price_type,pricing_text,price_tier,seo_title,meta_description",
+      select: "id,title,slug,tagline,description,address,city,min_capacity,max_capacity,cover_image,gallery,event_categories,venue_types,services,spaces,useful_information,option_features,ambiance_types,external_options,privatization_types,guest_dispositions,space_types,metro_access,location,closing_time,rating,review_count,price_amount,price_type,pricing_text,price_tier,seo_title,meta_description",
       slug: "in.(l'étage-du-mirasol,l’étage-du-mirasol)",
       active: "eq.true",
       limit: "1",
@@ -361,6 +391,7 @@ const fetchVenueMetadata = async (slug) => {
   const venueTypes = Array.isArray(venue.venue_types) ? venue.venue_types : [];
   const location = getVenueLocation(venue);
   const typePath = venueTypePaths[venueTypes[0]] || "/location-salle-paris";
+  const faq = buildVenueFaq(venue);
   const priceAmount = Number(venue.price_amount ?? 0);
   const venueSchema = {
     "@type": ["EventVenue", "LocalBusiness"],
@@ -391,9 +422,15 @@ const fetchVenueMetadata = async (slug) => {
     <article>
       <h1 style="font-family:Georgia,serif;font-size:58px;line-height:1;">${escapeHtml(venue.title)}<small style="display:block;margin-top:14px;font-family:Arial,sans-serif;font-size:22px;font-weight:500;">${escapeHtml(venueTypes[0] || "Lieu événementiel")} à privatiser à ${escapeHtml(venue.city)}</small></h1>
       <p>${escapeHtml(address)} · ${escapeHtml(capacity)}</p>
-      ${venue.cover_image ? `<img src="${escapeHtml(venue.cover_image)}" alt="Espace principal de ${escapeHtml(venue.title)} à ${escapeHtml(venue.city)}" width="1200" height="800" style="width:100%;height:auto;border-radius:8px;">` : ""}
-      <p style="max-width:780px;font-size:17px;line-height:1.8;white-space:pre-line;">${escapeHtml(venue.description || venue.tagline || "")}</p>
-      ${eventCategories.length ? `<section><h2>Événements adaptés</h2><p>${escapeHtml(eventCategories.join(", "))}</p></section>` : ""}
+      ${venue.cover_image ? `<img src="${escapeHtml(transformedImageUrl(venue.cover_image, 1200))}" srcset="${imageSrcSet(venue.cover_image)}" sizes="(max-width: 760px) 100vw, 1120px" alt="Espace principal de ${escapeHtml(venue.title)} à ${escapeHtml(venue.city)}" width="1200" height="800" fetchpriority="high" loading="eager" decoding="async" style="width:100%;height:auto;border-radius:8px;">` : ""}
+      <section><h2>Présentation</h2><p><strong>${escapeHtml(venue.tagline || "")}</strong></p><p style="max-width:780px;font-size:17px;line-height:1.8;white-space:pre-line;">${escapeHtml(venue.description || "")}</p></section>
+      <section><h2>Détails du lieu</h2>${venueList("Type de lieu", venue.venue_types)}${venueList("Type d'espace", venue.space_types)}${venueList("Type de privatisation", venue.privatization_types)}${venueList("Disposition des invités", venue.guest_dispositions)}${venueList("Options du lieu", venue.option_features)}${venue.closing_time ? `<h3>Horaires</h3><p>Fermeture : ${escapeHtml(venue.closing_time === "03:00" ? "Après 2h" : venue.closing_time)}</p>` : ""}</section>
+      ${arrayValue(venue.spaces).length ? `<section><h2>Options et espaces</h2>${arrayValue(venue.spaces).map((space) => `<article><h3>${escapeHtml(space.name)}</h3><p>${Number(space.capacity || 0)} personnes${Number(space.squareMeters || 0) > 0 ? ` · ${Number(space.squareMeters)} m²` : ""}</p><p>${escapeHtml(space.description || "")}</p></article>`).join("")}</section>` : ""}
+      ${venueList("Ambiance & activités", venue.ambiance_types)}
+      ${venueList("Ce que vous pouvez apporter", venue.external_options)}
+      <section><h2>Informations utiles</h2>${venueList("Équipements & services", venue.services)}${venueList("Parfait pour", venue.event_categories)}${venueList("À savoir", venue.useful_information)}</section>
+      <section><h2>Accès</h2><p>${escapeHtml(address)}</p>${venue.metro_access ? `<p>Métro / accès : ${escapeHtml(venue.metro_access)}</p>` : ""}<p><a href="https://www.google.com/maps/search/?api=1&amp;query=${encodeURIComponent(address)}">Voir sur la carte</a></p></section>
+      <section><h2>Questions fréquentes sur ${escapeHtml(venue.title)}</h2>${faq.map((item) => `<article><h3>${escapeHtml(item.question)}</h3><p>${escapeHtml(item.answer)}</p></article>`).join("")}</section>
       <section><h2>Lieux similaires</h2>${nearbyVenues.filter((candidate) => candidate.id !== venue.id).slice(0, 6).map((candidate) => `<article><h3><a href="/salle/${escapeHtml(candidate.slug)}">${escapeHtml(candidate.title)}</a></h3></article>`).join("")}</section>
       <nav aria-label="Recherches associées"><a href="${location.path}">Lieux à ${escapeHtml(location.label)}</a> · <a href="${typePath}">${escapeHtml(venueTypes[0] || "Lieux événementiels")} à privatiser</a></nav>
       <p><a href="/recherche">Voir les autres lieux disponibles</a></p>
@@ -416,10 +453,7 @@ const fetchVenueMetadata = async (slug) => {
           { "@type": "ListItem", position: 3, name: venue.title, item: `${siteUrl}${path}` },
         ],
       },
-      { "@type": "FAQPage", mainEntity: [
-        { "@type": "Question", name: `Peut-on privatiser ${venue.title} ?`, acceptedAnswer: { "@type": "Answer", text: `Oui, ${venue.title} peut être privatisé selon ses disponibilités.` } },
-        { "@type": "Question", name: `Comment réserver ${venue.title} ?`, acceptedAnswer: { "@type": "Answer", text: "Envoyez gratuitement une demande sur Wearevents afin que notre équipe vérifie la disponibilité du lieu." } }
-      ]},
+      { "@type": "FAQPage", mainEntity: faq.map((item) => ({ "@type": "Question", name: item.question, acceptedAnswer: { "@type": "Answer", text: item.answer } })) },
     ]},
   };
 };

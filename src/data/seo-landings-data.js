@@ -66,7 +66,7 @@ export const getCapacitySeoPath = (rangeKey, city = "Paris") =>
   `/location-salle-${rangeKey}-personnes-${slugifySeoValue(city)}`;
 
 export const SEO_CAPACITY_RANGES = [
-  { key: "moins-20", label: "Moins de 20", intent: "moins de 20 personnes", maxCapacityLimit: 20 },
+  { key: "moins-20", label: "Moins de 20", intent: "moins de 20 personnes", guestRangeMax: 20, maxCapacityLimit: 80 },
   { key: "20-50", label: "20–50", intent: "20 à 50 personnes", maxCapacityGreaterThan: 20, maxCapacityLimit: 50 },
   { key: "50-100", label: "50–100", intent: "50 à 100 personnes", maxCapacityGreaterThan: 50, maxCapacityLimit: 100 },
   { key: "100-150", label: "100–150", intent: "100 à 150 personnes", maxCapacityGreaterThan: 100, maxCapacityLimit: 150 },
@@ -198,10 +198,11 @@ const capacityPages = SEO_CAPACITY_RANGES.map((range) =>
     locationLabel: "Paris",
     filters: {
       locationQuery: "Paris",
+      guestRangeMax: range.guestRangeMax,
       maxCapacityGreaterThan: range.maxCapacityGreaterThan,
       maxCapacityLimit: range.maxCapacityLimit,
     },
-    intro: `Vous cherchez une salle pour ${range.intent} à Paris ? Découvrez des lieux dont la capacité maximale correspond à cette fourchette, comparez les configurations, les ambiances et les conditions de privatisation, puis envoyez gratuitement votre demande de disponibilité.`,
+    intro: `Vous cherchez une salle pour ${range.intent} à Paris ? Découvrez des lieux adaptés à ce format de groupe, comparez les configurations, les ambiances et les conditions de privatisation, puis envoyez gratuitement votre demande de disponibilité.`,
     relatedSlugs: [
       "location-salle-paris",
       "salle-anniversaire-paris",

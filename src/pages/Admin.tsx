@@ -302,8 +302,6 @@ const decodeImageFile = async (file: File) => {
 };
 
 const compressImageForUpload = async (file: File) => {
-  if (file.size <= maxImageUploadSizeBytes && ["image/webp", "image/avif"].includes(file.type)) return file;
-
   const decodedImage = await decodeImageFile(file);
   const canvas = document.createElement("canvas");
   const context = canvas.getContext("2d");
@@ -314,7 +312,7 @@ const compressImageForUpload = async (file: File) => {
   }
 
   const longestSide = Math.max(decodedImage.width, decodedImage.height);
-  let maxDimension = Math.min(longestSide, 2200);
+  let maxDimension = Math.min(longestSide, 1200);
   let quality = 0.86;
   let bestBlob: Blob | null = null;
 

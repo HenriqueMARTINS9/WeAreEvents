@@ -71,7 +71,7 @@ const getOutputPath = (path) => {
 };
 
 const optimizeImage = async (input) => {
-  const widths = [2000, 1700, 1400, 1200, 1000];
+  const widths = [1200, 1000, 800];
   const qualities = [82, 76, 70, 64, 58, 52];
   let smallest = null;
 

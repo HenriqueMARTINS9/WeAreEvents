@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { ArrowRight, Search } from "lucide-react";
 import DesktopNav from "@/components/DesktopNav";
@@ -7,6 +8,8 @@ import Seo, { siteUrl } from "@/components/Seo";
 import SiteFooter from "@/components/SiteFooter";
 import VenueCodeSearch from "@/components/VenueCodeSearch";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { fetchVenues } from "@/lib/supabase-data";
+import { getMatchingSeoVenues } from "@/data/seo-venue-filter.js";
 import {
   getCapacitySeoPath,
   getEventSeoPath,
@@ -42,17 +45,18 @@ const pickPages = (slugs: string[], pagesBySlug: Map<string, SeoLink>) =>
 const SeoIndex = () => {
   const isMobile = useIsMobile();
   const [showCodeSearch, setShowCodeSearch] = useState(false);
+  const { data: venues = [] } = useQuery({ queryKey: ["venues"], queryFn: fetchVenues });
 
   const groups = useMemo<SeoGroup[]>(() => {
     const pagesBySlug = new Map(
-      seoLandingPages.filter((page) => page.indexable !== false).map((page) => [
+      seoLandingPages.filter((page) => page.indexable !== false && getMatchingSeoVenues(venues, page).length >= 3).map((page) => [
         page.slug,
         { slug: page.slug, h1: page.h1, description: page.description },
       ]),
     );
 
     const arrondissementPages = seoLandingPages
-      .filter((page) => /^location-salle-paris-(1er|\d+e)$/.test(page.slug))
+      .filter((page) => /^location-salle-paris-(1er|\d+e)$/.test(page.slug) && getMatchingSeoVenues(venues, page).length >= 3)
       .sort((a, b) => getArrondissementNumber(a.slug) - getArrondissementNumber(b.slug))
       .map((page) => ({ slug: page.slug, h1: page.h1, description: page.description }));
 
@@ -230,7 +234,7 @@ const SeoIndex = () => {
         ),
       },
     ].filter((group) => group.links.length > 0);
-  }, []);
+  }, [venues]);
 
   const allLinks = Array.from(new Map(groups.flatMap((group) => group.links).map((link) => [link.slug, link])).values());
 
