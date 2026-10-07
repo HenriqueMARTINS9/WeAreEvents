@@ -6,6 +6,7 @@ import {
   isGoogleTagConfigured,
   initializeGoogleTag,
   setGoogleConsentChoice,
+  trackPhoneClick,
   trackPageView,
 } from "@/lib/analytics";
 import { getBookingAttribution } from "@/lib/booking-attribution";
@@ -34,6 +35,21 @@ const GoogleTagTracker = () => {
 
     return () => window.clearTimeout(timeout);
   }, [hideOnAdmin, location.pathname, location.search]);
+
+  useEffect(() => {
+    if (hideOnAdmin) return;
+
+    const handlePhoneClick = (event: MouseEvent) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      if (!target.closest<HTMLAnchorElement>('a[href^="tel:"]')) return;
+
+      trackPhoneClick("phone_link");
+    };
+
+    document.addEventListener("click", handlePhoneClick);
+    return () => document.removeEventListener("click", handlePhoneClick);
+  }, [hideOnAdmin]);
 
   if (!isGoogleTagConfigured || hideOnAdmin || consentChoice) return null;
 

@@ -36,10 +36,14 @@ declare global {
 }
 
 const ga4MeasurementId = (import.meta.env.VITE_GA4_MEASUREMENT_ID || "").trim();
-const googleAdsId = (import.meta.env.VITE_GOOGLE_ADS_ID || "").trim();
-const bookingConversionLabel = (import.meta.env.VITE_GOOGLE_ADS_BOOKING_CONVERSION_LABEL || "").trim();
+const configuredGoogleAdsId = (import.meta.env.VITE_GOOGLE_ADS_ID || "").trim();
+const googleAdsId = /^AW-\d+$/.test(configuredGoogleAdsId)
+  ? configuredGoogleAdsId
+  : "AW-10977680047";
+const bookingConversionLabel = (import.meta.env.VITE_GOOGLE_ADS_BOOKING_CONVERSION_LABEL || "lGYbCPCwvZQdEK-1yPIo").trim();
 const referralConversionLabel = (import.meta.env.VITE_GOOGLE_ADS_REFERRAL_CONVERSION_LABEL || "").trim();
-const whatsAppConversionLabel = (import.meta.env.VITE_GOOGLE_ADS_WHATSAPP_CONVERSION_LABEL || "").trim();
+const whatsAppConversionLabel = (import.meta.env.VITE_GOOGLE_ADS_WHATSAPP_CONVERSION_LABEL || "O2FKCPOwvZQdEK-1yPIo").trim();
+const phoneConversionLabel = (import.meta.env.VITE_GOOGLE_ADS_PHONE_CONVERSION_LABEL || "z6uSCPawvZQdEK-1yPIo").trim();
 const consentStorageKey = "wearevents-google-consent";
 const consentChangeEventName = "wearevents:analytics-consent-change";
 const e164PhonePattern = /^\+[1-9]\d{10,14}$/;
@@ -434,6 +438,14 @@ export const trackContactClick = (method: string, context: string) => {
   trackAnalyticsEvent("contact", {
     method,
     contact_context: context,
+  });
+};
+
+export const trackPhoneClick = (context: string) => {
+  trackContactClick("phone", context);
+  trackGoogleAdsConversion(phoneConversionLabel, {
+    value: 1,
+    currency: "EUR",
   });
 };
 
