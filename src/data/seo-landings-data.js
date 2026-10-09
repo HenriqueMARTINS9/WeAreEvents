@@ -178,17 +178,21 @@ const parisArrondissementPages = Array.from({ length: 20 }, (_, index) => {
   });
 });
 
-const eventPages = SEO_EVENT_TYPES.map((eventType) =>
-  createPage({
+const eventPages = SEO_EVENT_TYPES.map((eventType) => {
+  const isStudentEvent = eventType === "Événement étudiant";
+
+  return createPage({
     slug: `salle-${slugifySeoValue(eventType)}-paris`,
     h1: `Salle pour ${eventType.toLowerCase()} à Paris`,
     intentLabel: `Salle pour ${eventType.toLowerCase()}`,
     locationLabel: "Paris",
-    filters: { locationQuery: "Paris", eventType },
+    filters: isStudentEvent
+      ? { locationQuery: "Paris", venueTypes: ["Bar", "Discothèque"], minGuests: 100 }
+      : { locationQuery: "Paris", eventType },
     intro: `Vous organisez ${eventArticle(eventType)} ${eventType.toLowerCase()} à Paris ? Wearevents sélectionne des lieux adaptés à votre format : capacité, ambiance, horaires, restauration, musique et conditions de privatisation. Envoyez une demande gratuite et recevez un retour qualifié.`,
     relatedSlugs: ["location-salle-paris", "bar-privatisable-paris", "restaurant-privatisable-paris"],
-  }),
-);
+  });
+});
 
 const capacityPages = SEO_CAPACITY_RANGES.map((range) =>
   createPage({

@@ -87,6 +87,7 @@ export interface BookingRequest {
   endTime: string;
   guestCount: number;
   eventType: string;
+  budgetRange?: string;
   requestedSpaces: string[];
   message?: string;
   landingPage?: string;
@@ -99,6 +100,14 @@ export interface BookingRequest {
   status: BookingRequestDeliveryStatus;
   createdAt: string;
 }
+
+export const BOOKING_BUDGET_OPTIONS = [
+  "Moins de 30 € / pers.",
+  "30–50 € / pers.",
+  "50–80 € / pers.",
+  "Plus de 80 € / pers.",
+  "Je ne sais pas",
+] as const;
 
 export interface BookingEmailTemplate {
   to: string;

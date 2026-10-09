@@ -1,4 +1,10 @@
 {
+  "crons": [
+    {
+      "path": "/api/review-followups",
+      "schedule": "15 10 * * *"
+    }
+  ],
   "functions": {
     "api/seo-render.js": {
       "includeFiles": "dist/**"

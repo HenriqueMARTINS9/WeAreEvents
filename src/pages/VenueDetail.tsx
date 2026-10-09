@@ -14,6 +14,7 @@ import Seo, { siteUrl } from "@/components/Seo";
 import {
   formatVenueCapacity,
   formatVenuePrice,
+  getVenueEventSeoLinks,
   getSimilarVenues,
   getVenueImageAlt,
   getVenueLocationLabel,
@@ -83,6 +84,7 @@ const VenueDetail = () => {
   const locationSeoPath = getVenueLocationSeoPath(venue);
   const venueTypeSeoPath = getVenueTypeSeoPath(venue);
   const locationLabel = getVenueLocationLabel(venue);
+  const eventSeoLinks = getVenueEventSeoLinks(venue);
   const faqItems = buildVenueFaqItems(venue);
   const weareventsRating = reviews.length
     ? reviews.reduce((total, review) => total + review.rating, 0) / reviews.length
@@ -341,7 +343,7 @@ const VenueDetail = () => {
                   {[
                     { icon: <Users className="h-4 w-4" />, label: "Capacité max", value: averageCapacity },
                     { icon: <Clock3 className="h-4 w-4" />, label: "Horaires", value: closingLabel },
-                    { icon: <Euro className="h-4 w-4" />, label: "Gamme de prix", value: venue.priceTier },
+                    { icon: <Euro className="h-4 w-4" />, label: "Gamme de prix", value: formatVenuePrice(venue) },
                     { icon: <ShieldCheck className="h-4 w-4" />, label: "Statut", value: "Lieu vérifié" },
                   ].map((item) => (
                     <div key={item.label} className="rounded-lg border border-border bg-card p-4">
@@ -426,7 +428,21 @@ const VenueDetail = () => {
                   <h2 className="font-heading text-3xl font-semibold">Informations utiles</h2>
                   <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
                     <InfoBlock icon={<Tag className="h-4 w-4" />} title="Équipements & services" items={venue.services} />
-                    <InfoBlock icon={<UtensilsCrossed className="h-4 w-4" />} title="Parfait pour" items={venue.eventCategories} />
+                    {eventSeoLinks.length > 0 && (
+                      <div className="rounded-lg border border-border bg-card p-5">
+                        <div className="flex items-center gap-2 text-primary">
+                          <UtensilsCrossed className="h-4 w-4" />
+                          <h3 className="font-body text-sm font-semibold">Idéal pour</h3>
+                        </div>
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          {eventSeoLinks.map((item) => (
+                            <Link key={item.path} to={item.path} className="rounded-lg bg-secondary px-3 py-1.5 text-xs font-body font-semibold text-secondary-foreground transition-colors hover:bg-primary hover:text-primary-foreground">
+                              {item.label}
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                   {hasUsefulInformation && (
                     <div className="mt-4 rounded-lg border border-border bg-card p-5">
@@ -528,6 +544,11 @@ const VenueDetail = () => {
                 <Link to={venueTypeSeoPath} className="font-body text-sm font-semibold text-primary underline underline-offset-4">
                   Voir les lieux de type {venue.venueTypes[0]?.toLowerCase() || "événementiel"} à privatiser
                 </Link>
+                {eventSeoLinks.map((item) => (
+                  <Link key={item.path} to={item.path} className="font-body text-sm font-semibold text-primary underline underline-offset-4">
+                    Salles pour {item.label.toLowerCase()} à Paris
+                  </Link>
+                ))}
               </nav>
             </div>
 

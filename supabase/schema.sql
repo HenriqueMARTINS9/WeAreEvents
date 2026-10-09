@@ -143,6 +143,8 @@ create table if not exists public.booking_requests (
   end_time text not null default '',
   guest_count integer not null default 0,
   event_type text not null default '',
+  budget_range text,
+  commission_amount numeric(10, 2),
   requested_spaces text[] not null default '{}',
   message text,
   landing_page text not null default '',
@@ -175,7 +177,20 @@ alter table public.booking_requests add column if not exists start_time text not
 alter table public.booking_requests add column if not exists end_time text not null default '';
 alter table public.booking_requests add column if not exists guest_count integer not null default 0;
 alter table public.booking_requests add column if not exists event_type text not null default '';
+alter table public.booking_requests add column if not exists budget_range text;
+alter table public.booking_requests add column if not exists commission_amount numeric(10, 2);
 alter table public.booking_requests add column if not exists requested_spaces text[] not null default '{}';
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint where conname = 'booking_requests_commission_amount_check'
+  ) then
+    alter table public.booking_requests
+      add constraint booking_requests_commission_amount_check
+      check (commission_amount is null or commission_amount >= 0);
+  end if;
+end $$;
 alter table public.booking_requests add column if not exists message text;
 alter table public.booking_requests add column if not exists status text not null default 'new';
 alter table public.booking_requests add column if not exists landing_page text not null default '';

@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import type { Review, Venue } from "@/types/venue";
 import VenueMediaLightbox, { type VenueMediaItem } from "./VenueMediaLightbox";
 import VenueFaq from "./VenueFaq";
-import { formatVenueCapacity, formatVenuePrice, getVenueImageAlt, getVenueLocationLabel, getVenueLocationSeoPath, getVenueTypeSeoPath, hasVenueRating } from "@/lib/venue-display";
+import { formatVenueCapacity, formatVenuePrice, getVenueEventSeoLinks, getVenueImageAlt, getVenueLocationLabel, getVenueLocationSeoPath, getVenueTypeSeoPath, hasVenueRating } from "@/lib/venue-display";
 
 interface VenueDetailSheetProps {
   venue: Venue;
@@ -63,6 +63,7 @@ const VenueDetailSheet = ({ venue, reviews = [], similarVenues = [], onClose, on
   const closingLabel = formatClosingLabel(venue.closingTime);
   const usefulInformation = filledItems(venue.usefulInformation);
   const services = filledItems(venue.services);
+  const eventSeoLinks = getVenueEventSeoLinks(venue);
 
   return (
     <div className="fixed inset-0 z-[2000] overflow-x-hidden overflow-y-auto bg-background animate-slide-up">
@@ -181,11 +182,23 @@ const VenueDetailSheet = ({ venue, reviews = [], similarVenues = [], onClose, on
           title="Profil du lieu"
           groups={[
             { label: "Type de lieu", items: venue.venueTypes },
-            { label: "Événements", items: venue.eventCategories },
             { label: "Ambiances", items: venue.ambianceTypes },
             { label: "Type d'espace", items: venue.spaceTypes },
           ]}
         />
+
+        {eventSeoLinks.length > 0 && (
+          <section className="mb-6 rounded-lg border border-border bg-background p-4">
+            <h3 className="font-heading text-lg font-semibold">Idéal pour</h3>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {eventSeoLinks.map((item) => (
+                <Link key={item.path} to={item.path} className="rounded-lg bg-secondary px-3 py-1.5 text-xs font-body font-semibold text-secondary-foreground">
+                  {item.label}
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
 
         <MobileChipSection
           title="Conditions & options"
@@ -274,7 +287,7 @@ const VenueDetailSheet = ({ venue, reviews = [], similarVenues = [], onClose, on
         )}
 
         {/* Pricing */}
-        {(venue.pricingText || venue.priceAmount) && (
+        {venue.priceTier && (
           <div className="p-4 rounded-lg bg-foreground text-primary-foreground mb-6">
             <p className="text-xs text-primary-foreground/60 font-body mb-1">Tarif indicatif</p>
             <p className="font-heading text-2xl font-semibold text-luxe-gold">{formatVenuePrice(venue)}</p>
@@ -347,6 +360,11 @@ const VenueDetailSheet = ({ venue, reviews = [], similarVenues = [], onClose, on
           <Link to={getVenueTypeSeoPath(venue)} className="font-body text-sm font-semibold text-primary underline underline-offset-4">
             Voir les lieux de type {venue.venueTypes[0]?.toLowerCase() || "événementiel"} à privatiser
           </Link>
+          {eventSeoLinks.map((item) => (
+            <Link key={item.path} to={item.path} className="font-body text-sm font-semibold text-primary underline underline-offset-4">
+              Salles pour {item.label.toLowerCase()} à Paris
+            </Link>
+          ))}
         </nav>
       </div>
 

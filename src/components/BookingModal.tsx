@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { X, CheckCircle, MapPin, AlertCircle, MailCheck, CalendarDays, Users } from "lucide-react";
 import type { BookingEmailTemplates, BookingRequest, Venue } from "@/types/venue";
-import { EVENT_TYPES } from "@/types/venue";
+import { BOOKING_BUDGET_OPTIONS, EVENT_TYPES } from "@/types/venue";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
   type BookingFieldErrors,
@@ -34,6 +34,7 @@ const createInitialForm = (venue: Venue): BookingFormValues => ({
   startTime: "",
   endTime: "",
   ...getBookingPrefillFromUrl(),
+  budgetRange: "",
   requestedSpaces: venue.spaces.length === 1 ? [venue.spaces[0].id] : [],
   message: "",
 });
@@ -503,6 +504,24 @@ const BookingModal = ({ venue, onClose, source }: BookingModalProps) => {
               />
               {renderError("lastName")}
             </div>
+          </div>
+
+          <div>
+            <label className="text-xs font-body font-medium text-muted-foreground mb-1 block">
+              Budget approximatif <span className="font-normal">(facultatif)</span>
+            </label>
+            <select
+              value={form.budgetRange}
+              onChange={(e) => updateField("budgetRange", e.target.value)}
+              className={fieldClass("budgetRange")}
+              aria-invalid={Boolean(fieldErrors.budgetRange)}
+            >
+              <option value="">Non renseigné</option>
+              {BOOKING_BUDGET_OPTIONS.map((option) => (
+                <option key={option} value={option}>{option}</option>
+              ))}
+            </select>
+            {renderError("budgetRange")}
           </div>
 
           <div>

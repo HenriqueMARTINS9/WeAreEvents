@@ -1,6 +1,6 @@
 import { readFile, stat } from "node:fs/promises";
 import { join, normalize, sep } from "node:path";
-import { seoLandingPages } from "../src/data/seo-landings-data.js";
+import { getEventSeoPath, SEO_EVENT_TYPES, seoLandingPages } from "../src/data/seo-landings-data.js";
 import { getMatchingSeoVenues } from "../src/data/seo-venue-filter.js";
 
 const distDir = join(process.cwd(), "dist");
@@ -262,11 +262,29 @@ const fetchSeoMetadata = async (path) => {
   };
 };
 
-const venueCardGrid = (venues) => `<section><h2>Lieux à découvrir</h2><div>${venues.map((venue) => `<article><h3><a href="/salle/${escapeHtml(venue.slug)}">${escapeHtml(venue.title)}</a></h3><p>${escapeHtml(venue.city || "Paris")} · Jusqu'à ${Number(venue.max_capacity || 0)} personnes</p></article>`).join("")}</div></section>`;
+const venueCardGrid = (venues) => `<section><h2>Lieux à découvrir</h2><div>${venues.map((venue) => `<article><h3><a href="/salle/${escapeHtml(venue.slug)}">${escapeHtml(venue.title)}</a></h3><p>${escapeHtml(venue.city || "Paris")} · Jusqu'à ${Number(venue.max_capacity || 0)} personnes · ${escapeHtml(formatVenuePrice(venue))}</p></article>`).join("")}</div></section>`;
 const arrayValue = (value) => Array.isArray(value) ? value.filter((item) => String(item || "").trim()) : [];
 const venueList = (title, items) => {
   const values = arrayValue(items);
   return values.length ? `<section><h2>${escapeHtml(title)}</h2><ul>${values.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul></section>` : "";
+};
+const venueEventLinks = (items) => {
+  const allowed = new Set(SEO_EVENT_TYPES);
+  const values = arrayValue(items).filter((item) => allowed.has(item));
+  return values.length
+    ? `<section><h2>Idéal pour</h2><ul>${values.map((item) => `<li><a href="${escapeHtml(getEventSeoPath(item))}">${escapeHtml(item)}</a></li>`).join("")}</ul></section>`
+    : "";
+};
+const formatVenuePrice = (venue) => {
+  const amount = Number(venue.price_amount ?? 0);
+  if (amount > 0) {
+    if (venue.price_type === "per_person") return `À partir de ${amount} € / pers.`;
+    if (venue.price_type === "minimum_spend") return `Minimum de consommation : ${amount} €`;
+    return `Location à partir de ${amount} €`;
+  }
+  const tier = venue.price_tier || "€€";
+  const labels = { "€": "budget économique", "€€": "budget moyen", "€€€": "budget élevé", "€€€€": "budget premium" };
+  return `${tier} · ${labels[tier] || "budget sur devis"}`;
 };
 const buildVenueFaq = (venue) => {
   const events = arrayValue(venue.event_categories);
@@ -409,18 +427,19 @@ const fetchVenueMetadata = async (slug) => {
     <nav aria-label="Fil d'Ariane" style="font-size:13px;margin-bottom:26px;"><a href="/">Accueil</a> / <a href="${location.path}">${escapeHtml(location.label)}</a> / ${escapeHtml(venue.title)}</nav>
     <article>
       <h1 style="font-family:Georgia,serif;font-size:58px;line-height:1;">${escapeHtml(venue.title)}<small style="display:block;margin-top:14px;font-family:Arial,sans-serif;font-size:22px;font-weight:500;">${escapeHtml(venueTypes[0] || "Lieu événementiel")} à privatiser à ${escapeHtml(venue.city)}</small></h1>
-      <p>${escapeHtml(address)} · ${escapeHtml(capacity)}</p>
+      <p>${escapeHtml(address)} · ${escapeHtml(capacity)} · ${escapeHtml(formatVenuePrice(venue))}</p>
       ${venue.cover_image ? `<img src="${escapeHtml(venue.cover_image)}" alt="Espace principal de ${escapeHtml(venue.title)} à ${escapeHtml(venue.city)}" width="1200" height="800" fetchpriority="high" loading="eager" decoding="async" style="width:100%;height:auto;border-radius:8px;">` : ""}
       <section><h2>Présentation</h2><p><strong>${escapeHtml(venue.tagline || "")}</strong></p><p style="max-width:780px;font-size:17px;line-height:1.8;white-space:pre-line;">${escapeHtml(venue.description || "")}</p></section>
       <section><h2>Détails du lieu</h2>${venueList("Type de lieu", venue.venue_types)}${venueList("Type d'espace", venue.space_types)}${venueList("Type de privatisation", venue.privatization_types)}${venueList("Disposition des invités", venue.guest_dispositions)}${venueList("Options du lieu", venue.option_features)}${venue.closing_time ? `<h3>Horaires</h3><p>Fermeture : ${escapeHtml(venue.closing_time === "03:00" ? "Après 2h" : venue.closing_time)}</p>` : ""}</section>
       ${arrayValue(venue.spaces).length ? `<section><h2>Options et espaces</h2>${arrayValue(venue.spaces).map((space) => `<article><h3>${escapeHtml(space.name)}</h3><p>${Number(space.capacity || 0)} personnes${Number(space.squareMeters || 0) > 0 ? ` · ${Number(space.squareMeters)} m²` : ""}</p><p>${escapeHtml(space.description || "")}</p></article>`).join("")}</section>` : ""}
       ${venueList("Ambiance & activités", venue.ambiance_types)}
       ${venueList("Ce que vous pouvez apporter", venue.external_options)}
-      <section><h2>Informations utiles</h2>${venueList("Équipements & services", venue.services)}${venueList("Parfait pour", venue.event_categories)}${venueList("À savoir", venue.useful_information)}</section>
+      <section><h2>Informations utiles</h2>${venueList("Équipements & services", venue.services)}${venueEventLinks(venue.event_categories)}${venueList("À savoir", venue.useful_information)}</section>
       <section><h2>Accès</h2><p>${escapeHtml(address)}</p>${venue.metro_access ? `<p>Métro / accès : ${escapeHtml(venue.metro_access)}</p>` : ""}<p><a href="https://www.google.com/maps/search/?api=1&amp;query=${encodeURIComponent(address)}">Voir sur la carte</a></p></section>
+      ${reviews.length ? `<section><h2>Avis clients Wearevents</h2>${reviews.map((review) => `<article><h3>${escapeHtml(review.author_name)} · ${Number(review.rating)}/5</h3><p>${escapeHtml(review.comment)}</p></article>`).join("")}</section>` : ""}
       <section><h2>Questions fréquentes sur ${escapeHtml(venue.title)}</h2>${faq.map((item) => `<article><h3>${escapeHtml(item.question)}</h3><p>${escapeHtml(item.answer)}</p></article>`).join("")}</section>
       <section><h2>Lieux similaires</h2>${nearbyVenues.filter((candidate) => candidate.id !== venue.id).slice(0, 6).map((candidate) => `<article><h3><a href="/salle/${escapeHtml(candidate.slug)}">${escapeHtml(candidate.title)}</a></h3></article>`).join("")}</section>
-      <nav aria-label="Recherches associées"><a href="${location.path}">Lieux à ${escapeHtml(location.label)}</a> · <a href="${typePath}">${escapeHtml(venueTypes[0] || "Lieux événementiels")} à privatiser</a></nav>
+      <nav aria-label="Recherches associées"><a href="${location.path}">Lieux à ${escapeHtml(location.label)}</a> · <a href="${typePath}">${escapeHtml(venueTypes[0] || "Lieux événementiels")} à privatiser</a>${eventCategories.filter((item) => SEO_EVENT_TYPES.includes(item)).map((item) => ` · <a href="${escapeHtml(getEventSeoPath(item))}">${escapeHtml(item)}</a>`).join("")}</nav>
       <p><a href="/recherche">Voir les autres lieux disponibles</a></p>
     </article>
   </main>`;

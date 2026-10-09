@@ -1,4 +1,5 @@
 import type { Venue } from "@/types/venue";
+import { EVENT_TYPES } from "@/types/venue";
 
 export const hasVenueRating = (venue: Pick<Venue, "rating" | "reviewCount">) =>
   Number.isFinite(venue.rating) && venue.rating > 0 && venue.reviewCount > 0;
@@ -7,7 +8,7 @@ export const formatVenueCapacity = (venue: Pick<Venue, "maxCapacity">, suffix = 
   venue.maxCapacity > 0 ? `Jusqu'à ${venue.maxCapacity} ${suffix}` : "Capacité sur demande";
 
 export const formatVenuePrice = (
-  venue: Pick<Venue, "priceAmount" | "priceType" | "pricingText">,
+  venue: Pick<Venue, "priceAmount" | "priceType" | "pricingText" | "priceTier">,
 ) => {
   const amount = Number(venue.priceAmount ?? 0);
 
@@ -21,8 +22,32 @@ export const formatVenuePrice = (
     return `Location à partir de ${formattedAmount} €`;
   }
 
-  return venue.pricingText?.trim() || "Sur devis";
+  const tierLabels: Record<Venue["priceTier"], string> = {
+    "€": "budget économique",
+    "€€": "budget moyen",
+    "€€€": "budget élevé",
+    "€€€€": "budget premium",
+  };
+
+  return `${venue.priceTier} · ${tierLabels[venue.priceTier]}`;
 };
+
+const slugifyEvent = (value: string) => value
+  .normalize("NFD")
+  .replace(/[\u0300-\u036f]/g, "")
+  .toLowerCase()
+  .replace(/&/g, " et ")
+  .replace(/[^a-z0-9]+/g, "-")
+  .replace(/^-|-$/g, "");
+
+const eventSeoPaths = new Map<string, string>(
+  EVENT_TYPES.map((eventType) => [eventType, `/salle-${slugifyEvent(eventType)}-paris`]),
+);
+
+export const getVenueEventSeoLinks = (venue: Pick<Venue, "eventCategories">) =>
+  venue.eventCategories
+    .map((label) => ({ label, path: eventSeoPaths.get(label) }))
+    .filter((item): item is { label: string; path: string } => Boolean(item.path));
 
 export const getVenueImageAlt = (venue: Pick<Venue, "title" | "city">, index = 0) =>
   index === 0

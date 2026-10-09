@@ -1306,6 +1306,32 @@ const Admin = () => {
     }
   };
 
+  const updateBookingRequestCommission = async (requestId: string, commissionAmount: number | null) => {
+    if (!supabase || !canSubmit) return;
+    setUpdatingRequestId(requestId);
+    setMessage("");
+
+    try {
+      const { error } = await supabase
+        .from("booking_requests")
+        .update({ commission_amount: commissionAmount })
+        .eq("id", requestId);
+
+      if (error) throw error;
+
+      setAdminBookingRequests((current) => current.map((request) => (
+        request.id === requestId
+          ? { ...request, commission_amount: commissionAmount, updated_at: new Date().toISOString() }
+          : request
+      )));
+      setMessage("Commission enregistrée.");
+    } catch (error) {
+      setMessage(formatAdminError(error));
+    } finally {
+      setUpdatingRequestId(null);
+    }
+  };
+
   const updateSeoForm = (path: string, field: SeoMetadataFormField, value: string) => {
     setSeoForms((current) => ({
       ...current,
@@ -1452,6 +1478,7 @@ const Admin = () => {
                   requests={adminBookingRequests}
                   updatingRequestId={updatingRequestId}
                   onStatusChange={updateBookingRequestStatus}
+                  onCommissionChange={updateBookingRequestCommission}
                 />
               )}
               {view === "seo" && (
@@ -1704,14 +1731,73 @@ const ReviewEmailStatus = ({ request }: { request: any }) => {
   return <span className="inline-flex min-w-[130px] rounded-full bg-secondary px-2.5 py-1 font-body text-xs font-semibold text-muted-foreground">Non planifié</span>;
 };
 
+const CommissionEditor = ({
+  request,
+  disabled,
+  onSave,
+}: {
+  request: any;
+  disabled: boolean;
+  onSave: (requestId: string, amount: number | null) => void;
+}) => {
+  const [value, setValue] = useState(request.commission_amount == null ? "" : String(request.commission_amount));
+
+  useEffect(() => {
+    setValue(request.commission_amount == null ? "" : String(request.commission_amount));
+  }, [request.commission_amount]);
+
+  const save = () => {
+    const normalized = value.trim().replace(",", ".");
+    if (!normalized) {
+      onSave(request.id, null);
+      return;
+    }
+
+    const amount = Number(normalized);
+    if (Number.isFinite(amount) && amount >= 0) onSave(request.id, amount);
+  };
+
+  return (
+    <div className="min-w-[150px]">
+      <div className="flex items-center gap-2">
+        <div className="relative min-w-0 flex-1">
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            value={value}
+            disabled={disabled || request.status !== "confirmed"}
+            onChange={(event) => setValue(event.target.value)}
+            className="h-10 w-full rounded-lg border border-border bg-background px-3 pr-7 text-sm font-body outline-none focus:border-primary disabled:cursor-not-allowed disabled:opacity-55"
+            aria-label={`Commission de la demande ${request.id}`}
+            placeholder="0"
+          />
+          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">€</span>
+        </div>
+        <button
+          type="button"
+          onClick={save}
+          disabled={disabled || request.status !== "confirmed"}
+          className="h-10 rounded-lg bg-foreground px-3 text-xs font-body font-semibold text-background disabled:cursor-not-allowed disabled:opacity-45"
+        >
+          OK
+        </button>
+      </div>
+      {request.status !== "confirmed" && <p className="mt-1.5 text-[11px] text-muted-foreground">Disponible après confirmation</p>}
+    </div>
+  );
+};
+
 const BookingRequestsView = ({
   requests,
   updatingRequestId,
   onStatusChange,
+  onCommissionChange,
 }: {
   requests: any[];
   updatingRequestId: string | null;
   onStatusChange: (requestId: string, status: BookingRequestTrackingStatus) => void;
+  onCommissionChange: (requestId: string, amount: number | null) => void;
 }) => (
   <section>
     <div className="mb-6">
@@ -1722,19 +1808,20 @@ const BookingRequestsView = ({
       </p>
     </div>
 
-    <div className="mb-5 grid grid-cols-1 gap-4 md:grid-cols-4">
+    <div className="mb-5 grid grid-cols-1 gap-4 md:grid-cols-5">
       <MetricCard label="Total" value={requests.length} detail="demandes reçues" />
       <MetricCard label="Nouvelles" value={requests.filter((request) => request.status === "new").length} detail="à traiter" />
       <MetricCard label="Confirmées" value={requests.filter((request) => request.status === "confirmed").length} detail="bookings validés" />
       <MetricCard label="À vérifier" value={requests.filter((request) => request.status === "email_failed").length} detail="envoi email échoué" />
+      <MetricCard label="Commissions" value={`${requests.reduce((total, request) => total + Number(request.commission_amount || 0), 0).toLocaleString("fr-FR")} €`} detail="revenus confirmés" />
     </div>
 
     <div className="overflow-hidden rounded-lg border border-border bg-card luxury-shadow">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[1540px] text-left">
+        <table className="w-full min-w-[1900px] text-left">
           <thead className="border-b border-border bg-secondary/70">
             <tr>
-              {["Demande", "Lieu", "Date", "Invités", "Contact", "Origine", "Espaces", "Statut", "Email avis", "Créée le"].map((column) => (
+              {["Demande", "Lieu", "Date", "Invités", "Budget", "Contact", "Origine", "Espaces", "Statut", "Commission", "Email avis", "Créée le"].map((column) => (
                 <th key={column} className="px-4 py-3 text-xs font-body font-semibold uppercase text-muted-foreground">{column}</th>
               ))}
             </tr>
@@ -1742,7 +1829,7 @@ const BookingRequestsView = ({
           <tbody className="divide-y divide-border">
             {requests.length === 0 ? (
               <tr>
-                <td colSpan={10} className="px-4 py-10 text-center text-sm font-body text-muted-foreground">
+                <td colSpan={12} className="px-4 py-10 text-center text-sm font-body text-muted-foreground">
                   Aucune demande pour le moment.
                 </td>
               </tr>
@@ -1770,9 +1857,6 @@ const BookingRequestsView = ({
                       </p>
                     </div>
                   </td>
-                  <td className="px-4 py-4">
-                    <ReviewEmailStatus request={request} />
-                  </td>
                   <td className="px-4 py-4 text-sm font-body text-foreground/80">
                     <div className="min-w-[130px]">
                       <p>{formatAdminDate(request.desired_date)}</p>
@@ -1783,6 +1867,9 @@ const BookingRequestsView = ({
                   </td>
                   <td className="px-4 py-4 text-sm font-body text-foreground/80">
                     {request.guest_count ? `${request.guest_count} pers.` : "-"}
+                  </td>
+                  <td className="px-4 py-4 text-sm font-body text-foreground/80">
+                    <div className="max-w-[170px]">{request.budget_range || "Non renseigné"}</div>
                   </td>
                   <td className="px-4 py-4">
                     <div className="min-w-[210px] text-sm font-body">
@@ -1835,6 +1922,16 @@ const BookingRequestsView = ({
                         ))}
                       </select>
                     </div>
+                  </td>
+                  <td className="px-4 py-4">
+                    <CommissionEditor
+                      request={request}
+                      disabled={updatingRequestId === request.id}
+                      onSave={onCommissionChange}
+                    />
+                  </td>
+                  <td className="px-4 py-4">
+                    <ReviewEmailStatus request={request} />
                   </td>
                   <td className="px-4 py-4 text-sm font-body text-foreground/80">
                     <div className="min-w-[130px]">

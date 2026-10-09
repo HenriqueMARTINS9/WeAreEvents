@@ -7,6 +7,7 @@ import {
   validateBookingForm,
 } from "@/lib/booking";
 import { filterVenues } from "@/lib/supabase-data";
+import { formatVenuePrice, getVenueEventSeoLinks } from "@/lib/venue-display";
 
 describe("venue code lookup", () => {
   it("maps primary TikTok codes to venue records", () => {
@@ -35,11 +36,10 @@ describe("venue code lookup", () => {
     expect(parisSuggestion?.postalCodes).toContain("75008");
   });
 
-  it("matches business meal searches to legacy corporate event categories", () => {
+  it("only matches event categories explicitly selected in the back office", () => {
     const results = filterVenues(mockVenues, { eventType: "Repas d'entreprise" });
 
-    expect(results.length).toBeGreaterThan(0);
-    expect(results.some((venue) => venue.eventCategories.includes("Corporate"))).toBe(true);
+    expect(results).toHaveLength(0);
   });
 });
 
@@ -55,6 +55,7 @@ describe("booking workflow", () => {
     endTime: "23:30",
     guestCount: "120",
     eventType: "Gala",
+    budgetRange: "30–50 € / pers.",
     requestedSpaces: ["roof-main"],
     message: "Cocktail dinatoire suivi d'une soirée privée.",
   };
@@ -80,6 +81,7 @@ describe("booking workflow", () => {
     expect(request.venueTitle).toBe(venue.title);
     expect(request.venueCode).toBe(venue.venueCode);
     expect(request.startTime).toBe("18:00");
+    expect(request.budgetRange).toBe("30–50 € / pers.");
     expect(request.requestedSpaces).toContain("Terrasse principale");
     expect(request.status).toBe("sent");
   });
@@ -100,6 +102,7 @@ describe("booking workflow", () => {
     expect(templates.customerConfirmation.text).not.toContain(request.email);
     expect(templates.customerConfirmation.text).not.toContain(request.phone);
     expect(templates.adminNotification.text).toContain(request.phone);
+    expect(templates.adminNotification.text).toContain("Budget approximatif : 30–50 € / pers.");
     expect(templates.venueContactNotification.text).toContain("Un client souhaite privatiser votre établissement");
     expect(templates.venueContactNotification.text).toContain("les modalités de privatisation");
     expect(templates.venueContactNotification.text).not.toContain(request.phone);
@@ -117,5 +120,20 @@ describe("booking workflow", () => {
           Number.isFinite(item.location.lng),
       ),
     ).toBe(true);
+  });
+});
+
+describe("venue commercial information", () => {
+  const venue = mockVenues[0];
+
+  it("shows the price tier when no exact price is available", () => {
+    expect(formatVenuePrice({ ...venue, priceAmount: undefined, priceTier: "€€" })).toBe("€€ · budget moyen");
+  });
+
+  it("links explicit event categories to their SEO pages", () => {
+    expect(getVenueEventSeoLinks({ eventCategories: ["Anniversaire", "Séminaire"] })).toEqual([
+      { label: "Anniversaire", path: "/salle-anniversaire-paris" },
+      { label: "Séminaire", path: "/salle-seminaire-paris" },
+    ]);
   });
 });

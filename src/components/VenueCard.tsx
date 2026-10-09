@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { buildVenueWhatsAppUrl } from "@/lib/whatsapp";
 import { trackWhatsAppClick } from "@/lib/analytics";
 import { countMobileComments } from "@/lib/mobile-comments";
-import { formatVenueCapacity, getVenueImageAlt, hasVenueRating } from "@/lib/venue-display";
+import { formatVenueCapacity, formatVenuePrice, getVenueImageAlt, hasVenueRating } from "@/lib/venue-display";
 
 interface VenueCardProps {
   venue: Venue;
@@ -123,6 +123,7 @@ const VenueCard = ({ venue, priority = false, onOpenDetail, onBooking, onComment
               <Users className="w-3.5 h-3.5" />
               {formatVenueCapacity(venue, "pers.")}
             </span>
+            <span className="font-semibold text-primary-foreground">{formatVenuePrice(venue)}</span>
             {showRating && (
               <span className="flex items-center gap-1">
                 <Star className="w-3.5 h-3.5 fill-accent text-accent" />

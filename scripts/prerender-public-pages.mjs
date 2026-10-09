@@ -1,7 +1,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { seoLandingPages } from "../src/data/seo-landings-data.js";
+import { getEventSeoPath, SEO_EVENT_TYPES, seoLandingPages } from "../src/data/seo-landings-data.js";
 import { getIndexableSeoPages, getMatchingSeoVenues } from "../src/data/seo-venue-filter.js";
 
 const rootDir = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -68,12 +68,20 @@ const fetchRows = async (table, params) => {
   return response.json();
 };
 
-const [venues, posts, metadataRows] = await Promise.all([
+const [venues, posts, metadataRows, venueReviews] = await Promise.all([
   fetchRows("venues", { select: "*", active: "eq.true", order: "updated_at.desc", limit: "1000" }),
   fetchRows("blog_posts", { select: "*", published: "eq.true", order: "published_at.desc", limit: "1000" }),
   fetchRows("seo_metadata", { select: "page_path,title,description,intro,guide,faq", active: "eq.true", limit: "1000" })
     .catch(() => fetchRows("seo_metadata", { select: "page_path,title,description", active: "eq.true", limit: "1000" })),
+  fetchRows("venue_reviews", { select: "venue_id,author_name,rating,comment,created_at", published: "eq.true", order: "created_at.desc", limit: "1000" })
+    .catch(() => []),
 ]);
+const reviewsByVenue = new Map();
+venueReviews.forEach((review) => {
+  const reviews = reviewsByVenue.get(review.venue_id) ?? [];
+  reviews.push(review);
+  reviewsByVenue.set(review.venue_id, reviews);
+});
 
 const metadataOverrides = new Map(metadataRows.map((row) => [normalizePath(row.page_path), row]));
 const metadataFor = (path, title, description) => {
@@ -123,7 +131,11 @@ const breadcrumbs = (items) => `<nav aria-label="Fil d'Ariane" style="font-size:
 const locationSlug = (value) => String(value).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 const rawVenuePrice = (venue) => {
   const amount = Number(venue.price_amount ?? 0);
-  if (!amount) return venue.pricing_text || "Sur devis";
+  if (!amount) {
+    const tier = venue.price_tier || "€€";
+    const labels = { "€": "budget économique", "€€": "budget moyen", "€€€": "budget élevé", "€€€€": "budget premium" };
+    return `${tier} · ${labels[tier] || "budget sur devis"}`;
+  }
   if (venue.price_type === "per_person") return `À partir de ${amount} € / pers.`;
   if (venue.price_type === "minimum_spend") return `Minimum de consommation : ${amount} €`;
   return `Location à partir de ${amount} €`;
@@ -133,6 +145,13 @@ const arrayValue = (value) => Array.isArray(value) ? value.filter((item) => Stri
 const venueList = (title, items) => {
   const values = arrayValue(items);
   return values.length ? `<section><h2>${escapeHtml(title)}</h2><ul>${values.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul></section>` : "";
+};
+const venueEventLinks = (items) => {
+  const allowed = new Set(SEO_EVENT_TYPES);
+  const values = arrayValue(items).filter((item) => allowed.has(item));
+  return values.length
+    ? `<section><h2>Idéal pour</h2><ul>${values.map((item) => `<li><a href="${escapeHtml(getEventSeoPath(item))}">${escapeHtml(item)}</a></li>`).join("")}</ul></section>`
+    : "";
 };
 const buildVenueFaq = (venue) => {
   const title = venue.title;
@@ -257,8 +276,12 @@ for (const venue of venues) {
   const address = venue.address || venue.city || "";
   const description = venue.meta_description || `${address}. Jusqu'à ${Number(venue.max_capacity || 0)} personnes. Retrouvez les informations utiles sur la page de l'établissement.`;
   const faq = buildVenueFaq(venue);
-  const venueSchema = { "@context": "https://schema.org", "@type": "EventVenue", name: venue.title, description: venue.description, image: [venue.cover_image, ...(venue.gallery || [])].filter(Boolean), url: `${siteUrl}${path}`, address: { "@type": "PostalAddress", streetAddress: address, addressLocality: venue.city, addressCountry: "FR" }, maximumAttendeeCapacity: Number(venue.max_capacity || 0) || undefined };
-  if (Number(venue.rating) > 0 && Number(venue.review_count) > 0) venueSchema.aggregateRating = { "@type": "AggregateRating", ratingValue: Number(venue.rating), reviewCount: Number(venue.review_count) };
+  const reviews = reviewsByVenue.get(venue.id) ?? [];
+  const reviewRating = reviews.length
+    ? reviews.reduce((total, review) => total + Number(review.rating || 0), 0) / reviews.length
+    : 0;
+  const venueSchema = { "@context": "https://schema.org", "@type": ["EventVenue", "LocalBusiness"], name: venue.title, description: venue.description, image: [venue.cover_image, ...(venue.gallery || [])].filter(Boolean), url: `${siteUrl}${path}`, address: { "@type": "PostalAddress", streetAddress: address, addressLocality: venue.city, addressCountry: "FR" }, maximumAttendeeCapacity: Number(venue.max_capacity || 0) || undefined, priceRange: venue.price_tier || undefined, review: reviews.map((review) => ({ "@type": "Review", author: { "@type": "Person", name: review.author_name }, reviewRating: { "@type": "Rating", ratingValue: Number(review.rating), bestRating: 5 }, reviewBody: review.comment, datePublished: review.created_at })) };
+  if (reviewRating > 0 && reviews.length > 0) venueSchema.aggregateRating = { "@type": "AggregateRating", ratingValue: Number(reviewRating.toFixed(1)), reviewCount: reviews.length };
   if (Number(venue.price_amount) > 0) venueSchema.offers = { "@type": "Offer", price: Number(venue.price_amount), priceCurrency: "EUR", description: rawVenuePrice(venue) };
   const similar = venues.filter((candidate) => candidate.id !== venue.id && (candidate.city === venue.city || (candidate.venue_types || []).some((type) => (venue.venue_types || []).includes(type)))).slice(0, 6);
   const locationPath = `/location-salle-${locationSlug(venue.city)}`;
@@ -268,7 +291,7 @@ for (const venue of venues) {
     description,
     image: venue.cover_image || defaultImage,
     jsonLd: [venueSchema, { "@context": "https://schema.org", "@type": "FAQPage", mainEntity: faq.map((item) => ({ "@type": "Question", name: item.question, acceptedAnswer: { "@type": "Answer", text: item.answer } })) }, { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [{ "@type": "ListItem", position: 1, name: "Accueil", item: siteUrl }, { "@type": "ListItem", position: 2, name: `Salles à ${venue.city}`, item: `${siteUrl}${locationPath}` }, { "@type": "ListItem", position: 3, name: venue.title, item: `${siteUrl}${path}` }] }],
-    body: pageLayout(`${breadcrumbs([{ label: "Accueil", href: "/" }, { label: `Salles à ${venue.city}`, href: locationPath }, { label: venue.title }])}<article><h1 style="font-family:Georgia,serif;font-size:58px;line-height:1;">${escapeHtml(venue.title)}</h1><p>${escapeHtml(address)} · De ${Number(venue.min_capacity || 0)} à ${Number(venue.max_capacity || 0)} personnes · ${escapeHtml(rawVenuePrice(venue))}</p>${venue.cover_image ? `<img src="${escapeHtml(venue.cover_image)}" alt="Espace principal de ${escapeHtml(venue.title)} à ${escapeHtml(venue.city)}" width="1200" height="800" fetchpriority="high" loading="eager" decoding="async" style="width:100%;height:auto;border-radius:8px;">` : ""}<section><h2>Présentation</h2><p><strong>${escapeHtml(venue.tagline || "")}</strong></p><div style="max-width:780px;font-size:17px;line-height:1.8;white-space:pre-line;">${escapeHtml(venue.description)}</div></section><section><h2>Détails du lieu</h2>${venueList("Type de lieu", venue.venue_types)}${venueList("Type d'espace", venue.space_types)}${venueList("Type de privatisation", venue.privatization_types)}${venueList("Disposition des invités", venue.guest_dispositions)}${venueList("Options du lieu", venue.option_features)}${venue.closing_time ? `<h3>Horaires</h3><p>Fermeture : ${escapeHtml(venue.closing_time === "03:00" ? "Après 2h" : venue.closing_time)}</p>` : ""}</section>${arrayValue(venue.spaces).length ? `<section><h2>Options et espaces</h2>${arrayValue(venue.spaces).map((space) => `<article><h3>${escapeHtml(space.name)}</h3><p>${Number(space.capacity || 0)} personnes${Number(space.squareMeters || 0) > 0 ? ` · ${Number(space.squareMeters)} m²` : ""}</p><p>${escapeHtml(space.description || "")}</p></article>`).join("")}</section>` : ""}${venueList("Ambiance & activités", venue.ambiance_types)}${venueList("Ce que vous pouvez apporter", venue.external_options)}<section><h2>Informations utiles</h2>${venueList("Équipements & services", venue.services)}${venueList("Parfait pour", venue.event_categories)}${venueList("À savoir", venue.useful_information)}</section><section><h2>Accès</h2><p>${escapeHtml(address)}</p>${venue.metro_access ? `<p>Métro / accès : ${escapeHtml(venue.metro_access)}</p>` : ""}<p><a href="https://www.google.com/maps/search/?api=1&amp;query=${encodeURIComponent(address)}">Voir sur la carte</a></p></section><section><h2>Questions fréquentes sur ${escapeHtml(venue.title)}</h2>${faq.map((item) => `<article><h3>${escapeHtml(item.question)}</h3><p>${escapeHtml(item.answer)}</p></article>`).join("")}</section></article>${venueLinkGrid(similar)}`),
+    body: pageLayout(`${breadcrumbs([{ label: "Accueil", href: "/" }, { label: `Salles à ${venue.city}`, href: locationPath }, { label: venue.title }])}<article><h1 style="font-family:Georgia,serif;font-size:58px;line-height:1;">${escapeHtml(venue.title)}</h1><p>${escapeHtml(address)} · De ${Number(venue.min_capacity || 0)} à ${Number(venue.max_capacity || 0)} personnes · ${escapeHtml(rawVenuePrice(venue))}</p>${venue.cover_image ? `<img src="${escapeHtml(venue.cover_image)}" alt="Espace principal de ${escapeHtml(venue.title)} à ${escapeHtml(venue.city)}" width="1200" height="800" fetchpriority="high" loading="eager" decoding="async" style="width:100%;height:auto;border-radius:8px;">` : ""}<section><h2>Présentation</h2><p><strong>${escapeHtml(venue.tagline || "")}</strong></p><div style="max-width:780px;font-size:17px;line-height:1.8;white-space:pre-line;">${escapeHtml(venue.description)}</div></section><section><h2>Détails du lieu</h2>${venueList("Type de lieu", venue.venue_types)}${venueList("Type d'espace", venue.space_types)}${venueList("Type de privatisation", venue.privatization_types)}${venueList("Disposition des invités", venue.guest_dispositions)}${venueList("Options du lieu", venue.option_features)}${venue.closing_time ? `<h3>Horaires</h3><p>Fermeture : ${escapeHtml(venue.closing_time === "03:00" ? "Après 2h" : venue.closing_time)}</p>` : ""}</section>${arrayValue(venue.spaces).length ? `<section><h2>Options et espaces</h2>${arrayValue(venue.spaces).map((space) => `<article><h3>${escapeHtml(space.name)}</h3><p>${Number(space.capacity || 0)} personnes${Number(space.squareMeters || 0) > 0 ? ` · ${Number(space.squareMeters)} m²` : ""}</p><p>${escapeHtml(space.description || "")}</p></article>`).join("")}</section>` : ""}${venueList("Ambiance & activités", venue.ambiance_types)}${venueList("Ce que vous pouvez apporter", venue.external_options)}<section><h2>Informations utiles</h2>${venueList("Équipements & services", venue.services)}${venueEventLinks(venue.event_categories)}${venueList("À savoir", venue.useful_information)}</section><section><h2>Accès</h2><p>${escapeHtml(address)}</p>${venue.metro_access ? `<p>Métro / accès : ${escapeHtml(venue.metro_access)}</p>` : ""}<p><a href="https://www.google.com/maps/search/?api=1&amp;query=${encodeURIComponent(address)}">Voir sur la carte</a></p></section>${reviews.length ? `<section><h2>Avis clients Wearevents</h2>${reviews.map((review) => `<article><h3>${escapeHtml(review.author_name)} · ${Number(review.rating)}/5</h3><p>${escapeHtml(review.comment)}</p></article>`).join("")}</section>` : ""}<section><h2>Questions fréquentes sur ${escapeHtml(venue.title)}</h2>${faq.map((item) => `<article><h3>${escapeHtml(item.question)}</h3><p>${escapeHtml(item.answer)}</p></article>`).join("")}</section></article>${venueLinkGrid(similar)}`),
   }));
 }
 

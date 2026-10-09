@@ -85,6 +85,8 @@ export type BookingRequestInsert = {
   end_time: string;
   guest_count: number;
   event_type: string;
+  budget_range?: string | null;
+  commission_amount?: number | null;
   requested_spaces: string[];
   message?: string | null;
   landing_page?: string;

@@ -1,4 +1,4 @@
-import { EVENT_TYPES, type BookingRequestTrackingStatus } from "@/types/venue";
+import { BOOKING_BUDGET_OPTIONS, EVENT_TYPES, type BookingRequestTrackingStatus } from "@/types/venue";
 import type { BookingEmailTemplates, BookingRequest, Venue } from "@/types/venue";
 import { supabase, type BookingRequestInsert } from "@/lib/supabase";
 import type { BookingAttribution } from "@/lib/booking-attribution";
@@ -13,6 +13,7 @@ export interface BookingFormValues {
   endTime: string;
   guestCount: string;
   eventType: string;
+  budgetRange: string;
   requestedSpaces: string[];
   message: string;
 }
@@ -41,6 +42,7 @@ const trimForm = (form: BookingFormValues): BookingFormValues => ({
   endTime: form.endTime,
   guestCount: form.guestCount.trim(),
   eventType: form.eventType,
+  budgetRange: form.budgetRange,
   requestedSpaces: form.requestedSpaces,
   message: form.message.trim(),
 });
@@ -136,6 +138,10 @@ export const validateBookingForm = (form: BookingFormValues, venue: Venue): Book
     errors.eventType = "Sélectionnez un type d'événement proposé.";
   }
 
+  if (values.budgetRange && !BOOKING_BUDGET_OPTIONS.includes(values.budgetRange as (typeof BOOKING_BUDGET_OPTIONS)[number])) {
+    errors.budgetRange = "Sélectionnez une tranche de budget proposée.";
+  }
+
   if (values.message.length > 900) {
     errors.message = "Votre message doit rester sous 900 caractères.";
   }
@@ -165,6 +171,7 @@ export const createBookingRequest = (
     endTime: values.endTime,
     guestCount: Number(values.guestCount),
     eventType: values.eventType,
+    budgetRange: values.budgetRange || undefined,
     requestedSpaces: venue.spaces
       .filter((space) => values.requestedSpaces.includes(space.id))
       .map((space) => space.name),
@@ -227,6 +234,7 @@ Horaires : ${request.startTime} - ${request.endTime}
 Espaces demandés : ${requestedSpaces}
 Format : ${request.eventType}
 Nombre d'invités : ${guests}
+Budget approximatif : ${request.budgetRange || "Non renseigné"}
 Message : ${message}
 
 Action recommandée : vérifier la disponibilité, qualifier le besoin et répondre sous 24h.`,
@@ -303,6 +311,7 @@ const buildBookingRequestInsert = (
   end_time: request.endTime,
   guest_count: request.guestCount,
   event_type: request.eventType,
+  budget_range: request.budgetRange ?? null,
   requested_spaces: request.requestedSpaces,
   message: request.message ?? null,
   landing_page: request.landingPage ?? "",
@@ -318,9 +327,16 @@ const buildBookingRequestInsert = (
 const saveBookingRequest = async (request: BookingRequest) => {
   if (!supabase) return;
 
-  const { error } = await supabase
+  const payload = buildBookingRequestInsert(request, "new");
+  let { error } = await supabase
     .from("booking_requests")
-    .insert(buildBookingRequestInsert(request, "new"));
+    .insert(payload);
+
+  // Keep submissions available during the short deployment window before the SQL migration is applied.
+  if (error && /budget_range|schema cache/i.test(error.message)) {
+    const { budget_range: _budgetRange, commission_amount: _commissionAmount, ...legacyPayload } = payload;
+    ({ error } = await supabase.from("booking_requests").insert(legacyPayload));
+  }
 
   if (error) {
     throw new Error(error.message || "L'enregistrement de la demande a échoué.");
