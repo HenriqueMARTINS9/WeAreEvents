@@ -19,6 +19,7 @@ import {
   getVenueImageAlt,
   getVenueLocationLabel,
   getVenueLocationSeoPath,
+  getVenueTypeLabel,
   getVenueTypeSeoPath,
   hasVenueRating,
 } from "@/lib/venue-display";
@@ -83,6 +84,7 @@ const VenueDetail = () => {
   const similarVenues = getSimilarVenues(venue, venues);
   const locationSeoPath = getVenueLocationSeoPath(venue);
   const venueTypeSeoPath = getVenueTypeSeoPath(venue);
+  const venueTypeLabel = getVenueTypeLabel(venue);
   const locationLabel = getVenueLocationLabel(venue);
   const eventSeoLinks = getVenueEventSeoLinks(venue);
   const faqItems = buildVenueFaqItems(venue);
@@ -127,8 +129,9 @@ const VenueDetail = () => {
       "@type": "BreadcrumbList",
       itemListElement: [
         { "@type": "ListItem", position: 1, name: "Accueil", item: siteUrl },
-        { "@type": "ListItem", position: 2, name: locationLabel, item: `${siteUrl}${locationSeoPath}` },
-        { "@type": "ListItem", position: 3, name: venue.title, item: `${siteUrl}/salle/${venue.slug}` },
+        { "@type": "ListItem", position: 2, name: venueTypeLabel, item: `${siteUrl}${venueTypeSeoPath}` },
+        { "@type": "ListItem", position: 3, name: locationLabel, item: `${siteUrl}${locationSeoPath}` },
+        { "@type": "ListItem", position: 4, name: venue.title, item: `${siteUrl}/salle/${venue.slug}` },
       ],
     },
     {
@@ -204,6 +207,8 @@ const VenueDetail = () => {
           <div className="mx-auto max-w-7xl xl:px-2">
             <div className="mb-5 flex flex-wrap items-center gap-2 text-sm font-body text-muted-foreground">
               <Link to="/" className="hover:text-foreground">Accueil</Link>
+              <span>/</span>
+              <Link to={venueTypeSeoPath} className="hover:text-foreground">{venueTypeLabel}</Link>
               <span>/</span>
               <Link to={locationSeoPath} className="hover:text-foreground">{locationLabel}</Link>
               <span>/</span>

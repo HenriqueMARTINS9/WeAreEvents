@@ -20,6 +20,7 @@ const Admin = lazy(() => import("./pages/Admin.tsx"));
 const Legal = lazy(() => import("./pages/Legal.tsx"));
 const Review = lazy(() => import("./pages/Review.tsx"));
 const Editorial = lazy(() => import("./pages/Editorial.tsx"));
+const AllVenues = lazy(() => import("./pages/AllVenues.tsx"));
 const NotFound = lazy(() => import("./pages/NotFound.tsx"));
 
 const queryClient = new QueryClient();
@@ -41,6 +42,7 @@ const App = () => (
               <Route path="/reseaux-sociaux" element={<Socials />} />
               <Route path="/qui-sommes-nous" element={<Editorial kind="about" />} />
               <Route path="/entreprises" element={<Editorial kind="business" />} />
+              <Route path="/tous-nos-lieux" element={<AllVenues />} />
               <Route path="/inspirations" element={<SeoIndex />} />
               <Route path="/mentions-legales" element={<Legal kind="mentions" />} />
               <Route path="/cgu" element={<Legal kind="cgu" />} />

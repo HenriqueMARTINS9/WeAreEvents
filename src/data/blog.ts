@@ -9,6 +9,7 @@ export type BlogPost = {
   secondaryKeywords?: string[];
   seoTitle?: string;
   metaDescription?: string;
+  venueSlugs?: string[];
   publishedAt?: string;
 };
 

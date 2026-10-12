@@ -46,6 +46,7 @@ create table if not exists public.venues (
   guest_dispositions text[] not null default '{}',
   space_types text[] not null default '{}',
   option_features text[] not null default '{}',
+  faq jsonb not null default '[]'::jsonb,
   metro_access text,
   featured boolean not null default false,
   active boolean not null default true,
@@ -67,6 +68,7 @@ alter table public.venues add column if not exists privatization_types text[] no
 alter table public.venues add column if not exists guest_dispositions text[] not null default '{}';
 alter table public.venues add column if not exists space_types text[] not null default '{}';
 alter table public.venues add column if not exists option_features text[] not null default '{}';
+alter table public.venues add column if not exists faq jsonb not null default '[]'::jsonb;
 alter table public.venues add column if not exists metro_access text;
 
 update public.venues
@@ -101,6 +103,7 @@ create table if not exists public.blog_posts (
   secondary_keywords text[] not null default '{}',
   seo_title text not null default '',
   meta_description text not null default '',
+  venue_slugs text[] not null default '{}',
   published boolean not null default true,
   published_at timestamptz default now(),
   created_at timestamptz not null default now(),
@@ -110,6 +113,7 @@ create table if not exists public.blog_posts (
 alter table public.blog_posts add column if not exists secondary_keywords text[] not null default '{}';
 alter table public.blog_posts add column if not exists seo_title text not null default '';
 alter table public.blog_posts add column if not exists meta_description text not null default '';
+alter table public.blog_posts add column if not exists venue_slugs text[] not null default '{}';
 
 create table if not exists public.seo_metadata (
   id uuid primary key default gen_random_uuid(),

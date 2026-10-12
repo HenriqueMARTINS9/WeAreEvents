@@ -179,6 +179,13 @@
       }
     },
     {
+      "src": "/salle-corporate-paris",
+      "status": 301,
+      "headers": {
+        "Location": "/salle-ambiance-corporate-paris"
+      }
+    },
+    {
       "src": "/salle/maison-brochettes",
       "status": 301,
       "headers": {
@@ -188,6 +195,18 @@
     {
       "src": "/api/(.*)",
       "dest": "/api/$1"
+    },
+    {
+      "src": "/sitemap-pages.xml",
+      "dest": "/api/sitemap?type=pages"
+    },
+    {
+      "src": "/sitemap-venues.xml",
+      "dest": "/api/sitemap?type=venues"
+    },
+    {
+      "src": "/sitemap-blog.xml",
+      "dest": "/api/sitemap?type=blog"
     },
     {
       "src": "/sitemap.xml",

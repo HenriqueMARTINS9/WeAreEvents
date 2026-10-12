@@ -561,6 +561,7 @@ const createEmptyVenueForm = () => ({
   guestDispositions: GUEST_DISPOSITIONS.slice(0, 1).join("\n"),
   spaceTypes: SPACE_TYPES.slice(0, 1).join("\n"),
   optionFeatures: OPTION_FEATURES.slice(0, 1).join("\n"),
+  faq: "",
   metroAccess: "",
   featured: true,
   active: true,
@@ -618,6 +619,7 @@ const createEmptyBlogForm = () => ({
   secondaryKeywords: "",
   seoTitle: "",
   metaDescription: "",
+  venueSlugs: "",
   published: true,
 });
 
@@ -984,6 +986,7 @@ const Admin = () => {
         guest_dispositions: toPresetList(venueForm.guestDispositions, GUEST_DISPOSITIONS),
         space_types: toPresetList(venueForm.spaceTypes, SPACE_TYPES),
         option_features: toPresetList(venueForm.optionFeatures, OPTION_FEATURES),
+        faq: parseSeoFaq(venueForm.faq),
         metro_access: venueForm.metroAccess.trim() || null,
         featured: venueForm.featured,
         active: venueForm.active,
@@ -1137,6 +1140,7 @@ const Admin = () => {
         secondary_keywords: toList(blogForm.secondaryKeywords),
         seo_title: blogForm.seoTitle.trim(),
         meta_description: blogForm.metaDescription.trim(),
+        venue_slugs: toList(blogForm.venueSlugs),
         published: blogForm.published,
         published_at: blogForm.published ? new Date().toISOString() : null,
       };
@@ -1209,6 +1213,7 @@ const Admin = () => {
       guestDispositions: (venue.guest_dispositions ?? []).join("\n"),
       spaceTypes: ((venue.space_types ?? []).length ? venue.space_types : (venue.option_features ?? []).filter((option: string) => SPACE_TYPES.includes(option as typeof SPACE_TYPES[number]))).join("\n"),
       optionFeatures: (venue.option_features ?? []).filter((option: string) => !SPACE_TYPES.includes(option as typeof SPACE_TYPES[number])).join("\n"),
+      faq: serializeSeoFaq(venue.faq ?? []),
       metroAccess: venue.metro_access ?? "",
       featured: Boolean(venue.featured),
       active: Boolean(venue.active),
@@ -1232,6 +1237,7 @@ const Admin = () => {
       secondaryKeywords: (post.secondary_keywords ?? []).join("\n"),
       seoTitle: post.seo_title ?? "",
       metaDescription: post.meta_description ?? "",
+      venueSlugs: (post.venue_slugs ?? []).join("\n"),
       published: Boolean(post.published),
     });
     setModal("blog");
@@ -1528,6 +1534,7 @@ const Admin = () => {
             onSubmit={handleBlogSubmit}
             onFilesSelected={handleBlogImageUpload}
             uploadingImages={uploadingImages}
+            venues={adminVenues}
           />
         </AdminModal>
       )}
@@ -2306,6 +2313,13 @@ const VenueForm = ({
       uploadingImages={uploadingImages}
     />
     <AdminTextarea label="Informations utiles" value={form.usefulInformation} onChange={(value) => setForm({ ...form, usefulInformation: value })} />
+    <AdminTextarea
+      label="FAQ de la salle"
+      value={form.faq}
+      onChange={(value) => setForm({ ...form, faq: value })}
+      hint="Une question et sa réponse par ligne, séparées par |. Si ce champ reste vide, la FAQ automatique est utilisée."
+      rows={6}
+    />
     <AdminInput label="Début vidéo en secondes" value={form.videoStartSeconds} onChange={(value) => setForm({ ...form, videoStartSeconds: value })} />
     <AdminInput label="Fin vidéo en secondes" value={form.videoEndSeconds} onChange={(value) => setForm({ ...form, videoEndSeconds: value })} />
     <AdminInput label="URL TikTok" value={form.tiktokUrl} onChange={(value) => setForm({ ...form, tiktokUrl: value })} />
@@ -2387,7 +2401,7 @@ const VenueAiImportPanel = ({
   </section>
 );
 
-const BlogForm = ({ form, setForm, saving, editing, onSubmit, onFilesSelected, uploadingImages }: any) => (
+const BlogForm = ({ form, setForm, saving, editing, onSubmit, onFilesSelected, uploadingImages, venues }: any) => (
   <form onSubmit={onSubmit} className="grid grid-cols-1 gap-5 xl:grid-cols-2">
     <AdminInput label="Titre" value={form.title} onChange={(value) => setForm({ ...form, title: value, slug: form.slug || slugify(value) })} required />
     <AdminInput label="Slug" value={form.slug} onChange={(value) => setForm({ ...form, slug: value })} required />
@@ -2404,6 +2418,14 @@ const BlogForm = ({ form, setForm, saving, editing, onSubmit, onFilesSelected, u
       uploading={uploadingImages}
     />
     <AdminTextarea label="Résumé" value={form.excerpt} onChange={(value) => setForm({ ...form, excerpt: value })} />
+    <div className="xl:col-span-2">
+      <AdminVenueMultiSelect
+        label="Les lieux de cet article"
+        value={form.venueSlugs}
+        onChange={(value) => setForm({ ...form, venueSlugs: value })}
+        venues={venues}
+      />
+    </div>
     <div className="grid gap-4 xl:col-span-2 xl:grid-cols-2">
       <div className="xl:col-span-2">
         <p className="font-body text-sm font-semibold">SEO de l'article</p>
@@ -2873,6 +2895,58 @@ const AdminPresetSelect = ({
     </select>
   </label>
 );
+
+const AdminVenueMultiSelect = ({
+  label,
+  value,
+  onChange,
+  venues,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  venues: Array<{ id: string; title: string; slug: string }>;
+}) => {
+  const [query, setQuery] = useState("");
+  const selectedSlugs = toList(value);
+  const normalizedQuery = normalizeAdminText(query);
+  const visibleVenues = [...venues]
+    .sort((left, right) => String(left.title).localeCompare(String(right.title), "fr"))
+    .filter((venue) => !normalizedQuery || normalizeAdminText(`${venue.title} ${venue.slug}`).includes(normalizedQuery));
+  const toggle = (slug: string) => {
+    const nextSlugs = selectedSlugs.includes(slug)
+      ? selectedSlugs.filter((item) => item !== slug)
+      : [...selectedSlugs, slug];
+    onChange(nextSlugs.join("\n"));
+  };
+
+  return (
+    <section className="rounded-lg border border-border bg-card p-4">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <span className="text-sm font-body font-semibold">{label}</span>
+        <span className="text-xs font-body text-muted-foreground">{selectedSlugs.length} sélectionné{selectedSlugs.length > 1 ? "s" : ""}</span>
+      </div>
+      <input
+        type="search"
+        value={query}
+        onChange={(event) => setQuery(event.target.value)}
+        placeholder="Rechercher une salle"
+        className="mb-3 h-10 w-full rounded-lg border border-border bg-background px-3 text-sm font-body outline-none focus:border-primary"
+      />
+      <div className="grid max-h-64 grid-cols-1 gap-2 overflow-y-auto pr-1 md:grid-cols-2">
+        {visibleVenues.map((venue) => {
+          const selected = selectedSlugs.includes(venue.slug);
+          return (
+            <label key={venue.id} className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm font-body ${selected ? "border-primary bg-primary/5" : "border-border bg-background"}`}>
+              <input type="checkbox" checked={selected} onChange={() => toggle(venue.slug)} className="h-4 w-4 accent-primary" />
+              <span className="min-w-0 truncate">{venue.title}</span>
+            </label>
+          );
+        })}
+      </div>
+    </section>
+  );
+};
 
 const AdminMultiSelect = ({
   label,

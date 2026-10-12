@@ -37,6 +37,7 @@ export type VenueInsert = {
   guest_dispositions: string[];
   space_types: string[];
   option_features: string[];
+  faq: Array<{ question: string; answer: string }>;
   metro_access?: string | null;
   featured: boolean;
   active: boolean;
@@ -56,6 +57,7 @@ export type BlogPostInsert = {
   secondary_keywords: string[];
   seo_title: string;
   meta_description: string;
+  venue_slugs: string[];
   published: boolean;
   published_at?: string | null;
 };

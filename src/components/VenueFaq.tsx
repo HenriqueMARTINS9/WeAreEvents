@@ -1,16 +1,11 @@
 import { useState } from "react";
 import { ChevronDown, HelpCircle } from "lucide-react";
-import type { Venue } from "@/types/venue";
+import type { Venue, VenueFaqItem } from "@/types/venue";
 
 interface VenueFaqProps {
   venue: Venue;
   compact?: boolean;
 }
-
-export type VenueFaqItem = {
-  question: string;
-  answer: string;
-};
 
 const normalizeValue = (value: string) =>
   value
@@ -53,6 +48,12 @@ const getRealisticEventCategories = (venue: Venue) => {
 };
 
 export const buildVenueFaqItems = (venue: Venue): VenueFaqItem[] => {
+  const customItems = (venue.faq ?? [])
+    .map((item) => ({ question: item.question.trim(), answer: item.answer.trim() }))
+    .filter((item) => item.question && item.answer);
+
+  if (customItems.length > 0) return customItems;
+
   const searchable = normalizeValue(
     [
       venue.title,

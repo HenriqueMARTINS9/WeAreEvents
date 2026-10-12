@@ -7,9 +7,10 @@ import MobileHeader from "@/components/MobileHeader";
 import SiteFooter from "@/components/SiteFooter";
 import VenueCodeSearch from "@/components/VenueCodeSearch";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { fetchBlogPostBySlug, fetchBlogPosts } from "@/lib/supabase-data";
+import { fetchBlogPostBySlug, fetchBlogPosts, fetchVenues } from "@/lib/supabase-data";
 import Seo, { siteUrl } from "@/components/Seo";
 import { sanitizeBlogHtml } from "@/lib/blog-content";
+import { formatVenueCapacity, formatVenuePrice } from "@/lib/venue-display";
 
 const BlogContent = ({ content }: { content: string }) => (
   <div
@@ -29,7 +30,15 @@ const BlogDetail = () => {
     enabled: Boolean(slug),
   });
   const { data: posts = [] } = useQuery({ queryKey: ["blog-posts"], queryFn: fetchBlogPosts });
-  const relatedPosts = useMemo(() => posts.filter((item) => item.slug !== slug).slice(0, 3), [posts, slug]);
+  const { data: venues = [] } = useQuery({ queryKey: ["venues"], queryFn: fetchVenues });
+  const relatedPosts = useMemo(() => posts
+    .filter((item) => item.slug !== slug)
+    .sort((left, right) => Number(right.category === post?.category) - Number(left.category === post?.category))
+    .slice(0, 3), [post?.category, posts, slug]);
+  const articleVenues = useMemo(() => {
+    const selectedSlugs = new Set(post?.venueSlugs ?? []);
+    return venues.filter((venue) => selectedSlugs.has(venue.slug));
+  }, [post?.venueSlugs, venues]);
 
   if (isLoading) {
     return <div className="min-h-screen bg-background" />;
@@ -188,6 +197,33 @@ const BlogDetail = () => {
             </div>
           </section>
         </article>
+
+        {articleVenues.length > 0 && (
+          <section className="border-t border-border bg-background px-6 py-20">
+            <div className="mx-auto max-w-7xl xl:px-2">
+              <p className="mb-3 font-body text-sm font-semibold text-primary">Adresses citées</p>
+              <h2 className="font-heading text-4xl font-semibold leading-tight">Les lieux de cet article</h2>
+              <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+                {articleVenues.map((venue) => (
+                  <Link
+                    key={venue.id}
+                    to={`/salle/${venue.slug}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group overflow-hidden rounded-lg border border-border bg-card transition-transform hover:-translate-y-1"
+                  >
+                    <img src={venue.coverImage} alt={`Espace principal de ${venue.title} à ${venue.city}`} width={720} height={480} loading="lazy" className="h-56 w-full object-cover image-grade-luxe" />
+                    <div className="p-5">
+                      <p className="text-sm font-body text-muted-foreground">{venue.city}</p>
+                      <h3 className="mt-1 font-heading text-2xl font-semibold leading-tight group-hover:text-primary">{venue.title}</h3>
+                      <p className="mt-3 text-sm font-body text-muted-foreground">{formatVenueCapacity(venue)} · {formatVenuePrice(venue)}</p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
 
         {relatedPosts.length > 0 && (
           <section className="bg-secondary/35 px-6 py-20">

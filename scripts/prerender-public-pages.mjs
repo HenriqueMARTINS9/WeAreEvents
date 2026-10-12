@@ -123,12 +123,28 @@ const applyDocument = (template, { path, title, description, image = defaultImag
 const shell = (content) => `
   <header style="padding:22px 24px;border-bottom:1px solid #e5e5e5;font-family:Arial,sans-serif;">
     <a href="/" style="font-weight:800;color:#171717;text-decoration:none;">Wearevents</a>
-    <nav aria-label="Navigation principale" style="float:right;"><a href="/recherche">Trouver une salle</a> · <a href="/inspirations">Inspirations</a> · <a href="/blog">Blog</a></nav>
+    <nav aria-label="Navigation principale" style="float:right;"><a href="/recherche">Trouver une salle</a> · <a href="/inspirations">Inspirations</a> · <a href="/tous-nos-lieux">Tous nos lieux</a> · <a href="/blog">Blog</a></nav>
   </header>${content}`;
 
 const pageLayout = (content) => shell(`<main data-prerender-seo style="font-family:Arial,sans-serif;max-width:1120px;margin:0 auto;padding:64px 24px;color:#171717;">${content}</main>`);
 const breadcrumbs = (items) => `<nav aria-label="Fil d'Ariane" style="font-size:13px;margin-bottom:26px;">${items.map((item, index) => `${index ? " / " : ""}${item.href ? `<a href="${escapeHtml(item.href)}">${escapeHtml(item.label)}</a>` : escapeHtml(item.label)}`).join("")}</nav>`;
-const locationSlug = (value) => String(value).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+const venueTypePaths = {
+  "Péniche": "/peniche-evenement-paris", Bar: "/bar-privatisable-paris", Restaurant: "/restaurant-privatisable-paris", "Discothèque": "/discotheque-paris",
+  Rooftop: "/rooftop-a-privatiser-paris", Villa: "/villa-evenement-paris", Loft: "/loft-evenement-paris", "Salle de réception": "/salle-reception-paris",
+  "Salle de réunion": "/salle-reunion-paris", "Salle de conférence": "/salle-de-conference-paris", "Espace extérieur": "/espace-exterieur-paris",
+  Appartement: "/appartement-evenement-paris", Maison: "/maison-evenement-paris", "Château": "/chateau-evenement-paris", Domaine: "/domaine-evenement-paris",
+  "Hôtel": "/hotel-evenement-paris", Jardin: "/jardin-evenement-paris", Terrasse: "/terrasse-evenement-paris", "Plage privée": "/plage-privee-evenement-paris",
+  Hangar: "/hangar-evenement-paris", Showroom: "/showroom-evenement-paris",
+};
+const rawVenueType = (venue) => arrayValue(venue.venue_types).find((type) => venueTypePaths[type]) || arrayValue(venue.venue_types)[0] || "Lieux événementiels";
+const rawVenueTypePath = (venue) => venueTypePaths[rawVenueType(venue)] || "/location-salle-paris";
+const rawVenueLocation = (venue) => {
+  const postalCode = String(venue.address || "").match(/\b\d{5}\b/)?.[0] || "";
+  const arrondissement = postalCode === "75116" ? 16 : Number(postalCode.match(/^750(0[1-9]|1\d|20)$/)?.[1] || 0);
+  if (!arrondissement) return { label: venue.city || "Paris", path: venue.city?.toLowerCase().includes("paris") ? "/location-salle-paris" : "/inspirations" };
+  const suffix = arrondissement === 1 ? "1er" : `${arrondissement}e`;
+  return { label: `Paris ${suffix}`, path: `/location-salle-paris-${suffix}` };
+};
 const rawVenuePrice = (venue) => {
   const amount = Number(venue.price_amount ?? 0);
   if (!amount) {
@@ -154,6 +170,11 @@ const venueEventLinks = (items) => {
     : "";
 };
 const buildVenueFaq = (venue) => {
+  const customFaq = arrayValue(venue.faq)
+    .map((item) => ({ question: String(item?.question || "").trim(), answer: String(item?.answer || "").trim() }))
+    .filter((item) => item.question && item.answer);
+  if (customFaq.length) return customFaq;
+
   const title = venue.title;
   const events = arrayValue(venue.event_categories);
   const searchable = [...arrayValue(venue.venue_types), ...arrayValue(venue.services), ...arrayValue(venue.option_features), ...arrayValue(venue.ambiance_types), ...arrayValue(venue.external_options)].join(" ").toLowerCase();
@@ -181,7 +202,26 @@ const publicFaqItems = [
   ["Quelle est la différence entre une location sèche et un forfait consommation ?", "La location sèche facture la privatisation du lieu, tandis que le forfait consommation repose sur un montant minimum de dépenses en boissons ou restauration pendant l'événement."],
 ].map(([question, answer]) => ({ question, answer }));
 
-const venueLinkGrid = (items) => items.length ? `<section style="margin-top:46px;"><h2>Lieux à découvrir</h2><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;">${items.map((venue) => `<article style="border:1px solid #e5e5e5;border-radius:8px;overflow:hidden;"><a href="/salle/${escapeHtml(venue.slug)}" style="display:block;color:#171717;text-decoration:none;">${venue.cover_image ? `<img src="${escapeHtml(venue.cover_image)}" alt="Espace principal de ${escapeHtml(venue.title)} à ${escapeHtml(venue.city)}" width="640" height="420" loading="lazy" style="width:100%;height:190px;object-fit:cover;">` : ""}<div style="padding:16px;"><strong>${escapeHtml(venue.title)}</strong><span style="display:block;margin-top:7px;color:#666;">${escapeHtml(venue.city)} · Jusqu'à ${Number(venue.max_capacity || 0)} personnes</span><span style="display:block;margin-top:7px;color:#D94F6D;">${escapeHtml(rawVenuePrice(venue))}</span></div></a></article>`).join("")}</div></section>` : "";
+const venueLinkGrid = (items, title = "Lieux à découvrir") => items.length ? `<section style="margin-top:46px;"><h2>${escapeHtml(title)}</h2><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;">${items.map((venue) => `<article style="border:1px solid #e5e5e5;border-radius:8px;overflow:hidden;"><a href="/salle/${escapeHtml(venue.slug)}" style="display:block;color:#171717;text-decoration:none;">${venue.cover_image ? `<img src="${escapeHtml(venue.cover_image)}" alt="Espace principal de ${escapeHtml(venue.title)} à ${escapeHtml(venue.city)}" width="640" height="420" loading="lazy" style="width:100%;height:190px;object-fit:cover;">` : ""}<div style="padding:16px;"><strong>${escapeHtml(venue.title)}</strong><span style="display:block;margin-top:7px;color:#666;">${escapeHtml(venue.city)} · Jusqu'à ${Number(venue.max_capacity || 0)} personnes</span><span style="display:block;margin-top:7px;color:#D94F6D;">${escapeHtml(rawVenuePrice(venue))}</span></div></a></article>`).join("")}</div></section>` : "";
+const getRawSimilarVenues = (venue) => {
+  const location = rawVenueLocation(venue);
+  const types = arrayValue(venue.venue_types);
+  const events = arrayValue(venue.event_categories);
+  return venues
+    .filter((candidate) => candidate.id !== venue.id)
+    .map((candidate) => {
+      let score = 0;
+      if (rawVenueLocation(candidate).path === location.path) score += 8;
+      if (String(candidate.city || "").toLowerCase() === String(venue.city || "").toLowerCase()) score += 4;
+      score += arrayValue(candidate.venue_types).filter((type) => types.includes(type)).length * 3;
+      score += arrayValue(candidate.event_categories).filter((event) => events.includes(event)).length;
+      if (Math.abs(Number(candidate.max_capacity || 0) - Number(venue.max_capacity || 0)) <= 50) score += 2;
+      return { candidate, score };
+    })
+    .sort((left, right) => right.score - left.score || String(left.candidate.title).localeCompare(String(right.candidate.title), "fr"))
+    .slice(0, 6)
+    .map(({ candidate }) => candidate);
+};
 
 const template = await readFile(join(distDir, "index.html"), "utf8");
 await writeFile(join(distDir, "app-shell.html"), template, "utf8");
@@ -246,6 +286,15 @@ await writePage("/inspirations", applyDocument(template, {
   body: pageLayout(`${breadcrumbs([{ label: "Accueil", href: "/" }, { label: "Inspirations" }])}<h1 style="font-family:Georgia,serif;font-size:58px;line-height:1;">Toutes les recherches pour trouver le bon lieu à Paris.</h1><p style="font-size:18px;line-height:1.7;">${escapeHtml(inspirationsDescription)}</p><section style="margin-top:44px;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;">${indexableSeoPages.map((page) => `<a href="/${page.slug}" style="border:1px solid #e5e5e5;border-radius:8px;padding:16px;color:#171717;text-decoration:none;"><strong>${escapeHtml(page.h1)}</strong></a>`).join("")}</section>`),
 }));
 
+const alphabeticVenues = [...venues].sort((left, right) => String(left.title).localeCompare(String(right.title), "fr", { sensitivity: "base" }));
+await writePage("/tous-nos-lieux", applyDocument(template, {
+  path: "/tous-nos-lieux",
+  title: "Tous nos lieux événementiels à Paris | Wearevents",
+  description: "Découvrez tous les lieux proposés par Wearevents à Paris et en Île-de-France, classés par ordre alphabétique.",
+  jsonLd: [{ "@context": "https://schema.org", "@type": "CollectionPage", name: "Tous nos lieux événementiels", url: `${siteUrl}/tous-nos-lieux`, mainEntity: { "@type": "ItemList", itemListElement: alphabeticVenues.map((venue, index) => ({ "@type": "ListItem", position: index + 1, name: venue.title, url: `${siteUrl}/salle/${venue.slug}` })) } }, { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [{ "@type": "ListItem", position: 1, name: "Accueil", item: siteUrl }, { "@type": "ListItem", position: 2, name: "Tous nos lieux", item: `${siteUrl}/tous-nos-lieux` }] }],
+  body: pageLayout(`${breadcrumbs([{ label: "Accueil", href: "/" }, { label: "Tous nos lieux" }])}<h1 style="font-family:Georgia,serif;font-size:58px;line-height:1;">Tous nos lieux événementiels</h1><p style="font-size:18px;line-height:1.7;">Découvrez ${alphabeticVenues.length} établissements à Paris et en Île-de-France.</p><section style="margin-top:42px;columns:3;column-gap:32px;">${alphabeticVenues.map((venue) => `<article style="break-inside:avoid;border-top:1px solid #e5e5e5;padding:12px 0;"><h2 style="font-size:18px;margin:0;"><a href="/salle/${escapeHtml(venue.slug)}">${escapeHtml(venue.title)}</a></h2><p style="margin:5px 0;color:#666;">${escapeHtml(venue.city)} · Jusqu'à ${Number(venue.max_capacity || 0)} personnes</p></article>`).join("")}</section>`),
+}));
+
 await writePage("/blog", applyDocument(template, {
   path: "/blog",
   title: "Blog événementiel - Conseils pour choisir le bon lieu",
@@ -259,14 +308,23 @@ for (const post of posts) {
   const title = post.seo_title || `${post.title} - Blog Wearevents`;
   const description = post.meta_description || post.excerpt || "Conseils événementiels Wearevents.";
   const safeContent = sanitizeBlogHtml(post.content);
+  const selectedVenueSlugs = new Set(arrayValue(post.venue_slugs));
+  const articleVenues = venues.filter((venue) => selectedVenueSlugs.has(venue.slug));
+  const relatedPosts = posts
+    .filter((candidate) => candidate.slug !== post.slug)
+    .sort((left, right) => Number(right.category === post.category) - Number(left.category === post.category))
+    .slice(0, 3);
+  const relatedPostsBody = relatedPosts.length
+    ? `<section style="margin-top:48px;"><h2>À lire aussi</h2>${relatedPosts.map((relatedPost) => `<article><h3><a href="/blog/${escapeHtml(relatedPost.slug)}">${escapeHtml(relatedPost.title)}</a></h3><p>${escapeHtml(relatedPost.excerpt || "")}</p></article>`).join("")}</section>`
+    : "";
   await writePage(path, applyDocument(template, {
     path,
     title,
     description,
     image: post.image || defaultImage,
     type: "article",
-    jsonLd: [{ "@context": "https://schema.org", "@type": "BlogPosting", headline: post.title, description, image: post.image || defaultImage, datePublished: post.published_at, dateModified: post.updated_at, mainEntityOfPage: `${siteUrl}${path}`, publisher: { "@type": "Organization", name: "Wearevents", url: siteUrl } }, { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [{ "@type": "ListItem", position: 1, name: "Accueil", item: siteUrl }, { "@type": "ListItem", position: 2, name: "Blog", item: `${siteUrl}/blog` }, { "@type": "ListItem", position: 3, name: post.title, item: `${siteUrl}${path}` }] }],
-    body: pageLayout(`${breadcrumbs([{ label: "Accueil", href: "/" }, { label: "Blog", href: "/blog" }, { label: post.title }])}<article><h1 style="font-family:Georgia,serif;font-size:56px;line-height:1;">${escapeHtml(post.title)}</h1>${post.image ? `<img src="${escapeHtml(post.image)}" alt="Illustration de l'article ${escapeHtml(post.title)}" width="1200" height="675" style="width:100%;height:auto;border-radius:8px;">` : ""}<div style="max-width:760px;font-size:17px;line-height:1.8;">${safeContent}</div></article>`),
+    jsonLd: [{ "@context": "https://schema.org", "@type": "BlogPosting", headline: post.title, description, image: post.image || defaultImage, datePublished: post.published_at, dateModified: post.updated_at, mainEntityOfPage: `${siteUrl}${path}`, publisher: { "@type": "Organization", name: "Wearevents", url: siteUrl }, mentions: articleVenues.map((venue) => ({ "@type": "LocalBusiness", name: venue.title, url: `${siteUrl}/salle/${venue.slug}` })) }, { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [{ "@type": "ListItem", position: 1, name: "Accueil", item: siteUrl }, { "@type": "ListItem", position: 2, name: "Blog", item: `${siteUrl}/blog` }, { "@type": "ListItem", position: 3, name: post.title, item: `${siteUrl}${path}` }] }],
+    body: pageLayout(`${breadcrumbs([{ label: "Accueil", href: "/" }, { label: "Blog", href: "/blog" }, { label: post.title }])}<article><h1 style="font-family:Georgia,serif;font-size:56px;line-height:1;">${escapeHtml(post.title)}</h1>${post.image ? `<img src="${escapeHtml(post.image)}" alt="Illustration de l'article ${escapeHtml(post.title)}" width="1200" height="675" style="width:100%;height:auto;border-radius:8px;">` : ""}<div style="max-width:760px;font-size:17px;line-height:1.8;">${safeContent}</div></article>${venueLinkGrid(articleVenues, "Les lieux de cet article")}${relatedPostsBody}`),
   }));
 }
 
@@ -283,15 +341,17 @@ for (const venue of venues) {
   const venueSchema = { "@context": "https://schema.org", "@type": ["EventVenue", "LocalBusiness"], name: venue.title, description: venue.description, image: [venue.cover_image, ...(venue.gallery || [])].filter(Boolean), url: `${siteUrl}${path}`, address: { "@type": "PostalAddress", streetAddress: address, addressLocality: venue.city, addressCountry: "FR" }, maximumAttendeeCapacity: Number(venue.max_capacity || 0) || undefined, priceRange: venue.price_tier || undefined, review: reviews.map((review) => ({ "@type": "Review", author: { "@type": "Person", name: review.author_name }, reviewRating: { "@type": "Rating", ratingValue: Number(review.rating), bestRating: 5 }, reviewBody: review.comment, datePublished: review.created_at })) };
   if (reviewRating > 0 && reviews.length > 0) venueSchema.aggregateRating = { "@type": "AggregateRating", ratingValue: Number(reviewRating.toFixed(1)), reviewCount: reviews.length };
   if (Number(venue.price_amount) > 0) venueSchema.offers = { "@type": "Offer", price: Number(venue.price_amount), priceCurrency: "EUR", description: rawVenuePrice(venue) };
-  const similar = venues.filter((candidate) => candidate.id !== venue.id && (candidate.city === venue.city || (candidate.venue_types || []).some((type) => (venue.venue_types || []).includes(type)))).slice(0, 6);
-  const locationPath = `/location-salle-${locationSlug(venue.city)}`;
+  const similar = getRawSimilarVenues(venue);
+  const location = rawVenueLocation(venue);
+  const typeLabel = rawVenueType(venue);
+  const typePath = rawVenueTypePath(venue);
   await writePage(path, applyDocument(template, {
     path,
     title,
     description,
     image: venue.cover_image || defaultImage,
-    jsonLd: [venueSchema, { "@context": "https://schema.org", "@type": "FAQPage", mainEntity: faq.map((item) => ({ "@type": "Question", name: item.question, acceptedAnswer: { "@type": "Answer", text: item.answer } })) }, { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [{ "@type": "ListItem", position: 1, name: "Accueil", item: siteUrl }, { "@type": "ListItem", position: 2, name: `Salles à ${venue.city}`, item: `${siteUrl}${locationPath}` }, { "@type": "ListItem", position: 3, name: venue.title, item: `${siteUrl}${path}` }] }],
-    body: pageLayout(`${breadcrumbs([{ label: "Accueil", href: "/" }, { label: `Salles à ${venue.city}`, href: locationPath }, { label: venue.title }])}<article><h1 style="font-family:Georgia,serif;font-size:58px;line-height:1;">${escapeHtml(venue.title)}</h1><p>${escapeHtml(address)} · De ${Number(venue.min_capacity || 0)} à ${Number(venue.max_capacity || 0)} personnes · ${escapeHtml(rawVenuePrice(venue))}</p>${venue.cover_image ? `<img src="${escapeHtml(venue.cover_image)}" alt="Espace principal de ${escapeHtml(venue.title)} à ${escapeHtml(venue.city)}" width="1200" height="800" fetchpriority="high" loading="eager" decoding="async" style="width:100%;height:auto;border-radius:8px;">` : ""}<section><h2>Présentation</h2><p><strong>${escapeHtml(venue.tagline || "")}</strong></p><div style="max-width:780px;font-size:17px;line-height:1.8;white-space:pre-line;">${escapeHtml(venue.description)}</div></section><section><h2>Détails du lieu</h2>${venueList("Type de lieu", venue.venue_types)}${venueList("Type d'espace", venue.space_types)}${venueList("Type de privatisation", venue.privatization_types)}${venueList("Disposition des invités", venue.guest_dispositions)}${venueList("Options du lieu", venue.option_features)}${venue.closing_time ? `<h3>Horaires</h3><p>Fermeture : ${escapeHtml(venue.closing_time === "03:00" ? "Après 2h" : venue.closing_time)}</p>` : ""}</section>${arrayValue(venue.spaces).length ? `<section><h2>Options et espaces</h2>${arrayValue(venue.spaces).map((space) => `<article><h3>${escapeHtml(space.name)}</h3><p>${Number(space.capacity || 0)} personnes${Number(space.squareMeters || 0) > 0 ? ` · ${Number(space.squareMeters)} m²` : ""}</p><p>${escapeHtml(space.description || "")}</p></article>`).join("")}</section>` : ""}${venueList("Ambiance & activités", venue.ambiance_types)}${venueList("Ce que vous pouvez apporter", venue.external_options)}<section><h2>Informations utiles</h2>${venueList("Équipements & services", venue.services)}${venueEventLinks(venue.event_categories)}${venueList("À savoir", venue.useful_information)}</section><section><h2>Accès</h2><p>${escapeHtml(address)}</p>${venue.metro_access ? `<p>Métro / accès : ${escapeHtml(venue.metro_access)}</p>` : ""}<p><a href="https://www.google.com/maps/search/?api=1&amp;query=${encodeURIComponent(address)}">Voir sur la carte</a></p></section>${reviews.length ? `<section><h2>Avis clients Wearevents</h2>${reviews.map((review) => `<article><h3>${escapeHtml(review.author_name)} · ${Number(review.rating)}/5</h3><p>${escapeHtml(review.comment)}</p></article>`).join("")}</section>` : ""}<section><h2>Questions fréquentes sur ${escapeHtml(venue.title)}</h2>${faq.map((item) => `<article><h3>${escapeHtml(item.question)}</h3><p>${escapeHtml(item.answer)}</p></article>`).join("")}</section></article>${venueLinkGrid(similar)}`),
+    jsonLd: [venueSchema, { "@context": "https://schema.org", "@type": "FAQPage", mainEntity: faq.map((item) => ({ "@type": "Question", name: item.question, acceptedAnswer: { "@type": "Answer", text: item.answer } })) }, { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [{ "@type": "ListItem", position: 1, name: "Accueil", item: siteUrl }, { "@type": "ListItem", position: 2, name: typeLabel, item: `${siteUrl}${typePath}` }, { "@type": "ListItem", position: 3, name: location.label, item: `${siteUrl}${location.path}` }, { "@type": "ListItem", position: 4, name: venue.title, item: `${siteUrl}${path}` }] }],
+    body: pageLayout(`${breadcrumbs([{ label: "Accueil", href: "/" }, { label: typeLabel, href: typePath }, { label: location.label, href: location.path }, { label: venue.title }])}<article><h1 style="font-family:Georgia,serif;font-size:58px;line-height:1;">${escapeHtml(venue.title)}</h1><p>${escapeHtml(address)} · De ${Number(venue.min_capacity || 0)} à ${Number(venue.max_capacity || 0)} personnes · ${escapeHtml(rawVenuePrice(venue))}</p>${venue.cover_image ? `<img src="${escapeHtml(venue.cover_image)}" alt="Espace principal de ${escapeHtml(venue.title)} à ${escapeHtml(venue.city)}" width="1200" height="800" fetchpriority="high" loading="eager" decoding="async" style="width:100%;height:auto;border-radius:8px;">` : ""}<section><h2>Présentation</h2><p><strong>${escapeHtml(venue.tagline || "")}</strong></p><div style="max-width:780px;font-size:17px;line-height:1.8;white-space:pre-line;">${escapeHtml(venue.description)}</div></section><section><h2>Détails du lieu</h2>${venueList("Type de lieu", venue.venue_types)}${venueList("Type d'espace", venue.space_types)}${venueList("Type de privatisation", venue.privatization_types)}${venueList("Disposition des invités", venue.guest_dispositions)}${venueList("Options du lieu", venue.option_features)}${venue.closing_time ? `<h3>Horaires</h3><p>Fermeture : ${escapeHtml(venue.closing_time === "03:00" ? "Après 2h" : venue.closing_time)}</p>` : ""}</section>${arrayValue(venue.spaces).length ? `<section><h2>Options et espaces</h2>${arrayValue(venue.spaces).map((space) => `<article><h3>${escapeHtml(space.name)}</h3><p>${Number(space.capacity || 0)} personnes${Number(space.squareMeters || 0) > 0 ? ` · ${Number(space.squareMeters)} m²` : ""}</p><p>${escapeHtml(space.description || "")}</p></article>`).join("")}</section>` : ""}${venueList("Ambiance & activités", venue.ambiance_types)}${venueList("Ce que vous pouvez apporter", venue.external_options)}<section><h2>Informations utiles</h2>${venueList("Équipements & services", venue.services)}${venueEventLinks(venue.event_categories)}${venueList("À savoir", venue.useful_information)}</section><section><h2>Accès</h2><p>${escapeHtml(address)}</p>${venue.metro_access ? `<p>Métro / accès : ${escapeHtml(venue.metro_access)}</p>` : ""}<p><a href="https://www.google.com/maps/search/?api=1&amp;query=${encodeURIComponent(address)}">Voir sur la carte</a></p></section>${reviews.length ? `<section><h2>Avis clients Wearevents</h2>${reviews.map((review) => `<article><h3>${escapeHtml(review.author_name)} · ${Number(review.rating)}/5</h3><p>${escapeHtml(review.comment)}</p></article>`).join("")}</section>` : ""}<section><h2>Questions fréquentes sur ${escapeHtml(venue.title)}</h2>${faq.map((item) => `<article><h3>${escapeHtml(item.question)}</h3><p>${escapeHtml(item.answer)}</p></article>`).join("")}</section></article>${venueLinkGrid(similar, "Lieux similaires")}`),
   }));
 }
 
@@ -300,9 +360,9 @@ const staticPages = [
   { path: "/reseaux-sociaux", title: "Réseaux sociaux Wearevents", description: "Retrouvez Wearevents sur Instagram, TikTok et LinkedIn pour découvrir nos lieux et inspirations événementielles.", h1: "Suivez Wearevents", text: "Découvrez les visites de lieux, nouveautés et conseils événementiels de Wearevents sur les réseaux sociaux." },
   { path: "/qui-sommes-nous", title: "Qui sommes-nous ? | Wearevents", description: "Découvrez Wearevents, notre sélection de lieux et l'accompagnement proposé aux organisateurs à Paris et en Île-de-France.", h1: "Wearevents simplifie la recherche de lieux événementiels", text: "Nous aidons particuliers, entreprises et agences à trouver un lieu fiable, adapté et disponible." },
   { path: "/entreprises", title: "Événements d'entreprise à Paris | Wearevents", description: "Trouvez un lieu pour votre séminaire, conférence, cocktail, lancement de produit ou soirée d'entreprise à Paris.", h1: "Un lieu adapté à chaque événement professionnel", text: "Recevez des propositions cohérentes avec votre format, votre capacité et votre budget." },
-  { path: "/mentions-legales", title: "Mentions légales - Wearevents", description: "Informations relatives à l'éditeur et à l'hébergement du site Wearevents.", h1: "Mentions légales", text: "Informations légales relatives à l'édition, à l'hébergement et à l'utilisation du site Wearevents." },
-  { path: "/cgu", title: "Conditions générales d'utilisation - Wearevents", description: "Conditions d'accès et d'utilisation du site Wearevents.", h1: "Conditions générales d'utilisation", text: "Les présentes conditions encadrent l'accès et l'utilisation des services proposés par Wearevents." },
-  { path: "/politique-confidentialite", title: "Politique de confidentialité - Wearevents", description: "Informations sur la collecte et l'utilisation des données personnelles par Wearevents.", h1: "Politique de confidentialité", text: "Cette page explique quelles données sont collectées via les formulaires et comment exercer vos droits." },
+  { path: "/mentions-legales", title: "Mentions légales - Wearevents", description: "Informations relatives à l'éditeur et à l'hébergement du site Wearevents.", h1: "Mentions légales", text: "Informations légales relatives à l'édition, à l'hébergement et à l'utilisation du site Wearevents.", noindex: true },
+  { path: "/cgu", title: "Conditions générales d'utilisation - Wearevents", description: "Conditions d'accès et d'utilisation du site Wearevents.", h1: "Conditions générales d'utilisation", text: "Les présentes conditions encadrent l'accès et l'utilisation des services proposés par Wearevents.", noindex: true },
+  { path: "/politique-confidentialite", title: "Politique de confidentialité - Wearevents", description: "Informations sur la collecte et l'utilisation des données personnelles par Wearevents.", h1: "Politique de confidentialité", text: "Cette page explique quelles données sont collectées via les formulaires et comment exercer vos droits.", noindex: true },
 ];
 
 for (const page of staticPages) {
@@ -315,6 +375,7 @@ for (const page of staticPages) {
   ];
   await writePage(page.path, applyDocument(template, {
     ...page,
+    noindex: page.noindex,
     jsonLd,
     body: pageLayout(`${breadcrumbs([{ label: "Accueil", href: "/" }, { label: page.h1 }])}<h1 style="font-family:Georgia,serif;font-size:58px;">${escapeHtml(page.h1)}</h1><p style="font-size:18px;line-height:1.7;">${escapeHtml(page.text)}</p>${faqBody}`),
   }));

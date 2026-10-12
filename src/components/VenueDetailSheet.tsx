@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import type { Review, Venue } from "@/types/venue";
 import VenueMediaLightbox, { type VenueMediaItem } from "./VenueMediaLightbox";
 import VenueFaq from "./VenueFaq";
-import { formatVenueCapacity, formatVenuePrice, getVenueEventSeoLinks, getVenueImageAlt, getVenueLocationLabel, getVenueLocationSeoPath, getVenueTypeSeoPath, hasVenueRating } from "@/lib/venue-display";
+import { formatVenueCapacity, formatVenuePrice, getVenueEventSeoLinks, getVenueImageAlt, getVenueLocationLabel, getVenueLocationSeoPath, getVenueTypeLabel, getVenueTypeSeoPath, hasVenueRating } from "@/lib/venue-display";
 
 interface VenueDetailSheetProps {
   venue: Venue;
@@ -147,6 +147,16 @@ const VenueDetailSheet = ({ venue, reviews = [], similarVenues = [], onClose, on
             </div>
           ))}
         </div>
+
+        <nav aria-label="Fil d'Ariane" className="mb-4 flex flex-wrap items-center gap-1.5 text-[11px] font-body text-muted-foreground">
+          <Link to="/" className="hover:text-foreground">Accueil</Link>
+          <span aria-hidden="true">/</span>
+          <Link to={getVenueTypeSeoPath(venue)} className="hover:text-foreground">{getVenueTypeLabel(venue)}</Link>
+          <span aria-hidden="true">/</span>
+          <Link to={getVenueLocationSeoPath(venue)} className="hover:text-foreground">{getVenueLocationLabel(venue)}</Link>
+          <span aria-hidden="true">/</span>
+          <span aria-current="page" className="text-foreground">{venue.title}</span>
+        </nav>
 
         <div className="mb-4 rounded-lg border border-border bg-background p-4">
         <div className="flex items-start justify-between mb-3">

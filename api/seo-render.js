@@ -18,9 +18,7 @@ const staticIndexablePaths = new Set([
   "/reseaux-sociaux",
   "/qui-sommes-nous",
   "/entreprises",
-  "/mentions-legales",
-  "/cgu",
-  "/politique-confidentialite",
+  "/tous-nos-lieux",
 ]);
 const staticMetadata = {
   "/": {
@@ -66,6 +64,10 @@ const staticMetadata = {
     title: "Événements d'entreprise à Paris | Wearevents",
     description: "Trouvez un lieu pour votre séminaire, conférence, cocktail, lancement de produit ou soirée d'entreprise à Paris.",
   },
+  "/tous-nos-lieux": {
+    title: "Tous nos lieux événementiels à Paris | Wearevents",
+    description: "Découvrez tous les lieux proposés par Wearevents à Paris et en Île-de-France, classés par ordre alphabétique.",
+  },
   "/mentions-legales": {
     title: "Mentions légales - Wearevents",
     description:
@@ -82,7 +84,7 @@ const staticMetadata = {
       "Informations sur la collecte, l'utilisation, la conservation et les droits liés aux données personnelles traitées sur Wearevents.",
   },
 };
-const noindexPaths = new Set(["/admin", "/recherche", "/avis"]);
+const noindexPaths = new Set(["/admin", "/recherche", "/avis", "/mentions-legales", "/cgu", "/politique-confidentialite"]);
 const seoLandingPaths = new Set(seoLandingPages.map((page) => `/${page.slug}`));
 
 const escapeHtml = (value) =>
@@ -262,7 +264,9 @@ const fetchSeoMetadata = async (path) => {
   };
 };
 
-const venueCardGrid = (venues) => `<section><h2>Lieux à découvrir</h2><div>${venues.map((venue) => `<article><h3><a href="/salle/${escapeHtml(venue.slug)}">${escapeHtml(venue.title)}</a></h3><p>${escapeHtml(venue.city || "Paris")} · Jusqu'à ${Number(venue.max_capacity || 0)} personnes · ${escapeHtml(formatVenuePrice(venue))}</p></article>`).join("")}</div></section>`;
+const venueCardGrid = (venues, title = "Lieux à découvrir") => venues.length
+  ? `<section><h2>${escapeHtml(title)}</h2><div>${venues.map((venue) => `<article><h3><a href="/salle/${escapeHtml(venue.slug)}">${escapeHtml(venue.title)}</a></h3><p>${escapeHtml(venue.city || "Paris")} · Jusqu'à ${Number(venue.max_capacity || 0)} personnes · ${escapeHtml(formatVenuePrice(venue))}</p></article>`).join("")}</div></section>`
+  : "";
 const arrayValue = (value) => Array.isArray(value) ? value.filter((item) => String(item || "").trim()) : [];
 const venueList = (title, items) => {
   const values = arrayValue(items);
@@ -287,6 +291,11 @@ const formatVenuePrice = (venue) => {
   return `${tier} · ${labels[tier] || "budget sur devis"}`;
 };
 const buildVenueFaq = (venue) => {
+  const customFaq = arrayValue(venue.faq)
+    .map((item) => ({ question: String(item?.question || "").trim(), answer: String(item?.answer || "").trim() }))
+    .filter((item) => item.question && item.answer);
+  if (customFaq.length) return customFaq;
+
   const events = arrayValue(venue.event_categories);
   const searchable = [...arrayValue(venue.venue_types), ...arrayValue(venue.services), ...arrayValue(venue.option_features), ...arrayValue(venue.ambiance_types), ...arrayValue(venue.external_options)].join(" ").toLowerCase();
   return [
@@ -301,12 +310,48 @@ const buildVenueFaq = (venue) => {
 };
 
 const venueTypePaths = {
+  "Péniche": "/peniche-evenement-paris",
   Bar: "/bar-privatisable-paris",
   Restaurant: "/restaurant-privatisable-paris",
   "Discothèque": "/discotheque-paris",
   Rooftop: "/rooftop-a-privatiser-paris",
   Villa: "/villa-evenement-paris",
-  Loft: "/loft-evenementiel-paris",
+  Loft: "/loft-evenement-paris",
+  "Salle de réception": "/salle-reception-paris",
+  "Salle de réunion": "/salle-reunion-paris",
+  "Salle de conférence": "/salle-de-conference-paris",
+  "Espace extérieur": "/espace-exterieur-paris",
+  Appartement: "/appartement-evenement-paris",
+  Maison: "/maison-evenement-paris",
+  "Château": "/chateau-evenement-paris",
+  Domaine: "/domaine-evenement-paris",
+  "Hôtel": "/hotel-evenement-paris",
+  Jardin: "/jardin-evenement-paris",
+  Terrasse: "/terrasse-evenement-paris",
+  "Plage privée": "/plage-privee-evenement-paris",
+  Hangar: "/hangar-evenement-paris",
+  Showroom: "/showroom-evenement-paris",
+};
+
+const rankSimilarVenues = (venue, candidates) => {
+  const postalCode = String(venue.address || "").match(/\b\d{5}\b/)?.[0] || "";
+  const venueTypes = arrayValue(venue.venue_types);
+  const eventCategories = arrayValue(venue.event_categories);
+  return candidates
+    .filter((candidate) => candidate.id !== venue.id)
+    .map((candidate) => {
+      let score = 0;
+      const candidatePostalCode = String(candidate.address || "").match(/\b\d{5}\b/)?.[0] || "";
+      if (postalCode && candidatePostalCode === postalCode) score += 8;
+      if (String(candidate.city || "").toLowerCase() === String(venue.city || "").toLowerCase()) score += 4;
+      score += arrayValue(candidate.venue_types).filter((type) => venueTypes.includes(type)).length * 3;
+      score += arrayValue(candidate.event_categories).filter((event) => eventCategories.includes(event)).length;
+      if (Math.abs(Number(candidate.max_capacity || 0) - Number(venue.max_capacity || 0)) <= 50) score += 2;
+      return { candidate, score };
+    })
+    .sort((left, right) => right.score - left.score || String(left.candidate.title).localeCompare(String(right.candidate.title), "fr"))
+    .slice(0, 6)
+    .map(({ candidate }) => candidate);
 };
 
 const getVenueLocation = (venue) => {
@@ -364,27 +409,25 @@ const fetchSeoLandingMetadata = async (path, requestedPage = 1) => {
 
 const fetchVenueMetadata = async (slug) => {
   let [venue] = await fetchSupabaseRows("venues", {
-    select: "id,title,slug,tagline,description,address,city,min_capacity,max_capacity,cover_image,gallery,event_categories,venue_types,services,spaces,useful_information,option_features,ambiance_types,external_options,privatization_types,guest_dispositions,space_types,metro_access,location,closing_time,rating,review_count,price_amount,price_type,pricing_text,price_tier,seo_title,meta_description",
+    select: "*",
     slug: `eq.${slug}`,
-    active: "eq.true",
     limit: "1",
   });
 
   if (!venue && slug === "letage-du-mirasol") {
     [venue] = await fetchSupabaseRows("venues", {
-      select: "id,title,slug,tagline,description,address,city,min_capacity,max_capacity,cover_image,gallery,event_categories,venue_types,services,spaces,useful_information,option_features,ambiance_types,external_options,privatization_types,guest_dispositions,space_types,metro_access,location,closing_time,rating,review_count,price_amount,price_type,pricing_text,price_tier,seo_title,meta_description",
+      select: "*",
       slug: "in.(l'étage-du-mirasol,l’étage-du-mirasol)",
-      active: "eq.true",
       limit: "1",
     }).catch(() => []);
     if (venue) venue = { ...venue, slug: "letage-du-mirasol" };
   }
 
-  if (!venue) return null;
+  if (!venue || venue.active === false) return null;
 
-  const [reviews, nearbyVenues] = await Promise.all([
+  const [reviews, venueCandidates] = await Promise.all([
     fetchSupabaseRows("venue_reviews", { select: "author_name,rating,comment,created_at", venue_id: `eq.${venue.id}`, published: "eq.true", order: "created_at.desc", limit: "100" }).catch(() => []),
-    fetchSupabaseRows("venues", { select: "id,title,slug,city,max_capacity", city: `eq.${venue.city}`, active: "eq.true", limit: "7" }).catch(() => []),
+    fetchSupabaseRows("venues", { select: "id,title,slug,city,address,max_capacity,venue_types,event_categories", active: "eq.true", limit: "1000" }).catch(() => []),
   ]);
 
   const address = venue.address || venue.city || "";
@@ -396,7 +439,9 @@ const fetchVenueMetadata = async (slug) => {
   const eventCategories = Array.isArray(venue.event_categories) ? venue.event_categories : [];
   const venueTypes = Array.isArray(venue.venue_types) ? venue.venue_types : [];
   const location = getVenueLocation(venue);
-  const typePath = venueTypePaths[venueTypes[0]] || "/location-salle-paris";
+  const typeLabel = venueTypes.find((type) => venueTypePaths[type]) || venueTypes[0] || "Lieux événementiels";
+  const typePath = venueTypePaths[typeLabel] || "/location-salle-paris";
+  const nearbyVenues = rankSimilarVenues(venue, venueCandidates);
   const faq = buildVenueFaq(venue);
   const priceAmount = Number(venue.price_amount ?? 0);
   const venueSchema = {
@@ -424,7 +469,7 @@ const fetchVenueMetadata = async (slug) => {
       : undefined,
   };
   const runtimeBody = `<main style="font-family:Arial,sans-serif;max-width:1120px;margin:0 auto;padding:64px 24px;color:#171717;">
-    <nav aria-label="Fil d'Ariane" style="font-size:13px;margin-bottom:26px;"><a href="/">Accueil</a> / <a href="${location.path}">${escapeHtml(location.label)}</a> / ${escapeHtml(venue.title)}</nav>
+    <nav aria-label="Fil d'Ariane" style="font-size:13px;margin-bottom:26px;"><a href="/">Accueil</a> / <a href="${typePath}">${escapeHtml(typeLabel)}</a> / <a href="${location.path}">${escapeHtml(location.label)}</a> / ${escapeHtml(venue.title)}</nav>
     <article>
       <h1 style="font-family:Georgia,serif;font-size:58px;line-height:1;">${escapeHtml(venue.title)}<small style="display:block;margin-top:14px;font-family:Arial,sans-serif;font-size:22px;font-weight:500;">${escapeHtml(venueTypes[0] || "Lieu événementiel")} à privatiser à ${escapeHtml(venue.city)}</small></h1>
       <p>${escapeHtml(address)} · ${escapeHtml(capacity)} · ${escapeHtml(formatVenuePrice(venue))}</p>
@@ -438,7 +483,7 @@ const fetchVenueMetadata = async (slug) => {
       <section><h2>Accès</h2><p>${escapeHtml(address)}</p>${venue.metro_access ? `<p>Métro / accès : ${escapeHtml(venue.metro_access)}</p>` : ""}<p><a href="https://www.google.com/maps/search/?api=1&amp;query=${encodeURIComponent(address)}">Voir sur la carte</a></p></section>
       ${reviews.length ? `<section><h2>Avis clients Wearevents</h2>${reviews.map((review) => `<article><h3>${escapeHtml(review.author_name)} · ${Number(review.rating)}/5</h3><p>${escapeHtml(review.comment)}</p></article>`).join("")}</section>` : ""}
       <section><h2>Questions fréquentes sur ${escapeHtml(venue.title)}</h2>${faq.map((item) => `<article><h3>${escapeHtml(item.question)}</h3><p>${escapeHtml(item.answer)}</p></article>`).join("")}</section>
-      <section><h2>Lieux similaires</h2>${nearbyVenues.filter((candidate) => candidate.id !== venue.id).slice(0, 6).map((candidate) => `<article><h3><a href="/salle/${escapeHtml(candidate.slug)}">${escapeHtml(candidate.title)}</a></h3></article>`).join("")}</section>
+      <section><h2>Lieux similaires</h2>${nearbyVenues.map((candidate) => `<article><h3><a href="/salle/${escapeHtml(candidate.slug)}">${escapeHtml(candidate.title)}</a></h3></article>`).join("")}</section>
       <nav aria-label="Recherches associées"><a href="${location.path}">Lieux à ${escapeHtml(location.label)}</a> · <a href="${typePath}">${escapeHtml(venueTypes[0] || "Lieux événementiels")} à privatiser</a>${eventCategories.filter((item) => SEO_EVENT_TYPES.includes(item)).map((item) => ` · <a href="${escapeHtml(getEventSeoPath(item))}">${escapeHtml(item)}</a>`).join("")}</nav>
       <p><a href="/recherche">Voir les autres lieux disponibles</a></p>
     </article>
@@ -448,6 +493,7 @@ const fetchVenueMetadata = async (slug) => {
     title: String(venue.seo_title || "").trim() || `${venue.title} | Réservez rapidement`,
     description: String(venue.meta_description || "").trim() || `${address}. ${capacity} Retrouvez le reste des informations utiles sur la page de l'établissement.`,
     image: venue.cover_image || defaultImage,
+    noindex: false,
     runtimeBody,
     jsonLd: {
       "@context": "https://schema.org",
@@ -456,8 +502,9 @@ const fetchVenueMetadata = async (slug) => {
         "@type": "BreadcrumbList",
         itemListElement: [
           { "@type": "ListItem", position: 1, name: "Accueil", item: siteUrl },
-          { "@type": "ListItem", position: 2, name: location.label, item: `${siteUrl}${location.path}` },
-          { "@type": "ListItem", position: 3, name: venue.title, item: `${siteUrl}${path}` },
+          { "@type": "ListItem", position: 2, name: typeLabel, item: `${siteUrl}${typePath}` },
+          { "@type": "ListItem", position: 3, name: location.label, item: `${siteUrl}${location.path}` },
+          { "@type": "ListItem", position: 4, name: venue.title, item: `${siteUrl}${path}` },
         ],
       },
       { "@type": "FAQPage", mainEntity: faq.map((item) => ({ "@type": "Question", name: item.question, acceptedAnswer: { "@type": "Answer", text: item.answer } })) },
@@ -467,7 +514,7 @@ const fetchVenueMetadata = async (slug) => {
 
 const fetchBlogMetadata = async (slug) => {
   const [post] = await fetchSupabaseRows("blog_posts", {
-    select: "title,slug,excerpt,content,image,published_at,updated_at,seo_title,meta_description",
+    select: "*",
     slug: `eq.${slug}`,
     published: "eq.true",
     limit: "1",
@@ -477,6 +524,20 @@ const fetchBlogMetadata = async (slug) => {
 
   const path = `/blog/${post.slug}`;
   const description = String(post.meta_description || "").trim() || post.excerpt || "";
+  const selectedVenueSlugs = new Set(arrayValue(post.venue_slugs));
+  const [venueCandidates, relatedPosts] = await Promise.all([
+    selectedVenueSlugs.size
+      ? fetchSupabaseRows("venues", { select: "title,slug,city,max_capacity,price_tier,price_amount,price_type", active: "eq.true", limit: "1000" }).catch(() => [])
+      : Promise.resolve([]),
+    fetchSupabaseRows("blog_posts", { select: "title,slug,excerpt,category", published: "eq.true", slug: `neq.${post.slug}`, order: "published_at.desc", limit: "20" }).catch(() => []),
+  ]);
+  const articleVenues = venueCandidates.filter((venue) => selectedVenueSlugs.has(venue.slug));
+  const sortedRelatedPosts = relatedPosts
+    .sort((left, right) => Number(right.category === post.category) - Number(left.category === post.category))
+    .slice(0, 3);
+  const relatedPostsBody = sortedRelatedPosts.length
+    ? `<section><h2>À lire aussi</h2>${sortedRelatedPosts.map((relatedPost) => `<article><h3><a href="/blog/${escapeHtml(relatedPost.slug)}">${escapeHtml(relatedPost.title)}</a></h3><p>${escapeHtml(relatedPost.excerpt || "")}</p></article>`).join("")}</section>`
+    : "";
 
   return {
     title: String(post.seo_title || "").trim() || `${post.title} - Blog Wearevents`,
@@ -489,9 +550,11 @@ const fetchBlogMetadata = async (slug) => {
       ${post.image ? `<img src="${escapeHtml(post.image)}" alt="Illustration de l'article ${escapeHtml(post.title)}" width="1200" height="675" style="width:100%;height:auto;border-radius:8px;">` : ""}
       <p style="font-size:18px;line-height:1.7;">${escapeHtml(post.excerpt || "")}</p>
       <div style="max-width:760px;font-size:17px;line-height:1.8;">${sanitizeBlogHtml(post.content)}</div></article>
+      ${venueCardGrid(articleVenues, "Les lieux de cet article")}
+      ${relatedPostsBody}
     </main>`,
     jsonLd: [
-      { "@context": "https://schema.org", "@type": "BlogPosting", headline: post.title, description, image: post.image || defaultImage, datePublished: post.published_at, dateModified: post.updated_at, mainEntityOfPage: `${siteUrl}${path}`, publisher: { "@type": "Organization", name: "Wearevents", url: siteUrl } },
+      { "@context": "https://schema.org", "@type": "BlogPosting", headline: post.title, description, image: post.image || defaultImage, datePublished: post.published_at, dateModified: post.updated_at, mainEntityOfPage: `${siteUrl}${path}`, publisher: { "@type": "Organization", name: "Wearevents", url: siteUrl }, mentions: articleVenues.map((venue) => ({ "@type": "LocalBusiness", name: venue.title, url: `${siteUrl}/salle/${venue.slug}` })) },
       { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [{ "@type": "ListItem", position: 1, name: "Accueil", item: siteUrl }, { "@type": "ListItem", position: 2, name: "Blog", item: `${siteUrl}/blog` }, { "@type": "ListItem", position: 3, name: post.title, item: `${siteUrl}${path}` }] },
     ],
   };

@@ -12,6 +12,11 @@ export interface VenueLocation {
   lng: number;
 }
 
+export interface VenueFaqItem {
+  question: string;
+  answer: string;
+}
+
 export interface Venue {
   id: string;
   title: string;
@@ -50,6 +55,7 @@ export interface Venue {
   guestDispositions: string[];
   spaceTypes: string[];
   optionFeatures: string[];
+  faq?: VenueFaqItem[];
   metroAccess?: string;
   featured: boolean;
   active: boolean;

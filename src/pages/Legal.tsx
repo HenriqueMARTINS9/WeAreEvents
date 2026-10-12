@@ -314,6 +314,7 @@ const Legal = ({ kind }: { kind: LegalPageKind }) => {
         title={page.seoTitle}
         description={page.description}
         path={page.path}
+        noindex
         jsonLd={{
           "@context": "https://schema.org",
           "@type": "BreadcrumbList",

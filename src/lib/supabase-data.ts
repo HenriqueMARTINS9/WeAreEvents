@@ -77,6 +77,14 @@ const mapVenue = (row: any): Venue => ({
     (row.option_features ?? []).filter((option: string) => !["Espace clos", "Espace ouvert"].includes(option)),
     OPTION_FEATURES,
   ),
+  faq: Array.isArray(row.faq)
+    ? row.faq.filter((item: unknown): item is { question: string; answer: string } => (
+      Boolean(item)
+      && typeof item === "object"
+      && typeof (item as { question?: unknown }).question === "string"
+      && typeof (item as { answer?: unknown }).answer === "string"
+    ))
+    : [],
   metroAccess: row.metro_access ?? undefined,
   featured: row.featured ?? false,
   active: row.active ?? true,
@@ -96,6 +104,7 @@ const mapBlogPost = (row: any): BlogPost => ({
   secondaryKeywords: Array.isArray(row.secondary_keywords) ? row.secondary_keywords : [],
   seoTitle: row.seo_title ?? "",
   metaDescription: row.meta_description ?? "",
+  venueSlugs: Array.isArray(row.venue_slugs) ? row.venue_slugs : [],
   publishedAt: row.published_at ?? undefined,
 });
 

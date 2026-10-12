@@ -82,12 +82,27 @@ export const getVenueLocationLabel = (venue: Pick<Venue, "address" | "city">) =>
 };
 
 const venueTypeSeoPaths: Record<string, string> = {
+  Péniche: "/peniche-evenement-paris",
   Bar: "/bar-privatisable-paris",
   Restaurant: "/restaurant-privatisable-paris",
   Discothèque: "/discotheque-paris",
   Rooftop: "/rooftop-a-privatiser-paris",
   Villa: "/villa-evenement-paris",
-  Loft: "/loft-evenementiel-paris",
+  Loft: "/loft-evenement-paris",
+  "Salle de réception": "/salle-reception-paris",
+  "Salle de réunion": "/salle-reunion-paris",
+  "Salle de conférence": "/salle-de-conference-paris",
+  "Espace extérieur": "/espace-exterieur-paris",
+  Appartement: "/appartement-evenement-paris",
+  Maison: "/maison-evenement-paris",
+  Château: "/chateau-evenement-paris",
+  Domaine: "/domaine-evenement-paris",
+  Hôtel: "/hotel-evenement-paris",
+  Jardin: "/jardin-evenement-paris",
+  Terrasse: "/terrasse-evenement-paris",
+  "Plage privée": "/plage-privee-evenement-paris",
+  Hangar: "/hangar-evenement-paris",
+  Showroom: "/showroom-evenement-paris",
 };
 
 export const getVenueTypeSeoPath = (venue: Pick<Venue, "venueTypes">) => {
@@ -95,7 +110,10 @@ export const getVenueTypeSeoPath = (venue: Pick<Venue, "venueTypes">) => {
   return venueType ? venueTypeSeoPaths[venueType] : "/location-salle-paris";
 };
 
-export const getSimilarVenues = (venue: Venue, venues: Venue[], limit = 4) => {
+export const getVenueTypeLabel = (venue: Pick<Venue, "venueTypes">) =>
+  venue.venueTypes.find((type) => venueTypeSeoPaths[type]) || venue.venueTypes[0] || "Lieux événementiels";
+
+export const getSimilarVenues = (venue: Venue, venues: Venue[], limit = 6) => {
   const postalCode = getVenuePostalCode(venue.address);
   const normalizedCity = venue.city.trim().toLowerCase();
 
