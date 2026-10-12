@@ -1,6 +1,6 @@
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { fetchVenueReviews, fetchVenues } from "@/lib/supabase-data";
+import { fetchVenueBySlug, fetchVenueReviews, fetchVenues } from "@/lib/supabase-data";
 import { ArrowRight, Building2, Cake, Clock3, Euro, ExternalLink, Images, MapPin, Music2, Play, Route, ShieldCheck, Sparkles, Star, Tag, UtensilsCrossed, Users } from "lucide-react";
 import { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -49,8 +49,18 @@ const VenueDetail = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const { data: venues = [], isLoading } = useQuery({ queryKey: ["venues"], queryFn: fetchVenues });
-  const venue = venues.find((item) => item.slug === slug);
+  const { data: venues = [] } = useQuery({ queryKey: ["venues"], queryFn: fetchVenues });
+  const {
+    data: venue,
+    isLoading,
+    isError,
+    refetch: retryVenue,
+  } = useQuery({
+    queryKey: ["venue", slug],
+    queryFn: () => fetchVenueBySlug(slug || ""),
+    enabled: Boolean(slug),
+    retry: 2,
+  });
   const { data: reviews = [] } = useQuery({
     queryKey: ["venue-reviews", venue?.id],
     queryFn: () => fetchVenueReviews(venue!.id),
@@ -61,6 +71,31 @@ const VenueDetail = () => {
 
   if (isLoading) {
     return <div className="min-h-screen bg-background" />;
+  }
+
+  if (isError) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background px-6 text-foreground">
+        <Seo
+          title="Chargement temporairement indisponible - Wearevents"
+          description="La fiche de cette salle est temporairement indisponible."
+          path={`/salle/${slug || ""}`}
+        />
+        <div role="alert" className="max-w-md text-center">
+          <h1 className="font-heading text-3xl font-semibold">Impossible de charger cette salle</h1>
+          <p className="mt-4 font-body text-sm leading-relaxed text-muted-foreground">
+            Un problème de connexion empêche temporairement l'affichage de la fiche. Vous pouvez réessayer sans quitter cette page.
+          </p>
+          <button
+            type="button"
+            onClick={() => retryVenue()}
+            className="mt-6 rounded-lg bg-primary px-6 py-3 text-sm font-body font-semibold text-primary-foreground"
+          >
+            Réessayer
+          </button>
+        </div>
+      </div>
+    );
   }
 
   if (!venue) {
@@ -182,6 +217,7 @@ const VenueDetail = () => {
   const hasAmbianceSection = hasItems(venue.ambianceTypes) || hasItems(venue.externalOptions);
   const hasUsefulInformation = hasItems(venue.usefulInformation);
   const hasUsefulInfoSection = hasItems(venue.services) || hasItems(venue.eventCategories) || hasUsefulInformation;
+  const hasPricingText = Boolean(venue.pricingText.trim());
   const scrollToSection = (sectionId: string) => {
     const section = document.getElementById(sectionId);
     if (!section) return;
@@ -315,6 +351,7 @@ const VenueDetail = () => {
               {[
                 ["#presentation", "Présentation"],
                 ["#details", "Détails"],
+                hasPricingText ? ["#tarifs", "Tarifs"] : null,
                 ["#options", "Options"],
                 hasAmbianceSection ? ["#ambiance", "Ambiance"] : null,
                 hasUsefulInfoSection ? ["#infos", "Informations utiles"] : null,
@@ -380,6 +417,18 @@ const VenueDetail = () => {
                   <InfoBlock icon={<Sparkles className="h-4 w-4" />} title="Options du lieu" items={venue.optionFeatures} />
                 </div>
               </section>
+
+              {hasPricingText && (
+                <section id="tarifs" className="scroll-mt-28 rounded-lg border border-border bg-background p-6">
+                  <p className="font-body text-sm font-semibold text-primary">Budget</p>
+                  <h2 className="mt-2 font-heading text-3xl font-semibold">Tarifs indicatifs</h2>
+                  <div className="mt-5 rounded-lg border border-border bg-card p-5">
+                    <p className="font-heading text-2xl font-semibold text-primary">{formatVenuePrice(venue)}</p>
+                    <p className="mt-3 whitespace-pre-line font-body text-sm leading-relaxed text-foreground/75">{venue.pricingText}</p>
+                    <p className="mt-3 font-body text-xs text-muted-foreground">Le tarif définitif dépend de la date, du format et des prestations retenues.</p>
+                  </div>
+                </section>
+              )}
 
               <section id="options" className="scroll-mt-28 rounded-lg border border-border bg-background p-6">
                 <h2 className="font-heading text-3xl font-semibold">Sélectionnez une option de réservation</h2>

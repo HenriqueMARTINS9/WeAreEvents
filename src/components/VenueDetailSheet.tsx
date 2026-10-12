@@ -296,12 +296,13 @@ const VenueDetailSheet = ({ venue, reviews = [], similarVenues = [], onClose, on
           </>
         )}
 
-        {/* Pricing */}
-        {venue.priceTier && (
+        {venue.pricingText.trim() && (
           <div className="p-4 rounded-lg bg-foreground text-primary-foreground mb-6">
-            <p className="text-xs text-primary-foreground/60 font-body mb-1">Tarif indicatif</p>
-            <p className="font-heading text-2xl font-semibold text-luxe-gold">{formatVenuePrice(venue)}</p>
-            <p className="mt-2 text-xs font-body text-primary-foreground/60">Devis précis après validation de la date et du format.</p>
+            <p className="text-xs text-primary-foreground/60 font-body mb-1">Budget</p>
+            <h3 className="font-heading text-xl font-semibold">Tarifs indicatifs</h3>
+            <p className="mt-2 font-heading text-2xl font-semibold text-luxe-gold">{formatVenuePrice(venue)}</p>
+            <p className="mt-3 whitespace-pre-line text-sm font-body leading-relaxed text-primary-foreground/80">{venue.pricingText}</p>
+            <p className="mt-2 text-xs font-body text-primary-foreground/60">Le tarif définitif dépend de la date, du format et des prestations retenues.</p>
           </div>
         )}
 

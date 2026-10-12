@@ -21,6 +21,7 @@ const assertPageBasics = (path, html, { noindexAllowed = false } = {}) => {
   if (!/<h1[\s>]/i.test(html)) failures.push(`${path}: H1 absent du code source`);
   if (!/<link\s+rel="canonical"/i.test(html)) failures.push(`${path}: canonical absente`);
   if (!/application\/ld\+json/i.test(html)) failures.push(`${path}: données structurées absentes`);
+  if (!/<footer\s+data-prerender-footer/i.test(html)) failures.push(`${path}: footer absent du code source`);
   if (!noindexAllowed && /name="robots"\s+content="noindex/i.test(html)) failures.push(`${path}: noindex inattendu`);
 };
 

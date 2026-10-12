@@ -15,7 +15,6 @@ export default async function handler(request, response) {
   }
 
   const cronSecret = process.env.CRON_SECRET || "";
-  const reviewCronSecret = process.env.REVIEW_CRON_SECRET || "";
   const authorization = request.headers.authorization || "";
 
   if (!cronSecret || authorization !== `Bearer ${cronSecret}`) {
@@ -25,8 +24,8 @@ export default async function handler(request, response) {
 
   const supabaseUrl = getSupabaseUrl();
   const supabaseKey = getSupabaseKey();
-  if (!supabaseUrl || !supabaseKey || !reviewCronSecret) {
-    console.error("Review follow-up cron is missing Supabase or review secret configuration");
+  if (!supabaseUrl || !supabaseKey) {
+    console.error("Review follow-up cron is missing Supabase configuration");
     return response.status(500).json({ error: "Review follow-up configuration is incomplete" });
   }
 
@@ -37,7 +36,7 @@ export default async function handler(request, response) {
         "Content-Type": "application/json",
         apikey: supabaseKey,
         Authorization: `Bearer ${supabaseKey}`,
-        "x-review-cron-secret": reviewCronSecret,
+        "x-review-cron-secret": cronSecret,
       },
       body: JSON.stringify({ source: "vercel-cron", triggered_at: new Date().toISOString() }),
     });

@@ -117,6 +117,7 @@ const normalizeSeoPath = (value = "/") => {
 };
 
 const canonicalUrl = (path) => `${siteUrl}${path === "/" ? "/" : path}`;
+const prerenderFooter = `<footer data-prerender-footer style="margin-top:64px;background:#171717;color:#fff;padding:48px 24px;font-family:Arial,sans-serif;"><div style="max-width:1120px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:32px;"><div><a href="/" style="font-size:20px;font-weight:800;color:#fff;text-decoration:none;">Wearevents</a><p style="color:#b8b8b8;line-height:1.6;">Le lieu idéal pour votre événement à Paris.</p></div><nav aria-label="Navigation du pied de page"><strong>Navigation</strong><p><a href="/recherche" style="color:#d8d8d8;">Trouver une salle</a></p><p><a href="/inspirations" style="color:#d8d8d8;">Inspirations</a></p><p><a href="/tous-nos-lieux" style="color:#d8d8d8;">Tous nos lieux</a></p><p><a href="/blog" style="color:#d8d8d8;">Blog</a></p><p><a href="/faq" style="color:#d8d8d8;">FAQ</a></p></nav><nav aria-label="Informations légales"><strong>Informations</strong><p><a href="/qui-sommes-nous" style="color:#d8d8d8;">Qui sommes-nous ?</a></p><p><a href="/entreprises" style="color:#d8d8d8;">Entreprises</a></p><p><a href="/mentions-legales" style="color:#d8d8d8;">Mentions légales</a></p><p><a href="/politique-confidentialite" style="color:#d8d8d8;">Confidentialité</a></p></nav><div><strong>Contact</strong><p><a href="mailto:contact@wearevents.fr" style="color:#d8d8d8;">contact@wearevents.fr</a></p><p style="color:#b8b8b8;">Paris, France</p></div></div></footer>`;
 
 const isInsideDist = (filePath) => {
   const normalizedDist = normalize(distDir);
@@ -171,9 +172,9 @@ const applyRuntimeContent = (html, body, jsonLd) => {
   if (/<main\s+data-prerender-seo[\s\S]*?<\/main>/i.test(nextHtml)) {
     nextHtml = nextHtml.replace(/<main\s+data-prerender-seo[\s\S]*?<\/main>/i, body);
   } else if (/<div id="root">[\s\S]*?<\/div>\s*<script/i.test(nextHtml)) {
-    nextHtml = nextHtml.replace(/<div id="root">[\s\S]*?<\/div>(\s*<script)/i, `<div id="root">${body}</div>$1`);
+    nextHtml = nextHtml.replace(/<div id="root">[\s\S]*?<\/div>(\s*<script)/i, `<div id="root">${body}${prerenderFooter}</div>$1`);
   } else {
-    nextHtml = nextHtml.replace('<div id="root"></div>', `<div id="root">${body}</div>`);
+    nextHtml = nextHtml.replace('<div id="root"></div>', `<div id="root">${body}${prerenderFooter}</div>`);
   }
   if (jsonLd) {
     nextHtml = nextHtml.replace(
@@ -290,6 +291,9 @@ const formatVenuePrice = (venue) => {
   const labels = { "€": "budget économique", "€€": "budget moyen", "€€€": "budget élevé", "€€€€": "budget premium" };
   return `${tier} · ${labels[tier] || "budget sur devis"}`;
 };
+const venuePricingSection = (venue) => String(venue.pricing_text || "").trim()
+  ? `<section><h2>Tarifs indicatifs</h2><p><strong>${escapeHtml(formatVenuePrice(venue))}</strong></p><p style="white-space:pre-line;">${escapeHtml(venue.pricing_text)}</p><p>Le tarif définitif dépend de la date, du format et des prestations retenues.</p></section>`
+  : "";
 const buildVenueFaq = (venue) => {
   const customFaq = arrayValue(venue.faq)
     .map((item) => ({ question: String(item?.question || "").trim(), answer: String(item?.answer || "").trim() }))
@@ -476,6 +480,7 @@ const fetchVenueMetadata = async (slug) => {
       ${venue.cover_image ? `<img src="${escapeHtml(venue.cover_image)}" alt="Espace principal de ${escapeHtml(venue.title)} à ${escapeHtml(venue.city)}" width="1200" height="800" fetchpriority="high" loading="eager" decoding="async" style="width:100%;height:auto;border-radius:8px;">` : ""}
       <section><h2>Présentation</h2><p><strong>${escapeHtml(venue.tagline || "")}</strong></p><p style="max-width:780px;font-size:17px;line-height:1.8;white-space:pre-line;">${escapeHtml(venue.description || "")}</p></section>
       <section><h2>Détails du lieu</h2>${venueList("Type de lieu", venue.venue_types)}${venueList("Type d'espace", venue.space_types)}${venueList("Type de privatisation", venue.privatization_types)}${venueList("Disposition des invités", venue.guest_dispositions)}${venueList("Options du lieu", venue.option_features)}${venue.closing_time ? `<h3>Horaires</h3><p>Fermeture : ${escapeHtml(venue.closing_time === "03:00" ? "Après 2h" : venue.closing_time)}</p>` : ""}</section>
+      ${venuePricingSection(venue)}
       ${arrayValue(venue.spaces).length ? `<section><h2>Options et espaces</h2>${arrayValue(venue.spaces).map((space) => `<article><h3>${escapeHtml(space.name)}</h3><p>${Number(space.capacity || 0)} personnes${Number(space.squareMeters || 0) > 0 ? ` · ${Number(space.squareMeters)} m²` : ""}</p><p>${escapeHtml(space.description || "")}</p></article>`).join("")}</section>` : ""}
       ${venueList("Ambiance & activités", venue.ambiance_types)}
       ${venueList("Ce que vous pouvez apporter", venue.external_options)}

@@ -241,6 +241,25 @@ export const fetchVenues = async (): Promise<Venue[]> => {
   return data.map(mapVenue);
 };
 
+export const fetchVenueBySlug = async (slug: string): Promise<Venue | undefined> => {
+  const normalizedSlug = slug.trim();
+  if (!supabase) return mockVenues.find((venue) => venue.slug === normalizedSlug && venue.active);
+
+  const candidateSlugs = normalizedSlug === "letage-du-mirasol"
+    ? [normalizedSlug, "l'étage-du-mirasol", "l’étage-du-mirasol"]
+    : [normalizedSlug];
+  const { data, error } = await supabase
+    .from("venues")
+    .select("*")
+    .eq("active", true)
+    .in("slug", candidateSlugs)
+    .limit(1)
+    .maybeSingle();
+
+  if (error) throw new Error(`Impossible de charger la salle : ${error.message}`);
+  return data ? mapVenue(data) : undefined;
+};
+
 export const fetchBlogPosts = async (): Promise<BlogPost[]> => {
   if (!supabase) return blogPosts;
 

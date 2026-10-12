@@ -107,7 +107,7 @@ const sendReviewEmail = async (booking: BookingFollowUp) => {
 Deno.serve(async (request) => {
   if (request.method !== "POST") return jsonResponse({ error: "Method not allowed" }, 405);
 
-  const cronSecret = Deno.env.get("REVIEW_CRON_SECRET") || "";
+  const cronSecret = Deno.env.get("REVIEW_CRON_SECRET") || Deno.env.get("REVIEWCRON_SECRET") || "";
   if (!cronSecret) return jsonResponse({ error: "REVIEW_CRON_SECRET is not configured" }, 500);
   if (request.headers.get("x-review-cron-secret") !== cronSecret) {
     return jsonResponse({ error: "Unauthorized" }, 401);
