@@ -9,12 +9,12 @@ import VenueCodeSearch from "@/components/VenueCodeSearch";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { fetchBlogPostBySlug, fetchBlogPosts, fetchVenues } from "@/lib/supabase-data";
 import Seo, { siteUrl } from "@/components/Seo";
-import { sanitizeBlogHtml } from "@/lib/blog-content";
+import { extractBlogFaq, sanitizeBlogHtml } from "@/lib/blog-content";
 import { formatVenueCapacity, formatVenuePrice } from "@/lib/venue-display";
 
 const BlogContent = ({ content }: { content: string }) => (
   <div
-    className="prose prose-neutral max-w-none font-body text-base leading-8 prose-headings:font-heading prose-headings:font-semibold prose-headings:leading-tight prose-h1:text-4xl prose-h2:mt-12 prose-h2:text-3xl prose-h3:mt-9 prose-h3:text-2xl prose-p:text-foreground/78 prose-a:font-medium prose-a:text-foreground prose-a:underline prose-a:underline-offset-4 prose-blockquote:border-primary prose-blockquote:text-foreground/70 prose-ul:list-disc prose-ol:list-decimal prose-li:text-foreground/78 prose-li:marker:text-primary prose-strong:text-foreground"
+    className="prose prose-neutral max-w-none font-body text-base leading-8 prose-headings:font-heading prose-headings:font-semibold prose-headings:leading-tight prose-h1:text-4xl prose-h2:mt-12 prose-h2:text-3xl prose-h3:mt-9 prose-h3:text-2xl prose-p:text-foreground/78 prose-a:font-medium prose-a:text-foreground prose-a:underline prose-a:underline-offset-4 prose-blockquote:border-primary prose-blockquote:text-foreground/70 prose-ul:list-disc prose-ol:list-decimal prose-li:text-foreground/78 prose-li:marker:text-primary prose-strong:text-foreground prose-figure:my-10 prose-img:my-0 prose-img:w-full prose-img:rounded-lg prose-figcaption:mt-3 prose-figcaption:text-center prose-figcaption:text-sm prose-figcaption:text-muted-foreground"
     dangerouslySetInnerHTML={{ __html: sanitizeBlogHtml(content) }}
   />
 );
@@ -39,6 +39,7 @@ const BlogDetail = () => {
     const selectedSlugs = new Set(post?.venueSlugs ?? []);
     return venues.filter((venue) => selectedSlugs.has(venue.slug));
   }, [post?.venueSlugs, venues]);
+  const articleFaq = useMemo(() => extractBlogFaq(post?.content ?? ""), [post?.content]);
 
   if (isLoading) {
     return <div className="min-h-screen bg-background" />;
@@ -119,7 +120,18 @@ const BlogDetail = () => {
             { "@type": "ListItem", position: 2, name: "Blog", item: `${siteUrl}/blog` },
             { "@type": "ListItem", position: 3, name: post.title, item: `${siteUrl}/blog/${post.slug}` },
           ],
-        }]}
+        }, ...(articleFaq.length ? [{
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: articleFaq.map((item) => ({
+            "@type": "Question",
+            name: item.question,
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: item.answer,
+            },
+          })),
+        }] : [])]}
       />
       {isMobile ? (
         <MobileHeader onCodeSearch={() => setShowCodeSearch(true)} withBackground />

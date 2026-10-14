@@ -79,7 +79,7 @@ const mentionsSections: LegalSection[] = [
     title: "Cookies et mesure d'audience",
     paragraphs: [
       "Le site peut utiliser des cookies ou technologies similaires nécessaires à son fonctionnement, à la mesure d'audience et au suivi des campagnes publicitaires en France, principalement en région parisienne.",
-      "Les outils Google Analytics 4 et Google Ads peuvent être utilisés uniquement après consentement afin de mesurer les visites, les clics WhatsApp, les demandes de disponibilité et les demandes de référencement d'établissement. Lorsque c'est nécessaire pour mesurer une conversion publicitaire, l'email et/ou le téléphone saisis dans un formulaire peuvent être normalisés puis hachés avant transmission à Google Ads.",
+      "Google Analytics 4 et Google Ads utilisent le Consent Mode v2. En cas de refus, aucun cookie publicitaire ou de mesure d'audience n'est déposé : seuls des signaux de conversion sans identifiant publicitaire ni donnée client peuvent être envoyés afin de produire des mesures agrégées et modélisées. Après consentement, la mesure complète est activée et l'email et/ou le téléphone saisis dans un formulaire peuvent être normalisés puis hachés pour les conversions enrichies Google Ads.",
       "L'utilisateur peut accepter, refuser ou modifier ses choix via la bannière de consentement ou le lien Préférences cookies présent dans le footer.",
     ],
   },
@@ -242,7 +242,7 @@ const privacySections: LegalSection[] = [
     title: "Cookies et stockage local",
     paragraphs: [
       "Le site peut utiliser du stockage local, du stockage de session ou des cookies strictement nécessaires au fonctionnement de certaines interfaces, par exemple pour conserver un brouillon dans l'administration, mémoriser un affichage temporaire ou enregistrer des commentaires côté navigateur.",
-      "Google Analytics 4 et Google Ads peuvent être activés après consentement pour mesurer l'audience, la performance des campagnes et les conversions liées aux demandes envoyées depuis le site. Les conversions enrichies Google Ads peuvent utiliser une version hachée de l'email et/ou du téléphone saisis dans un formulaire afin d'améliorer la mesure publicitaire.",
+      "Google Analytics 4 et Google Ads sont chargés avec le Consent Mode v2 et les stockages publicitaire et analytique refusés par défaut. Sans consentement, aucun cookie de mesure n'est déposé ; des signaux de conversion sans identifiant ni donnée client peuvent néanmoins être transmis à Google pour établir des statistiques agrégées et modélisées. Après consentement, la mesure complète est activée et les conversions enrichies Google Ads peuvent utiliser une version hachée de l'email et/ou du téléphone saisis dans un formulaire.",
       "Le choix de consentement est conservé localement dans le navigateur et peut être réinitialisé depuis le lien Préférences cookies du footer.",
     ],
   },

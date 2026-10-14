@@ -4,16 +4,21 @@ const allowedTags = new Set([
   "BLOCKQUOTE",
   "BR",
   "EM",
+  "FIGCAPTION",
+  "FIGURE",
   "H1",
   "H2",
   "H3",
   "I",
+  "IMG",
   "LI",
   "OL",
   "P",
   "STRONG",
   "UL",
 ]);
+
+const allowedImageAttributes = new Set(["src", "alt", "width", "height", "loading"]);
 
 const escapeHtml = (value: string) =>
   value
@@ -75,7 +80,10 @@ export const sanitizeBlogHtml = (value: string) => {
     }
 
     Array.from(element.attributes).forEach((attribute) => {
-      if (element.tagName !== "A" || attribute.name !== "href") {
+      const isAllowedLinkAttribute = element.tagName === "A" && attribute.name === "href";
+      const isAllowedImageAttribute = element.tagName === "IMG" && allowedImageAttributes.has(attribute.name);
+
+      if (!isAllowedLinkAttribute && !isAllowedImageAttribute) {
         element.removeAttribute(attribute.name);
       }
     });
@@ -92,6 +100,23 @@ export const sanitizeBlogHtml = (value: string) => {
       }
     }
 
+    if (element.tagName === "IMG") {
+      const src = element.getAttribute("src")?.trim() ?? "";
+      if (!/^(https?:\/\/|\/(?!\/))/i.test(src)) {
+        element.remove();
+        return;
+      }
+
+      element.setAttribute("src", src);
+      ["width", "height"].forEach((attribute) => {
+        const rawValue = element.getAttribute(attribute)?.trim() ?? "";
+        if (!/^\d{1,5}$/.test(rawValue) || Number(rawValue) <= 0) element.removeAttribute(attribute);
+      });
+
+      const loading = element.getAttribute("loading")?.toLowerCase();
+      if (loading !== "lazy" && loading !== "eager") element.removeAttribute("loading");
+    }
+
     if (element.tagName === "B") {
       const strong = documentNode.createElement("strong");
       strong.append(...Array.from(element.childNodes));
@@ -106,6 +131,45 @@ export const sanitizeBlogHtml = (value: string) => {
   });
 
   return container.innerHTML;
+};
+
+export type BlogFaqItem = {
+  question: string;
+  answer: string;
+};
+
+const normalizeFaqHeading = (value: string) => value
+  .normalize("NFD")
+  .replace(/[\u0300-\u036f]/g, "")
+  .trim()
+  .toLowerCase();
+
+export const extractBlogFaq = (value: string): BlogFaqItem[] => {
+  if (typeof DOMParser === "undefined") return [];
+
+  const documentNode = new DOMParser().parseFromString(sanitizeBlogHtml(value), "text/html");
+  const faqHeading = Array.from(documentNode.body.querySelectorAll("h2")).find((heading) => {
+    const normalized = normalizeFaqHeading(heading.textContent ?? "");
+    return normalized === "faq" || normalized.startsWith("questions frequentes");
+  });
+  if (!faqHeading) return [];
+
+  const items: BlogFaqItem[] = [];
+  let element = faqHeading.nextElementSibling;
+
+  while (element && !["H1", "H2"].includes(element.tagName)) {
+    if (element.tagName === "H3") {
+      const question = (element.textContent ?? "").replace(/\s+/g, " ").trim();
+      const answerElement = element.nextElementSibling;
+      if (question && answerElement?.tagName === "P") {
+        const answer = (answerElement.textContent ?? "").replace(/\s+/g, " ").trim();
+        if (answer) items.push({ question, answer });
+      }
+    }
+    element = element.nextElementSibling;
+  }
+
+  return items;
 };
 
 export const prepareBlogContentForEditor = (value: string) =>

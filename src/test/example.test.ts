@@ -104,7 +104,12 @@ describe("booking workflow", () => {
     expect(templates.adminNotification.text).toContain(request.phone);
     expect(templates.adminNotification.text).toContain("Budget approximatif : 30–50 € / pers.");
     expect(templates.venueContactNotification.text).toContain("Un client souhaite privatiser votre établissement");
-    expect(templates.venueContactNotification.text).toContain("les modalités de privatisation");
+    expect(templates.venueContactNotification.text).toContain("Date : 12 juin 2099");
+    expect(templates.venueContactNotification.text).toContain("Horaires : 18:00 – 23:30");
+    expect(templates.venueContactNotification.text).toContain("Espace demandé : Terrasse principale");
+    expect(templates.venueContactNotification.text).toContain("Budget approximatif : 30–50 € / pers.");
+    expect(templates.venueContactNotification.text).toContain(`Référence : ${request.id}`);
+    expect(templates.venueContactNotification.text).toContain("Wearevents s'occupe du client");
     expect(templates.venueContactNotification.text).not.toContain(request.phone);
     expect(templates.venueContactNotification.text).not.toContain(request.email);
     expect(templates.postEventReviewFollowUp.to).toBe(validForm.email);

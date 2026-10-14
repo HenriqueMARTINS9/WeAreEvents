@@ -71,6 +71,37 @@ const renderTextWithLinks = (value: string) => {
 type EmailKind = "customer" | "admin" | "venue";
 
 const getPublicSiteUrl = () => (Deno.env.get("PUBLIC_SITE_URL") || "https://www.wearevents.fr").replace(/\/$/, "");
+const weareventsReplyEmail = "contact@wearevents.fr";
+
+const buildVenueReplyUrl = (requestId: string | undefined, status: string, body: string) => {
+  const reference = requestId ? ` ${requestId}` : "";
+  const subject = `${status} - demande Wearevents${reference}`;
+  return `mailto:${weareventsReplyEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+};
+
+const renderVenueResponseButtons = (requestId?: string) => {
+  const reference = requestId ? `Référence : ${requestId}\n\n` : "";
+  const availableUrl = buildVenueReplyUrl(
+    requestId,
+    "Disponible",
+    `Bonjour,\n\n${reference}Notre établissement est disponible pour cette demande.\n\nNos modalités et conditions :\n`,
+  );
+  const unavailableUrl = buildVenueReplyUrl(
+    requestId,
+    "Pas disponible",
+    `Bonjour,\n\n${reference}Notre établissement n'est pas disponible pour cette demande.\n`,
+  );
+  const conditionsUrl = buildVenueReplyUrl(
+    requestId,
+    "Réponse avec conditions",
+    `Bonjour,\n\n${reference}Voici nos modalités de privatisation et nos conditions pour cette demande :\n\n`,
+  );
+
+  const button = (label: string, url: string, background: string, color = "#FFFFFF") =>
+    `<a href="${escapeHtml(url)}" style="display:inline-block;margin:0 8px 10px 0;border-radius:12px;background:${background};padding:14px 17px;font-family:Arial,sans-serif;font-size:13px;font-weight:700;color:${color};text-decoration:none;">${escapeHtml(label)}</a>`;
+
+  return `<div style="margin-top:26px;">${button("Disponible", availableUrl, "#237A57")}${button("Pas disponible", unavailableUrl, "#4B4B4B")}${button("Répondre avec mes conditions", conditionsUrl, "#D94F6D")}</div>`;
+};
 
 const getEmailTheme = (kind: EmailKind) => {
   if (kind === "admin") {
@@ -169,6 +200,9 @@ const buildBrandedEmailHtml = (
   const { rows, paragraphs } = splitEmailText(template.text);
   const preview = template.preview || theme.description;
   const heroTitle = kind === "admin" ? theme.title : template.subject;
+  const paragraphsBeforeRows = kind === "venue" ? paragraphs.slice(0, 2) : paragraphs;
+  const venueContextParagraphs = kind === "venue" ? paragraphs.slice(2, 3) : [];
+  const venueClosingParagraphs = kind === "venue" ? paragraphs.slice(3) : [];
 
   return `<!doctype html>
 <html lang="fr">
@@ -224,7 +258,7 @@ const buildBrandedEmailHtml = (
                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-radius:22px;background:#FFFFFF;border:1px solid #EFE8E4;">
                   <tr>
                     <td style="padding:30px;">
-                      ${renderParagraphs(paragraphs)}
+                      ${renderParagraphs(paragraphsBeforeRows)}
 
                       ${
                         rows.length
@@ -234,15 +268,18 @@ const buildBrandedEmailHtml = (
                           : ""
                       }
 
-                      <table role="presentation" cellspacing="0" cellpadding="0" style="margin-top:28px;">
-                        <tr>
-                          <td style="border-radius:12px;background:${theme.accent};">
-                            <a href="${theme.buttonUrl}" style="display:inline-block;padding:14px 18px;font-family:Arial,sans-serif;font-size:14px;font-weight:700;color:#FFFFFF;text-decoration:none;">
-                              ${escapeHtml(theme.buttonLabel)}
-                            </a>
-                          </td>
-                        </tr>
-                      </table>
+                      ${kind === "venue" ? renderParagraphs(venueContextParagraphs) : ""}
+                      ${kind === "venue" ? renderVenueResponseButtons(requestId) : `
+                        <table role="presentation" cellspacing="0" cellpadding="0" style="margin-top:28px;">
+                          <tr>
+                            <td style="border-radius:12px;background:${theme.accent};">
+                              <a href="${theme.buttonUrl}" style="display:inline-block;padding:14px 18px;font-family:Arial,sans-serif;font-size:14px;font-weight:700;color:#FFFFFF;text-decoration:none;">
+                                ${escapeHtml(theme.buttonLabel)}
+                              </a>
+                            </td>
+                          </tr>
+                        </table>`}
+                      ${kind === "venue" ? renderParagraphs(venueClosingParagraphs) : ""}
                     </td>
                   </tr>
                 </table>
@@ -268,7 +305,7 @@ const sendEmail = async (template: EmailTemplate, from: string, kind: EmailKind,
   const safeTemplate = kind === "venue"
     ? { ...template, text: removeCustomerContactDetails(template.text) }
     : template;
-  const safeReplyTo = kind === "venue" ? undefined : replyTo;
+  const safeReplyTo = kind === "venue" ? weareventsReplyEmail : replyTo;
 
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",

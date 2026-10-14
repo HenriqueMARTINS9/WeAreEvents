@@ -34,21 +34,67 @@ const escapeJsonForHtml = (value) => JSON.stringify(value)
   .replace(/>/g, "\\u003e")
   .replace(/&/g, "\\u0026");
 
+const blogAllowedTags = new Set(["p", "h1", "h2", "h3", "strong", "b", "em", "i", "ul", "ol", "li", "blockquote", "br", "a", "figure", "figcaption", "img"]);
+const readHtmlAttribute = (attributes, name) => {
+  const match = attributes.match(new RegExp(`(?:^|\\s)${name}\\s*=\\s*(?:"([^"]*)"|'([^']*)'|([^\\s"'=<>]+))`, "i"));
+  return match ? (match[1] ?? match[2] ?? match[3] ?? "") : null;
+};
+
 const sanitizeBlogHtml = (value = "") => String(value)
   .replace(/<script[\s\S]*?<\/script>/gi, "")
   .replace(/<style[\s\S]*?<\/style>/gi, "")
   .replace(/<!--([\s\S]*?)-->/g, "")
   .replace(/<\/?([a-z0-9]+)([^>]*)>/gi, (tag, rawName, attributes) => {
     const name = rawName.toLowerCase();
-    const allowed = new Set(["p", "h1", "h2", "h3", "strong", "b", "em", "i", "ul", "ol", "li", "blockquote", "br", "a"]);
-    if (!allowed.has(name)) return "";
-    if (tag.startsWith("</")) return `</${name}>`;
+    if (!blogAllowedTags.has(name)) return "";
+    if (tag.startsWith("</")) return name === "img" || name === "br" ? "" : `</${name}>`;
     if (name === "br") return "<br>";
+    if (name === "img") {
+      const src = (readHtmlAttribute(attributes, "src") ?? "").trim();
+      if (!/^(https?:\/\/|\/(?!\/))/i.test(src)) return "";
+      const alt = readHtmlAttribute(attributes, "alt");
+      const width = readHtmlAttribute(attributes, "width");
+      const height = readHtmlAttribute(attributes, "height");
+      const loading = readHtmlAttribute(attributes, "loading")?.toLowerCase();
+      const safeAttributes = [`src="${escapeHtml(src)}"`];
+      if (alt !== null) safeAttributes.push(`alt="${escapeHtml(alt)}"`);
+      if (width && /^\d{1,5}$/.test(width) && Number(width) > 0) safeAttributes.push(`width="${width}"`);
+      if (height && /^\d{1,5}$/.test(height) && Number(height) > 0) safeAttributes.push(`height="${height}"`);
+      if (loading === "lazy" || loading === "eager") safeAttributes.push(`loading="${loading}"`);
+      return `<img ${safeAttributes.join(" ")}>`;
+    }
     if (name !== "a") return `<${name}>`;
-    const href = attributes.match(/href\s*=\s*["']([^"']+)["']/i)?.[1] ?? "";
-    const safeHref = /^(https?:\/\/|\/|#)/i.test(href) ? href : "";
+    const href = readHtmlAttribute(attributes, "href") ?? "";
+    const safeHref = /^(https?:\/\/|mailto:|tel:|\/|#)/i.test(href) ? href : "";
     return safeHref ? `<a href="${escapeHtml(safeHref)}">` : "<a>";
   });
+
+const htmlToPlainText = (value = "") => String(value)
+  .replace(/<[^>]+>/g, " ")
+  .replace(/&nbsp;/gi, " ")
+  .replace(/&amp;/gi, "&")
+  .replace(/&#(?:39|x27);|&apos;/gi, "'")
+  .replace(/&quot;/gi, '"')
+  .replace(/\s+/g, " ")
+  .trim();
+
+const extractBlogFaq = (html = "") => {
+  const headings = Array.from(String(html).matchAll(/<h2>([\s\S]*?)<\/h2>/gi));
+  const faqHeadingIndex = headings.findIndex((heading) => {
+    const normalized = htmlToPlainText(heading[1]).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    return normalized === "faq" || normalized.startsWith("questions frequentes");
+  });
+  if (faqHeadingIndex < 0) return [];
+
+  const heading = headings[faqHeadingIndex];
+  const start = (heading.index ?? 0) + heading[0].length;
+  const end = headings[faqHeadingIndex + 1]?.index ?? String(html).length;
+  const section = String(html).slice(start, end);
+
+  return Array.from(section.matchAll(/<h3>([\s\S]*?)<\/h3>\s*<p>([\s\S]*?)<\/p>/gi))
+    .map((match) => ({ question: htmlToPlainText(match[1]), answer: htmlToPlainText(match[2]) }))
+    .filter((item) => item.question && item.answer);
+};
 
 const normalizePath = (value = "/") => {
   const path = String(value).split(/[?#]/)[0] || "/";
@@ -321,6 +367,7 @@ for (const post of posts) {
   const title = post.seo_title || `${post.title} - Blog Wearevents`;
   const description = post.meta_description || post.excerpt || "Conseils événementiels Wearevents.";
   const safeContent = sanitizeBlogHtml(post.content);
+  const articleFaq = extractBlogFaq(safeContent);
   const selectedVenueSlugs = new Set(arrayValue(post.venue_slugs));
   const articleVenues = venues.filter((venue) => selectedVenueSlugs.has(venue.slug));
   const relatedPosts = posts
@@ -336,7 +383,7 @@ for (const post of posts) {
     description,
     image: post.image || defaultImage,
     type: "article",
-    jsonLd: [{ "@context": "https://schema.org", "@type": "BlogPosting", headline: post.title, description, image: post.image || defaultImage, datePublished: post.published_at, dateModified: post.updated_at, mainEntityOfPage: `${siteUrl}${path}`, publisher: { "@type": "Organization", name: "Wearevents", url: siteUrl }, mentions: articleVenues.map((venue) => ({ "@type": "LocalBusiness", name: venue.title, url: `${siteUrl}/salle/${venue.slug}` })) }, { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [{ "@type": "ListItem", position: 1, name: "Accueil", item: siteUrl }, { "@type": "ListItem", position: 2, name: "Blog", item: `${siteUrl}/blog` }, { "@type": "ListItem", position: 3, name: post.title, item: `${siteUrl}${path}` }] }],
+    jsonLd: [{ "@context": "https://schema.org", "@type": "BlogPosting", headline: post.title, description, image: post.image || defaultImage, datePublished: post.published_at, dateModified: post.updated_at, mainEntityOfPage: `${siteUrl}${path}`, publisher: { "@type": "Organization", name: "Wearevents", url: siteUrl }, mentions: articleVenues.map((venue) => ({ "@type": "LocalBusiness", name: venue.title, url: `${siteUrl}/salle/${venue.slug}` })) }, { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [{ "@type": "ListItem", position: 1, name: "Accueil", item: siteUrl }, { "@type": "ListItem", position: 2, name: "Blog", item: `${siteUrl}/blog` }, { "@type": "ListItem", position: 3, name: post.title, item: `${siteUrl}${path}` }] }, ...(articleFaq.length ? [{ "@context": "https://schema.org", "@type": "FAQPage", mainEntity: articleFaq.map((item) => ({ "@type": "Question", name: item.question, acceptedAnswer: { "@type": "Answer", text: item.answer } })) }] : [])],
     body: pageLayout(`${breadcrumbs([{ label: "Accueil", href: "/" }, { label: "Blog", href: "/blog" }, { label: post.title }])}<article><h1 style="font-family:Georgia,serif;font-size:56px;line-height:1;">${escapeHtml(post.title)}</h1>${post.image ? `<img src="${escapeHtml(post.image)}" alt="Illustration de l'article ${escapeHtml(post.title)}" width="1200" height="675" style="width:100%;height:auto;border-radius:8px;">` : ""}<div style="max-width:760px;font-size:17px;line-height:1.8;">${safeContent}</div></article>${venueLinkGrid(articleVenues, "Les lieux de cet article")}${relatedPostsBody}`),
   }));
 }

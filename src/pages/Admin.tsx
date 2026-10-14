@@ -2616,7 +2616,7 @@ const BlogRichTextEditor = ({ value, onChange }: { value: string; onChange: (val
           const selection = window.getSelection();
           if (selection?.rangeCount) selectionRef.current = selection.getRangeAt(0).cloneRange();
         }}
-        className="prose prose-neutral min-h-[360px] max-h-[55vh] max-w-none overflow-y-auto scroll-smooth bg-background px-5 py-5 font-body outline-none focus:ring-2 focus:ring-primary/20 prose-headings:font-heading prose-headings:font-semibold prose-h1:text-4xl prose-h2:text-3xl prose-h3:text-2xl prose-a:font-medium prose-a:text-foreground prose-a:underline prose-a:underline-offset-4 prose-blockquote:border-primary prose-blockquote:text-foreground/70 prose-ul:list-disc prose-ol:list-decimal prose-li:marker:text-primary prose-strong:text-foreground"
+        className="prose prose-neutral min-h-[360px] max-h-[55vh] max-w-none overflow-y-auto scroll-smooth bg-background px-5 py-5 font-body outline-none focus:ring-2 focus:ring-primary/20 prose-headings:font-heading prose-headings:font-semibold prose-h1:text-4xl prose-h2:text-3xl prose-h3:text-2xl prose-a:font-medium prose-a:text-foreground prose-a:underline prose-a:underline-offset-4 prose-blockquote:border-primary prose-blockquote:text-foreground/70 prose-ul:list-disc prose-ol:list-decimal prose-li:marker:text-primary prose-strong:text-foreground prose-figure:my-8 prose-img:my-0 prose-img:w-full prose-img:rounded-lg prose-figcaption:text-center prose-figcaption:text-sm prose-figcaption:text-muted-foreground"
         aria-label="Contenu de l'article"
       />
     </section>

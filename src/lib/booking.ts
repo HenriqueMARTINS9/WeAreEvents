@@ -78,12 +78,6 @@ const buildReviewFollowUpDate = (dateValue: string) => {
   return followUpDate.toISOString();
 };
 
-const formatEventTypePhrase = (eventType: string) => {
-  if (eventType === "Soirée privée") return "une soirée privée";
-  if (eventType === "Repas d'entreprise") return "un repas d'entreprise";
-  return `un ${eventType.toLowerCase()}`;
-};
-
 export const validateBookingForm = (form: BookingFormValues, venue: Venue): BookingFieldErrors => {
   const values = trimForm(form);
   const errors: BookingFieldErrors = {};
@@ -192,7 +186,6 @@ export const buildBookingEmailTemplates = (request: BookingRequest, venue: Venue
   const customerName = `${request.firstName} ${request.lastName}`;
   const formattedDate = formatDate(request.desiredDate);
   const guests = formatGuestCount(request.guestCount);
-  const eventTypePhrase = formatEventTypePhrase(request.eventType);
   const message = request.message || "Aucun message complémentaire.";
   const requestedSpaces = request.requestedSpaces.join(", ");
   const platformReviewUrl = WEAREVENTS_GOOGLE_REVIEW_URL;
@@ -245,15 +238,19 @@ Action recommandée : vérifier la disponibilité, qualifier le besoin et répon
       preview: `${request.eventType} · ${guests}`,
       text: `Bonjour,
 
-Un client souhaite privatiser votre établissement pour ${eventTypePhrase} réunissant environ ${request.guestCount} invités.
+Un client souhaite privatiser votre établissement :
 
-Afin que nous puissions lui adresser une proposition rapidement, merci de nous confirmer :
+Date : ${formattedDate}
+Horaires : ${request.startTime} – ${request.endTime}
+Espace demandé : ${requestedSpaces}
+Format : ${request.eventType}
+Nombre d'invités : ${guests}
+Budget approximatif : ${request.budgetRange || "Non renseigné"}
+Référence : ${request.id}
 
-la disponibilité du lieu,
-les modalités de privatisation,
-et les conditions applicables.
+Wearevents s'occupe du client : vous n'avez qu'à nous confirmer votre disponibilité. Si vous êtes disponible, indiquez-nous vos modalités de privatisation et vos conditions, pour que nous lui adressions une proposition rapidement.
 
-Nous restons disponibles si des précisions sont nécessaires.
+Nous restons disponibles si vous avez besoin de précisions.
 
 — L'équipe Wearevents`,
     },

@@ -35,7 +35,7 @@ declare global {
   }
 }
 
-const ga4MeasurementId = (import.meta.env.VITE_GA4_MEASUREMENT_ID || "").trim();
+const ga4MeasurementId = "G-KKQD9XCBVN";
 const configuredGoogleAdsId = (import.meta.env.VITE_GOOGLE_ADS_ID || "").trim();
 const googleAdsId = /^AW-\d+$/.test(configuredGoogleAdsId)
   ? configuredGoogleAdsId
@@ -169,6 +169,15 @@ export const trackAnalyticsEvent = (eventName: string, params: GtagParams = {}) 
   });
 };
 
+const trackConsentModeAnalyticsEvent = (eventName: string, params: GtagParams = {}) => {
+  if (!ga4MeasurementId) return;
+  ensureGoogleTag();
+  window.gtag?.("event", eventName, {
+    send_to: ga4MeasurementId,
+    ...params,
+  });
+};
+
 const compactValue = (value?: string | number | boolean | null) => {
   if (value === undefined || value === null || value === "") return undefined;
   return value;
@@ -275,7 +284,7 @@ const setEnhancedConversionUserData = async (data?: EnhancedConversionData) => {
 };
 
 const trackGoogleAdsConversion = (label: string, params: GtagParams = {}) => {
-  if (!googleAdsId || !label || !hasGoogleTrackingConsent()) return;
+  if (!googleAdsId || !label) return;
   ensureGoogleTag();
   window.gtag?.("event", "conversion", {
     send_to: `${googleAdsId}/${label}`,
@@ -386,7 +395,7 @@ export const trackBookingRequestConversion = async (
   enhancedConversionData?: EnhancedConversionData,
 ) => {
   await setEnhancedConversionUserData(enhancedConversionData);
-  trackAnalyticsEvent("generate_lead", {
+  trackConsentModeAnalyticsEvent("generate_lead", {
     lead_type: "booking_request",
     venue_id: request.venueId,
     venue_code: request.venueCode,
@@ -409,7 +418,7 @@ export const trackEstablishmentReferralConversion = async (
   enhancedConversionData?: EnhancedConversionData,
 ) => {
   await setEnhancedConversionUserData(enhancedConversionData);
-  trackAnalyticsEvent("generate_lead", {
+  trackConsentModeAnalyticsEvent("generate_lead", {
     lead_type: "establishment_referral",
     venue_name: venueName,
     city,
