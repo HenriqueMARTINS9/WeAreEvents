@@ -1,10 +1,13 @@
 import { X, Star, MapPin, Users, Tag, Wifi, Car, UtensilsCrossed, Music, Camera, TreePine, Waves, ChefHat, Snowflake, Projector, ShirtIcon, ShieldCheck, ExternalLink, Play, Images } from "lucide-react";
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { Link } from "react-router-dom";
 import type { Review, Venue } from "@/types/venue";
-import VenueMediaLightbox, { type VenueMediaItem } from "./VenueMediaLightbox";
+import type { VenueMediaItem } from "./VenueMediaLightbox";
 import VenueFaq from "./VenueFaq";
 import { formatVenueCapacity, formatVenuePrice, getVenueEventSeoLinks, getVenueImageAlt, getVenueLocationLabel, getVenueLocationSeoPath, getVenueTypeLabel, getVenueTypeSeoPath, hasVenueRating } from "@/lib/venue-display";
+import { getResponsiveImageProps } from "@/lib/responsive-image";
+
+const VenueMediaLightbox = lazy(() => import("./VenueMediaLightbox"));
 
 interface VenueDetailSheetProps {
   venue: Venue;
@@ -79,7 +82,7 @@ const VenueDetailSheet = ({ venue, reviews = [], similarVenues = [], onClose, on
               aria-label={`Ouvrir la photo ${index + 1}`}
             >
               <img
-                src={image}
+                {...getResponsiveImageProps(image, "100vw")}
                 alt={getVenueImageAlt(venue, index)}
                 width={960}
                 height={720}
@@ -390,12 +393,14 @@ const VenueDetailSheet = ({ venue, reviews = [], similarVenues = [], onClose, on
         <p className="mt-2 text-center text-[11px] font-body text-muted-foreground">Réponse qualifiée sous 24h</p>
       </div>
       {activeMediaIndex !== null && (
-        <VenueMediaLightbox
-          items={mediaItems}
-          activeIndex={activeMediaIndex}
-          onChange={setActiveMediaIndex}
-          onClose={() => setActiveMediaIndex(null)}
-        />
+        <Suspense fallback={null}>
+          <VenueMediaLightbox
+            items={mediaItems}
+            activeIndex={activeMediaIndex}
+            onChange={setActiveMediaIndex}
+            onClose={() => setActiveMediaIndex(null)}
+          />
+        </Suspense>
       )}
     </div>
   );

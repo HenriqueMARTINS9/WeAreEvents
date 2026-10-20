@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { EstablishmentReferralModalContext } from "@/lib/establishment-referral-modal";
-import EstablishmentReferralModal from "./EstablishmentReferralModal";
+
+const EstablishmentReferralModal = lazy(() => import("./EstablishmentReferralModal"));
 
 interface EstablishmentReferralModalProviderProps {
   children: ReactNode;
@@ -53,7 +54,11 @@ const EstablishmentReferralModalProvider = ({ children }: EstablishmentReferralM
   return (
     <EstablishmentReferralModalContext.Provider value={contextValue}>
       {children}
-      <EstablishmentReferralModal isOpen={isOpen} onClose={closeModal} />
+      {isOpen && (
+        <Suspense fallback={null}>
+          <EstablishmentReferralModal isOpen onClose={closeModal} />
+        </Suspense>
+      )}
     </EstablishmentReferralModalContext.Provider>
   );
 };

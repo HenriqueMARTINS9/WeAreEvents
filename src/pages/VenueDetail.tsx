@@ -2,15 +2,14 @@ import { Link, useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { fetchVenueBySlug, fetchVenueReviews, fetchVenues } from "@/lib/supabase-data";
 import { ArrowRight, Building2, Cake, Clock3, Euro, ExternalLink, Images, MapPin, Music2, Play, Route, ShieldCheck, Sparkles, Star, Tag, UtensilsCrossed, Users } from "lucide-react";
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import DesktopNav from "@/components/DesktopNav";
-import BookingModal from "@/components/BookingModal";
 import SiteFooter from "@/components/SiteFooter";
-import VenueDetailSheet from "@/components/VenueDetailSheet";
 import VenueFaq from "@/components/VenueFaq";
-import VenueMediaLightbox, { type VenueMediaItem } from "@/components/VenueMediaLightbox";
+import type { VenueMediaItem } from "@/components/VenueMediaLightbox";
 import Seo, { siteUrl } from "@/components/Seo";
+import { getResponsiveImageProps } from "@/lib/responsive-image";
 import {
   formatVenueCapacity,
   formatVenuePrice,
@@ -24,6 +23,10 @@ import {
   hasVenueRating,
 } from "@/lib/venue-display";
 import { buildVenueFaqItems } from "@/components/VenueFaq";
+
+const BookingModal = lazy(() => import("@/components/BookingModal"));
+const VenueDetailSheet = lazy(() => import("@/components/VenueDetailSheet"));
+const VenueMediaLightbox = lazy(() => import("@/components/VenueMediaLightbox"));
 
 const filledItems = (items: Array<string | null | undefined>) => items.filter((item): item is string => Boolean(item?.trim()));
 const hasItems = (items: Array<string | null | undefined>) => filledItems(items).length > 0;
@@ -189,8 +192,14 @@ const VenueDetail = () => {
           image={venue.coverImage}
           jsonLd={seoJsonLd}
         />
-        <VenueDetailSheet venue={venue} reviews={reviews} similarVenues={similarVenues} onClose={() => navigate(-1)} onBooking={() => setBookingOpen(true)} />
-        {bookingOpen && <BookingModal venue={venue} onClose={() => setBookingOpen(false)} source="venue_detail_mobile" />}
+        <Suspense fallback={<main className="min-h-screen bg-background" />}>
+          <VenueDetailSheet venue={venue} reviews={reviews} similarVenues={similarVenues} onClose={() => navigate(-1)} onBooking={() => setBookingOpen(true)} />
+        </Suspense>
+        {bookingOpen && (
+          <Suspense fallback={null}>
+            <BookingModal venue={venue} onClose={() => setBookingOpen(false)} source="venue_detail_mobile" />
+          </Suspense>
+        )}
       </>
     );
   }
@@ -291,7 +300,7 @@ const VenueDetail = () => {
                 aria-label="Ouvrir la photo principale"
               >
                 <img
-                  src={galleryImages[0]}
+                  {...getResponsiveImageProps(galleryImages[0], "(min-width: 1280px) calc(100vw - 540px), 100vw")}
                   alt={getVenueImageAlt(venue)}
                   width={1200}
                   height={800}
@@ -310,7 +319,7 @@ const VenueDetail = () => {
                     className="group aspect-square w-full overflow-hidden rounded-2xl"
                     aria-label={`Ouvrir la photo ${index + 2}`}
                   >
-                    <img src={image} alt={getVenueImageAlt(venue, index + 1)} width={600} height={600} className="h-full w-full object-cover image-grade-luxe transition-transform duration-700 group-hover:scale-105" loading="lazy" decoding="async" />
+                    <img {...getResponsiveImageProps(image, "234px")} alt={getVenueImageAlt(venue, index + 1)} width={600} height={600} className="h-full w-full object-cover image-grade-luxe transition-transform duration-700 group-hover:scale-105" loading="lazy" decoding="async" />
                   </button>
                 ))}
               </div>
@@ -644,14 +653,20 @@ const VenueDetail = () => {
         </section>
       </main>
 
-      {bookingOpen && <BookingModal venue={venue} onClose={() => setBookingOpen(false)} source="venue_detail_desktop" />}
+      {bookingOpen && (
+        <Suspense fallback={null}>
+          <BookingModal venue={venue} onClose={() => setBookingOpen(false)} source="venue_detail_desktop" />
+        </Suspense>
+      )}
       {activeMediaIndex !== null && (
-        <VenueMediaLightbox
-          items={mediaItems}
-          activeIndex={activeMediaIndex}
-          onChange={setActiveMediaIndex}
-          onClose={() => setActiveMediaIndex(null)}
-        />
+        <Suspense fallback={null}>
+          <VenueMediaLightbox
+            items={mediaItems}
+            activeIndex={activeMediaIndex}
+            onChange={setActiveMediaIndex}
+            onClose={() => setActiveMediaIndex(null)}
+          />
+        </Suspense>
       )}
       <SiteFooter variant="dark" />
     </div>

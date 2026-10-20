@@ -45,6 +45,7 @@ import { editableSeoPages, type EditableSeoPage } from "@/data/seo-pages";
 import { isSupabaseConfigured, supabase, type BlogPostInsert, type SeoMetadataInsert, type VenueInsert } from "@/lib/supabase";
 import Seo from "@/components/Seo";
 import { plainTextToBlogHtml, prepareBlogContentForEditor, sanitizeBlogHtml } from "@/lib/blog-content";
+import { notifyIndexNow } from "@/lib/indexnow";
 
 const slugify = (value: string) =>
   value
@@ -772,6 +773,7 @@ const Admin = () => {
         upsert: false,
       });
       if (error) throw error;
+
       uploads.push({
         kind,
         url: supabase.storage.from(imageBucket).getPublicUrl(path).data.publicUrl,
@@ -935,6 +937,9 @@ const Admin = () => {
     setMessage("");
 
     try {
+      const previousVenue = editingVenueId
+        ? adminVenues.find((venue) => venue.id === editingVenueId)
+        : null;
       const spaces = parseReservationOptions(venueForm.spaces)
         .map((option, index) => {
           const normalizedOption = normalizeReservationOption(option);
@@ -1012,6 +1017,11 @@ const Admin = () => {
         : await supabase.from("venues").insert(payload);
 
       if (error) throw error;
+
+      await notifyIndexNow(
+        [previousVenue?.slug ? `/salle/${previousVenue.slug}` : "", `/salle/${payload.slug}`],
+        session?.access_token,
+      );
 
       if (!editingVenueId) clearVenueDraft();
       setMessage(editingVenueId ? "Salle mise à jour." : "Salle ajoutée.");
@@ -1129,6 +1139,9 @@ const Admin = () => {
     setMessage("");
 
     try {
+      const previousPost = editingBlogId
+        ? adminBlogPosts.find((post) => post.id === editingBlogId)
+        : null;
       const payload: BlogPostInsert = {
         title: blogForm.title.trim(),
         slug: (blogForm.slug || slugify(blogForm.title)).trim(),
@@ -1153,6 +1166,13 @@ const Admin = () => {
         : await supabase.from("blog_posts").insert(payload);
 
       if (error) throw error;
+
+      if (payload.published || previousPost?.published) {
+        await notifyIndexNow(
+          [previousPost?.slug ? `/blog/${previousPost.slug}` : "", `/blog/${payload.slug}`],
+          session?.access_token,
+        );
+      }
 
       setMessage(editingBlogId ? "Article mis à jour." : "Article ajouté.");
       closeModal();
@@ -1385,6 +1405,7 @@ const Admin = () => {
 
       if (error) throw error;
 
+      await notifyIndexNow([page.path], session?.access_token);
       setMessage(`SEO mis à jour pour ${page.label}.`);
       await loadAdminRecords();
     } catch (error) {
@@ -1407,6 +1428,7 @@ const Admin = () => {
 
       if (error) throw error;
 
+      await notifyIndexNow(payload.map((item) => item.page_path), session?.access_token);
       setMessage(`${payload.length} pages SEO mises à jour.`);
       await loadAdminRecords();
     } catch (error) {

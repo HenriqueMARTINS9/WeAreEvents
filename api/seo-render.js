@@ -95,6 +95,22 @@ const escapeHtml = (value) =>
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
 
+const responsiveImageAttributes = (src, sizes) => {
+  const marker = "/storage/v1/object/public/";
+  if (!String(src).includes(marker) || !/\.(?:avif|jpe?g|png|webp)(?:[?#]|$)/i.test(src)) {
+    return `src="${escapeHtml(src)}" sizes="${escapeHtml(sizes)}"`;
+  }
+
+  const transformedUrl = (width) => {
+    const url = new URL(String(src).replace(marker, "/storage/v1/render/image/public/"));
+    url.searchParams.set("width", String(width));
+    url.searchParams.set("quality", "76");
+    return url.href;
+  };
+  const srcSet = [480, 800, 1200].map((width) => `${transformedUrl(width)} ${width}w`).join(", ");
+  return `src="${escapeHtml(transformedUrl(1200))}" srcset="${escapeHtml(srcSet)}" sizes="${escapeHtml(sizes)}"`;
+};
+
 const blogAllowedTags = new Set(["p", "h1", "h2", "h3", "strong", "b", "em", "i", "ul", "ol", "li", "blockquote", "br", "a", "figure", "figcaption", "img"]);
 const readHtmlAttribute = (attributes, name) => {
   const match = attributes.match(new RegExp(`(?:^|\\s)${name}\\s*=\\s*(?:"([^"]*)"|'([^']*)'|([^\\s"'=<>]+))`, "i"));
@@ -443,7 +459,7 @@ const fetchSeoLandingMetadata = async (path, requestedPage = 1) => {
     title: override?.title || page.title,
     description: override?.description || page.description,
     image: displayedVenues[0]?.cover_image || defaultImage,
-    noindex: page.indexable === false || matchingVenues.length < 3,
+    noindex: page.indexable === false || (page.forceIndex !== true && matchingVenues.length < 3),
     canonicalPath: currentPage > 1 ? `${path}?page=${currentPage}` : path,
     runtimeBody,
     jsonLd: {
@@ -523,7 +539,7 @@ const fetchVenueMetadata = async (slug) => {
     <article>
       <h1 style="font-family:Georgia,serif;font-size:58px;line-height:1;">${escapeHtml(venue.title)}<small style="display:block;margin-top:14px;font-family:Arial,sans-serif;font-size:22px;font-weight:500;">${escapeHtml(venueTypes[0] || "Lieu événementiel")} à privatiser à ${escapeHtml(venue.city)}</small></h1>
       <p>${escapeHtml(address)} · ${escapeHtml(capacity)} · ${escapeHtml(formatVenuePrice(venue))}</p>
-      ${venue.cover_image ? `<img src="${escapeHtml(venue.cover_image)}" alt="Espace principal de ${escapeHtml(venue.title)} à ${escapeHtml(venue.city)}" width="1200" height="800" fetchpriority="high" loading="eager" decoding="async" style="width:100%;height:auto;border-radius:8px;">` : ""}
+      ${venue.cover_image ? `<img ${responsiveImageAttributes(venue.cover_image, "100vw")} alt="Espace principal de ${escapeHtml(venue.title)} à ${escapeHtml(venue.city)}" width="1200" height="800" fetchpriority="high" loading="eager" decoding="async" style="width:100%;height:auto;border-radius:8px;">` : ""}
       <section><h2>Présentation</h2><p><strong>${escapeHtml(venue.tagline || "")}</strong></p><p style="max-width:780px;font-size:17px;line-height:1.8;white-space:pre-line;">${escapeHtml(venue.description || "")}</p></section>
       <section><h2>Détails du lieu</h2>${venueList("Type de lieu", venue.venue_types)}${venueList("Type d'espace", venue.space_types)}${venueList("Type de privatisation", venue.privatization_types)}${venueList("Disposition des invités", venue.guest_dispositions)}${venueList("Options du lieu", venue.option_features)}${venue.closing_time ? `<h3>Horaires</h3><p>Fermeture : ${escapeHtml(venue.closing_time === "03:00" ? "Après 2h" : venue.closing_time)}</p>` : ""}</section>
       ${venuePricingSection(venue)}

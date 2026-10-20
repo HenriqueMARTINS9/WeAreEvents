@@ -6,8 +6,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import EstablishmentReferralModalProvider from "@/components/EstablishmentReferralModalProvider";
 import FloatingWhatsAppButton from "@/components/FloatingWhatsAppButton";
 import GoogleTagTracker from "@/components/GoogleTagTracker";
-import Index from "./pages/Index.tsx";
 
+const Index = lazy(() => import("./pages/Index.tsx"));
 const VenueDetail = lazy(() => import("./pages/VenueDetail.tsx"));
 const SearchResults = lazy(() => import("./pages/SearchResults.tsx"));
 const Blog = lazy(() => import("./pages/Blog.tsx"));

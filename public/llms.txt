@@ -1,0 +1,70 @@
+# Wearevents
+
+> Wearevents (wearevents.fr) est un service gratuit pour trouver et privatiser un lieu événementiel à Paris et en Île-de-France : bars, restaurants, clubs, péniches, rooftops, lofts et salles de réception. Plus de 200 lieux sélectionnés, de 10 à 2 000 invités. L'organisateur envoie une seule demande (date, nombre d'invités, type d'événement) et reçoit sous 24 h une sélection de lieux disponibles. Le service est gratuit pour les organisateurs : Wearevents est rémunéré par les lieux partenaires une fois la réservation confirmée.
+
+Informations clés :
+- Zone : Paris (tous les arrondissements) et proche banlieue (Levallois-Perret, Issy-les-Moulineaux, Chilly-Mazarin…).
+- Événements : anniversaires, soirées privées, EVJF/EVG, mariages, soirées d'entreprise, afterworks, séminaires, fêtes de fin d'année, winter parties, Nouvel An, team building, galas, lancements de produit.
+- Chaque fiche lieu indique : capacité (min. et max.), espaces privatisables, heure de fermeture, accès en transports, équipements (son, DJ, piste de danse, terrasse, PMR), et si l'on peut apporter son gâteau, son traiteur ou ses boissons.
+- Tarifs : la plupart des bars se privatisent sans frais de location, contre un minimum de consommation ou un forfait par personne ; péniches et salles de réception se louent souvent en location sèche. Devis gratuit et sans engagement.
+- Contact : anselme@wearevents.fr — demande de devis sur chaque fiche lieu.
+
+## Pages principales
+
+- [Tous nos lieux](https://www.wearevents.fr/tous-nos-lieux) : catalogue complet des lieux à privatiser à Paris
+- [Location de salle à Paris](https://www.wearevents.fr/location-salle-paris)
+- [Bar privatisable à Paris](https://www.wearevents.fr/bar-privatisable-paris)
+- [Restaurant privatisable à Paris](https://www.wearevents.fr/restaurant-privatisable-paris)
+- [Discothèque à privatiser à Paris](https://www.wearevents.fr/discotheque-paris)
+- [Péniche pour un événement à Paris](https://www.wearevents.fr/peniche-evenement-paris)
+- [Rooftop à privatiser à Paris](https://www.wearevents.fr/rooftop-a-privatiser-paris)
+- [Salle de réception à Paris](https://www.wearevents.fr/salle-reception-paris)
+- [Loft pour un événement à Paris](https://www.wearevents.fr/loft-evenement-paris)
+- [Location sèche à Paris](https://www.wearevents.fr/location-seche-salle-paris)
+- [Entreprises](https://www.wearevents.fr/entreprises) : offre pour les événements professionnels
+- [FAQ](https://www.wearevents.fr/faq) : fonctionnement du service
+
+## Par type d'événement
+
+- [Salle pour un anniversaire à Paris](https://www.wearevents.fr/salle-anniversaire-paris)
+- [Salle pour une soirée privée à Paris](https://www.wearevents.fr/salle-soiree-privee-paris)
+- [Salle pour un EVJF / EVG à Paris](https://www.wearevents.fr/salle-evjf-evg-paris)
+- [Salle de mariage à Paris](https://www.wearevents.fr/salle-mariage-paris)
+- [Salle pour une fête de fin d'année à Paris](https://www.wearevents.fr/salle-fete-de-fin-d-annee-paris)
+- [Salle pour un afterwork à Paris](https://www.wearevents.fr/salle-afterwork-paris)
+- [Salle de séminaire à Paris](https://www.wearevents.fr/salle-seminaire-paris)
+- [Salle pour un team building à Paris](https://www.wearevents.fr/salle-team-building-paris)
+- [Salle pour un cocktail à Paris](https://www.wearevents.fr/salle-cocktail-paris)
+- [Salle pour un gala à Paris](https://www.wearevents.fr/salle-gala-paris)
+- [Salle pour un arbre de Noël à Paris](https://www.wearevents.fr/salle-arbre-de-noel-paris)
+- [Salle pour un événement étudiant à Paris](https://www.wearevents.fr/salle-evenement-etudiant-paris)
+
+## Par nombre d'invités
+
+- [Moins de 20 personnes](https://www.wearevents.fr/location-salle-moins-20-personnes-paris)
+- [20 à 50 personnes](https://www.wearevents.fr/location-salle-20-50-personnes-paris)
+- [50 à 100 personnes](https://www.wearevents.fr/location-salle-50-100-personnes-paris)
+- [100 à 150 personnes](https://www.wearevents.fr/location-salle-100-150-personnes-paris)
+- [150 à 200 personnes](https://www.wearevents.fr/location-salle-150-200-personnes-paris)
+- [200 à 500 personnes](https://www.wearevents.fr/location-salle-200-500-personnes-paris)
+- [Plus de 500 personnes](https://www.wearevents.fr/location-salle-plus-500-personnes-paris)
+
+## Par arrondissement
+
+- [Paris 1er](https://www.wearevents.fr/location-salle-paris-1er), [2e](https://www.wearevents.fr/location-salle-paris-2e), [3e](https://www.wearevents.fr/location-salle-paris-3e), [4e](https://www.wearevents.fr/location-salle-paris-4e), [5e](https://www.wearevents.fr/location-salle-paris-5e), [6e](https://www.wearevents.fr/location-salle-paris-6e), [7e](https://www.wearevents.fr/location-salle-paris-7e), [8e](https://www.wearevents.fr/location-salle-paris-8e), [9e](https://www.wearevents.fr/location-salle-paris-9e), [10e](https://www.wearevents.fr/location-salle-paris-10e), [11e](https://www.wearevents.fr/location-salle-paris-11e), [12e](https://www.wearevents.fr/location-salle-paris-12e), [15e](https://www.wearevents.fr/location-salle-paris-15e), [16e](https://www.wearevents.fr/location-salle-paris-16e), [17e](https://www.wearevents.fr/location-salle-paris-17e), [18e](https://www.wearevents.fr/location-salle-paris-18e)
+
+## Guides
+
+- [Soirée privée à Paris : 15 lieux à privatiser](https://www.wearevents.fr/blog/lieu-soiree-privee-paris)
+- [20 bars à privatiser à Paris](https://www.wearevents.fr/blog/bars-a-privatiser-paris)
+- [Lieu de mariage à Paris : 16 salles de réception](https://www.wearevents.fr/blog/lieu-mariage-paris)
+- [Soirée de Noël d'entreprise à Paris](https://www.wearevents.fr/blog/soiree-noel-entreprise-paris)
+- [Nouvel An à Paris : lieux à privatiser pour le 31 décembre](https://www.wearevents.fr/blog/reveillon-nouvel-an-paris)
+- [Winter party à Paris](https://www.wearevents.fr/blog/winter-party-paris)
+- [Team building à Paris](https://www.wearevents.fr/blog/team-building-paris)
+- [Tous les articles](https://www.wearevents.fr/blog)
+
+## Optional
+
+- [Plan du site des lieux](https://www.wearevents.fr/sitemap-venues.xml) : toutes les fiches lieux (URL /salle/<nom-du-lieu>)
+- [Plan du site des articles](https://www.wearevents.fr/sitemap-blog.xml)

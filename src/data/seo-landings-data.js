@@ -99,6 +99,7 @@ const createPage = ({
   intro,
   relatedSlugs = [],
   indexable = true,
+  forceIndex = false,
 }) => ({
   slug,
   title: `${h1} | Wearevents`,
@@ -130,6 +131,7 @@ const createPage = ({
   faq: buildFaq(intentLabel, locationLabel),
   relatedSlugs,
   indexable,
+  forceIndex,
 });
 
 const feminineEventTypes = new Set([
@@ -379,6 +381,7 @@ const pricePages = [
     h1: "Salle pas chère à Paris",
     intentLabel: "Salle pas chère",
     filters: { priceTier: "€" },
+    forceIndex: true,
     intro: "Vous cherchez une salle pas chère à Paris ? Wearevents regroupe des lieux au budget économique pour organiser un événement simple, clair et adapté à vos invités.",
   },
   {
@@ -603,15 +606,11 @@ const allSeoLandingPages = [
 ];
 
 const retainedSecondarySlugs = new Set([
-  "salle-ou-danser-paris",
-  "salle-avec-terrasse-paris",
-  "salle-avec-jardin-paris",
+  "salle-pas-chere-paris",
   "salle-avec-piste-de-danse-paris",
   "salle-ouverte-jusqua-2h-paris",
   "salle-acces-pmr-paris",
-  "salle-ouverte-apres-2h-paris",
   "location-seche-salle-paris",
-  "salle-traiteur-externe-paris",
   "rooftop-a-privatiser-paris",
   "lieu-evenementiel-ile-de-france",
 ]);

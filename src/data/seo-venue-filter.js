@@ -90,4 +90,7 @@ export const getMatchingSeoVenues = (venues, page) =>
     );
 
 export const getIndexableSeoPages = (venues, pages, minimumVenueCount = 3) =>
-  pages.filter((page) => page.indexable !== false && getMatchingSeoVenues(venues, page).length >= minimumVenueCount);
+  pages.filter((page) => (
+    page.indexable !== false
+    && (page.forceIndex === true || getMatchingSeoVenues(venues, page).length >= minimumVenueCount)
+  ));

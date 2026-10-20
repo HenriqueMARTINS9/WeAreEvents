@@ -5,6 +5,7 @@ import { buildVenueWhatsAppUrl } from "@/lib/whatsapp";
 import { trackWhatsAppClick } from "@/lib/analytics";
 import { countMobileComments } from "@/lib/mobile-comments";
 import { formatVenueCapacity, formatVenuePrice, getVenueImageAlt, hasVenueRating } from "@/lib/venue-display";
+import { getResponsiveImageProps } from "@/lib/responsive-image";
 
 interface VenueCardProps {
   venue: Venue;
@@ -57,7 +58,7 @@ const VenueCard = ({ venue, priority = false, onOpenDetail, onBooking, onComment
     <div className="snap-item h-screen w-full relative overflow-hidden bg-foreground">
       {/* Cover image */}
       <img
-        src={venue.coverImage}
+        {...getResponsiveImageProps(venue.coverImage, "100vw")}
         alt={getVenueImageAlt(venue)}
         width={1080}
         height={1920}

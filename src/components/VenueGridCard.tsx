@@ -4,6 +4,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import type { Venue } from "@/types/venue";
 import { trackVenueCardOpen } from "@/lib/analytics";
 import { formatVenueCapacity, formatVenuePrice, getVenueImageAlt, hasVenueRating } from "@/lib/venue-display";
+import { getResponsiveImageProps } from "@/lib/responsive-image";
 
 interface VenueGridCardProps {
   venue: Venue;
@@ -50,7 +51,7 @@ const VenueGridCard = ({ venue, size = "default", variant = "default" }: VenueGr
       >
         <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-muted">
           <img
-            src={activeImage}
+            {...getResponsiveImageProps(activeImage, "100vw")}
             alt={getVenueImageAlt(venue, activeImageIndex)}
             width={960}
             height={720}
@@ -120,7 +121,7 @@ const VenueGridCard = ({ venue, size = "default", variant = "default" }: VenueGr
     >
       <div className={`relative overflow-hidden bg-foreground ${isLarge ? "h-72" : "h-64"}`}>
         <img
-          src={activeImage}
+          {...getResponsiveImageProps(activeImage, isSearch ? "(min-width: 1024px) 32vw, 50vw" : "(min-width: 1024px) 33vw, 100vw")}
           alt={getVenueImageAlt(venue, activeImageIndex)}
           width={960}
           height={640}

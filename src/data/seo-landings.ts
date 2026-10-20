@@ -43,6 +43,7 @@ export type SeoLandingPage = {
   faq: Array<{ question: string; answer: string }>;
   relatedSlugs: string[];
   indexable: boolean;
+  forceIndex?: boolean;
 };
 
 const typedSeoLandingPages = seoLandingPages as SeoLandingPage[];

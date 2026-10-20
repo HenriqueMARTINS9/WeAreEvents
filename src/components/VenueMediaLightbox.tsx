@@ -1,5 +1,6 @@
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { useEffect, useRef } from "react";
+import { getResponsiveImageProps } from "@/lib/responsive-image";
 
 export interface VenueMediaItem {
   type: "image" | "video";
@@ -87,7 +88,7 @@ const VenueMediaLightbox = ({ items, activeIndex, onChange, onClose }: VenueMedi
           </video>
         ) : (
           <img
-            src={activeItem.src}
+            {...getResponsiveImageProps(activeItem.src, "100vw")}
             alt={activeItem.label}
             className="h-auto w-auto max-h-full max-w-full rounded-2xl object-contain"
           />
@@ -131,7 +132,7 @@ const VenueMediaLightbox = ({ items, activeIndex, onChange, onClose }: VenueMedi
                 <track kind="captions" src="/captions-empty.vtt" srcLang="fr" label="Français" />
               </video>
             ) : (
-              <img src={item.src} alt="" className="h-full w-full object-cover" />
+              <img {...getResponsiveImageProps(item.src, "96px")} alt="" className="h-full w-full object-cover" loading="lazy" />
             )}
           </button>
         ))}
