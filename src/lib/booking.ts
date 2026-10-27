@@ -25,8 +25,9 @@ export interface BookingSubmissionResult {
   emails: BookingEmailTemplates;
 }
 
-const ADMIN_EMAIL = "reservations@wearevents.fr";
+const ADMIN_EMAIL = "reservation@wearevents.fr";
 const WEAREVENTS_GOOGLE_REVIEW_URL = "https://g.page/r/Cb3yTIoVykRuEBM/review";
+const BOOKING_CONTACT_PHONE = String(import.meta.env.VITE_WHATSAPP_PHONE || "").trim();
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const phonePattern = /^[+()\d\s.-]{8,}$/;
@@ -60,6 +61,16 @@ const formatDate = (dateValue: string) =>
     month: "long",
     year: "numeric",
   }).format(new Date(`${dateValue}T00:00:00`));
+
+const formatShortDate = (dateValue: string) => {
+  const parts = new Intl.DateTimeFormat("fr-FR", {
+    weekday: "short",
+    day: "2-digit",
+    month: "2-digit",
+  }).formatToParts(new Date(`${dateValue}T12:00:00`));
+  const part = (type: Intl.DateTimeFormatPartTypes) => parts.find((item) => item.type === type)?.value || "";
+  return `${part("weekday")} ${part("day")}/${part("month")}`.trim();
+};
 
 const formatGuestCount = (guestCount: number) => `${guestCount} invité${guestCount > 1 ? "s" : ""}`;
 
@@ -132,7 +143,9 @@ export const validateBookingForm = (form: BookingFormValues, venue: Venue): Book
     errors.eventType = "Sélectionnez un type d'événement proposé.";
   }
 
-  if (values.budgetRange && !BOOKING_BUDGET_OPTIONS.includes(values.budgetRange as (typeof BOOKING_BUDGET_OPTIONS)[number])) {
+  if (!values.budgetRange) {
+    errors.budgetRange = "Sélectionnez un budget approximatif.";
+  } else if (!BOOKING_BUDGET_OPTIONS.includes(values.budgetRange as (typeof BOOKING_BUDGET_OPTIONS)[number])) {
     errors.budgetRange = "Sélectionnez une tranche de budget proposée.";
   }
 
@@ -165,7 +178,8 @@ export const createBookingRequest = (
     endTime: values.endTime,
     guestCount: Number(values.guestCount),
     eventType: values.eventType,
-    budgetRange: values.budgetRange || undefined,
+    budgetRange: values.budgetRange,
+    venueResponseToken: crypto.randomUUID(),
     requestedSpaces: venue.spaces
       .filter((space) => values.requestedSpaces.includes(space.id))
       .map((space) => space.name),
@@ -185,10 +199,12 @@ export const createBookingRequest = (
 export const buildBookingEmailTemplates = (request: BookingRequest, venue: Venue): BookingEmailTemplates => {
   const customerName = `${request.firstName} ${request.lastName}`;
   const formattedDate = formatDate(request.desiredDate);
+  const shortDate = formatShortDate(request.desiredDate);
   const guests = formatGuestCount(request.guestCount);
   const message = request.message || "Aucun message complémentaire.";
   const requestedSpaces = request.requestedSpaces.join(", ");
   const platformReviewUrl = WEAREVENTS_GOOGLE_REVIEW_URL;
+  const venueSignature = ["Anselme", "Wearevents", BOOKING_CONTACT_PHONE, ADMIN_EMAIL].filter(Boolean).join(" – ");
 
   return {
     customerConfirmation: {
@@ -234,7 +250,7 @@ Action recommandée : vérifier la disponibilité, qualifier le besoin et répon
     },
     venueContactNotification: {
       to: venue.contactEmail,
-      subject: `Nouvelle demande reçue pour ${venue.title}`,
+      subject: `Demande Wearevents – ${venue.title} – ${shortDate}, ${request.guestCount} pers.`,
       preview: `${request.eventType} · ${guests}`,
       text: `Bonjour,
 
@@ -250,9 +266,13 @@ Référence : ${request.id}
 
 Wearevents s'occupe du client : vous n'avez qu'à nous confirmer votre disponibilité. Si vous êtes disponible, indiquez-nous vos modalités de privatisation et vos conditions, pour que nous lui adressions une proposition rapidement.
 
+Merci de nous répondre sous 24 h, le client attend notre proposition.
+
+Demande transmise par Wearevents dans le cadre de notre partenariat.
+
 Nous restons disponibles si vous avez besoin de précisions.
 
-— L'équipe Wearevents`,
+${venueSignature}`,
     },
     postEventReviewFollowUp: {
       to: request.email,
@@ -309,6 +329,7 @@ const buildBookingRequestInsert = (
   guest_count: request.guestCount,
   event_type: request.eventType,
   budget_range: request.budgetRange ?? null,
+  venue_response_token: request.venueResponseToken,
   requested_spaces: request.requestedSpaces,
   message: request.message ?? null,
   landing_page: request.landingPage ?? "",

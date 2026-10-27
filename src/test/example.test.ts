@@ -61,10 +61,11 @@ describe("booking workflow", () => {
   };
 
   it("validates required booking fields", () => {
-    const errors = validateBookingForm({ ...validForm, email: "camille", guestCount: "9999" }, venue);
+    const errors = validateBookingForm({ ...validForm, email: "camille", guestCount: "9999", budgetRange: "" }, venue);
 
     expect(errors.email).toBe("Indiquez une adresse email valide.");
     expect(errors.guestCount).toContain("Ce lieu accueille");
+    expect(errors.budgetRange).toBe("Sélectionnez un budget approximatif.");
   });
 
   it("accepts an end time after midnight", () => {
@@ -82,6 +83,7 @@ describe("booking workflow", () => {
     expect(request.venueCode).toBe(venue.venueCode);
     expect(request.startTime).toBe("18:00");
     expect(request.budgetRange).toBe("30–50 € / pers.");
+    expect(request.venueResponseToken).toMatch(/^[0-9a-f-]{36}$/i);
     expect(request.requestedSpaces).toContain("Terrasse principale");
     expect(request.status).toBe("sent");
   });
@@ -92,9 +94,9 @@ describe("booking workflow", () => {
 
     expect(templates.customerConfirmation.to).toBe(validForm.email);
     expect(templates.customerConfirmation.subject).toBe("Nous avons bien reçu votre demande");
-    expect(templates.adminNotification.to).toBe("reservations@wearevents.fr");
+    expect(templates.adminNotification.to).toBe("reservation@wearevents.fr");
     expect(templates.venueContactNotification.to).toBe(venue.contactEmail);
-    expect(templates.venueContactNotification.subject).toBe(`Nouvelle demande reçue pour ${venue.title}`);
+    expect(templates.venueContactNotification.subject).toBe(`Demande Wearevents – ${venue.title} – ven. 12/06, 120 pers.`);
     expect(templates.venueContactNotification.preview).toBe("Gala · 120 invités");
     expect(templates.customerConfirmation.text).toContain(venue.title);
     expect(templates.customerConfirmation.text).toContain("Votre demande pour");
@@ -110,6 +112,10 @@ describe("booking workflow", () => {
     expect(templates.venueContactNotification.text).toContain("Budget approximatif : 30–50 € / pers.");
     expect(templates.venueContactNotification.text).toContain(`Référence : ${request.id}`);
     expect(templates.venueContactNotification.text).toContain("Wearevents s'occupe du client");
+    expect(templates.venueContactNotification.text).toContain("Merci de nous répondre sous 24 h");
+    expect(templates.venueContactNotification.text).toContain("dans le cadre de notre partenariat");
+    expect(templates.venueContactNotification.text).toContain("Anselme – Wearevents");
+    expect(templates.venueContactNotification.text).toContain("reservation@wearevents.fr");
     expect(templates.venueContactNotification.text).not.toContain(request.phone);
     expect(templates.venueContactNotification.text).not.toContain(request.email);
     expect(templates.postEventReviewFollowUp.to).toBe(validForm.email);

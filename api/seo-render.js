@@ -84,7 +84,7 @@ const staticMetadata = {
       "Informations sur la collecte, l'utilisation, la conservation et les droits liés aux données personnelles traitées sur Wearevents.",
   },
 };
-const noindexPaths = new Set(["/admin", "/recherche", "/avis", "/mentions-legales", "/cgu", "/politique-confidentialite"]);
+const noindexPaths = new Set(["/admin", "/recherche", "/avis", "/reponse-lieu", "/mentions-legales", "/cgu", "/politique-confidentialite"]);
 const seoLandingPaths = new Set(seoLandingPages.map((page) => `/${page.slug}`));
 
 const escapeHtml = (value) =>
@@ -459,7 +459,7 @@ const fetchSeoLandingMetadata = async (path, requestedPage = 1) => {
     title: override?.title || page.title,
     description: override?.description || page.description,
     image: displayedVenues[0]?.cover_image || defaultImage,
-    noindex: page.indexable === false || (page.forceIndex !== true && matchingVenues.length < 3),
+    noindex: requestedPage > 1 || page.indexable === false || (page.forceIndex !== true && matchingVenues.length < 3),
     canonicalPath: currentPage > 1 ? `${path}?page=${currentPage}` : path,
     runtimeBody,
     jsonLd: {

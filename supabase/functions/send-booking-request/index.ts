@@ -19,6 +19,7 @@ type BookingEmailPayload = {
     venueCity?: string;
     firstName?: string;
     lastName?: string;
+    venueResponseToken?: string;
   };
   emails?: {
     customerConfirmation?: EmailTemplate;
@@ -71,31 +72,18 @@ const renderTextWithLinks = (value: string) => {
 type EmailKind = "customer" | "admin" | "venue";
 
 const getPublicSiteUrl = () => (Deno.env.get("PUBLIC_SITE_URL") || "https://www.wearevents.fr").replace(/\/$/, "");
-const weareventsReplyEmail = "contact@wearevents.fr";
+const weareventsReplyEmail = "reservation@wearevents.fr";
 
-const buildVenueReplyUrl = (requestId: string | undefined, status: string, body: string) => {
-  const reference = requestId ? ` ${requestId}` : "";
-  const subject = `${status} - demande Wearevents${reference}`;
-  return `mailto:${weareventsReplyEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+const buildVenueResponseUrl = (token: string, response: string) => {
+  const params = new URLSearchParams({ token, response });
+  return `${getPublicSiteUrl()}/reponse-lieu?${params.toString()}`;
 };
 
-const renderVenueResponseButtons = (requestId?: string) => {
-  const reference = requestId ? `Référence : ${requestId}\n\n` : "";
-  const availableUrl = buildVenueReplyUrl(
-    requestId,
-    "Disponible",
-    `Bonjour,\n\n${reference}Notre établissement est disponible pour cette demande.\n\nNos modalités et conditions :\n`,
-  );
-  const unavailableUrl = buildVenueReplyUrl(
-    requestId,
-    "Pas disponible",
-    `Bonjour,\n\n${reference}Notre établissement n'est pas disponible pour cette demande.\n`,
-  );
-  const conditionsUrl = buildVenueReplyUrl(
-    requestId,
-    "Réponse avec conditions",
-    `Bonjour,\n\n${reference}Voici nos modalités de privatisation et nos conditions pour cette demande :\n\n`,
-  );
+const renderVenueResponseButtons = (responseToken?: string) => {
+  if (!responseToken) return "";
+  const availableUrl = buildVenueResponseUrl(responseToken, "available");
+  const unavailableUrl = buildVenueResponseUrl(responseToken, "unavailable");
+  const conditionsUrl = buildVenueResponseUrl(responseToken, "conditions");
 
   const button = (label: string, url: string, background: string, color = "#FFFFFF") =>
     `<a href="${escapeHtml(url)}" style="display:inline-block;margin:0 8px 10px 0;border-radius:12px;background:${background};padding:14px 17px;font-family:Arial,sans-serif;font-size:13px;font-weight:700;color:${color};text-decoration:none;">${escapeHtml(label)}</a>`;
@@ -193,6 +181,7 @@ const buildBrandedEmailHtml = (
   template: EmailTemplate,
   kind: EmailKind,
   requestId?: string,
+  venueResponseToken?: string,
 ) => {
   const siteUrl = getPublicSiteUrl();
   const logoUrl = `${siteUrl}/favicon.png`;
@@ -201,8 +190,8 @@ const buildBrandedEmailHtml = (
   const preview = template.preview || theme.description;
   const heroTitle = kind === "admin" ? theme.title : template.subject;
   const paragraphsBeforeRows = kind === "venue" ? paragraphs.slice(0, 2) : paragraphs;
-  const venueContextParagraphs = kind === "venue" ? paragraphs.slice(2, 3) : [];
-  const venueClosingParagraphs = kind === "venue" ? paragraphs.slice(3) : [];
+  const venueContextParagraphs = kind === "venue" ? paragraphs.slice(2, 4) : [];
+  const venueClosingParagraphs = kind === "venue" ? paragraphs.slice(4) : [];
 
   return `<!doctype html>
 <html lang="fr">
@@ -269,7 +258,7 @@ const buildBrandedEmailHtml = (
                       }
 
                       ${kind === "venue" ? renderParagraphs(venueContextParagraphs) : ""}
-                      ${kind === "venue" ? renderVenueResponseButtons(requestId) : `
+                      ${kind === "venue" ? renderVenueResponseButtons(venueResponseToken) : `
                         <table role="presentation" cellspacing="0" cellpadding="0" style="margin-top:28px;">
                           <tr>
                             <td style="border-radius:12px;background:${theme.accent};">
@@ -301,7 +290,14 @@ const buildBrandedEmailHtml = (
 </html>`;
 };
 
-const sendEmail = async (template: EmailTemplate, from: string, kind: EmailKind, requestId?: string, replyTo?: string) => {
+const sendEmail = async (
+  template: EmailTemplate,
+  from: string,
+  kind: EmailKind,
+  requestId?: string,
+  replyTo?: string,
+  venueResponseToken?: string,
+) => {
   const safeTemplate = kind === "venue"
     ? { ...template, text: removeCustomerContactDetails(template.text) }
     : template;
@@ -318,7 +314,7 @@ const sendEmail = async (template: EmailTemplate, from: string, kind: EmailKind,
       to: [safeTemplate.to],
       subject: safeTemplate.subject,
       text: safeTemplate.text,
-      html: buildBrandedEmailHtml(safeTemplate, kind, requestId),
+      html: buildBrandedEmailHtml(safeTemplate, kind, requestId, venueResponseToken),
       reply_to: safeReplyTo,
     }),
   });
@@ -367,10 +363,11 @@ Deno.serve(async (request) => {
 
     const customerEmail = payload.request?.email;
     const requestId = payload.request?.id;
+    const venueResponseToken = payload.request?.venueResponseToken;
     const [customerConfirmation, adminNotification, venueContactNotification] = await Promise.all([
       sendEmail(templates.customerConfirmation, from, "customer", requestId),
       sendEmail(templates.adminNotification, from, "admin", requestId, customerEmail),
-      sendEmail(templates.venueContactNotification, from, "venue", requestId),
+      sendEmail(templates.venueContactNotification, from, "venue", requestId, undefined, venueResponseToken),
     ]);
 
     return jsonResponse({

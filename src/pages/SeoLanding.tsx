@@ -99,7 +99,7 @@ const SeoLanding = () => {
         description={page.description}
         path={canonicalPath}
         image={image}
-        noindex={page.indexable === false || (!page.forceIndex && !venuesLoading && matchingVenues.length < 3)}
+        noindex={pageNumber > 1 || page.indexable === false || (!page.forceIndex && !venuesLoading && matchingVenues.length < 3)}
         jsonLd={[
           {
             "@context": "https://schema.org",

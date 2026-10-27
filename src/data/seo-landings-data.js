@@ -189,7 +189,7 @@ const eventPages = SEO_EVENT_TYPES.map((eventType) => {
     intentLabel: `Salle pour ${eventType.toLowerCase()}`,
     locationLabel: "Paris",
     filters: isStudentEvent
-      ? { locationQuery: "Paris", venueTypes: ["Bar", "Discothèque"], minGuests: 100 }
+      ? { locationQuery: "Paris", venueTypes: ["Bar", "Discothèque"], guestRangeMin: 100 }
       : { locationQuery: "Paris", eventType },
     intro: `Vous organisez ${eventArticle(eventType)} ${eventType.toLowerCase()} à Paris ? Wearevents sélectionne des lieux adaptés à votre format : capacité, ambiance, horaires, restauration, musique et conditions de privatisation. Envoyez une demande gratuite et recevez un retour qualifié.`,
     relatedSlugs: ["location-salle-paris", "bar-privatisable-paris", "restaurant-privatisable-paris"],

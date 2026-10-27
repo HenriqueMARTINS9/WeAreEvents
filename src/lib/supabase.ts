@@ -88,6 +88,15 @@ export type BookingRequestInsert = {
   guest_count: number;
   event_type: string;
   budget_range?: string | null;
+  venue_response_token?: string;
+  venue_response_status?: string;
+  venue_response_at?: string | null;
+  venue_response_reason?: string | null;
+  venue_response_conditions?: string | null;
+  venue_response_reminder_due_at?: string | null;
+  venue_response_reminder_sent_at?: string | null;
+  venue_response_reminder_last_error?: string | null;
+  loss_reason?: string | null;
   commission_amount?: number | null;
   requested_spaces: string[];
   message?: string | null;

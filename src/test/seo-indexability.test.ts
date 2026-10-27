@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { seoLandingPages } from "@/data/seo-landings";
-import { getIndexableSeoPages } from "@/data/seo-venue-filter.js";
+import { getIndexableSeoPages, getMatchingSeoVenues } from "@/data/seo-venue-filter.js";
 import { getResponsiveImageProps } from "@/lib/responsive-image";
 
 describe("SEO landing indexability", () => {
@@ -23,6 +23,17 @@ describe("SEO landing indexability", () => {
     duplicateSlugs.forEach((slug) => {
       expect(seoLandingPages.find((page) => page.slug === slug)?.indexable).toBe(false);
     });
+  });
+
+  it("matches student-event pages with bars that can host at least 100 guests", () => {
+    const page = seoLandingPages.find((candidate) => candidate.slug === "salle-evenement-etudiant-paris");
+    const venues = [
+      { slug: "bar-etudiant", active: true, city: "Paris", address: "10 rue Test 75011 Paris", venue_types: ["Bar"], min_capacity: 20, max_capacity: 150 },
+      { slug: "petit-bar", active: true, city: "Paris", address: "11 rue Test 75011 Paris", venue_types: ["Bar"], min_capacity: 10, max_capacity: 80 },
+    ];
+
+    expect(page).toBeDefined();
+    expect(getMatchingSeoVenues(venues, page).map((venue) => venue.slug)).toEqual(["bar-etudiant"]);
   });
 });
 

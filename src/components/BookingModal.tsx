@@ -508,15 +508,16 @@ const BookingModal = ({ venue, onClose, source }: BookingModalProps) => {
 
           <div>
             <label className="text-xs font-body font-medium text-muted-foreground mb-1 block">
-              Budget approximatif <span className="font-normal">(facultatif)</span>
+              Budget approximatif *
             </label>
             <select
+              required
               value={form.budgetRange}
               onChange={(e) => updateField("budgetRange", e.target.value)}
               className={fieldClass("budgetRange")}
               aria-invalid={Boolean(fieldErrors.budgetRange)}
             >
-              <option value="">Non renseigné</option>
+              <option value="">Sélectionnez un budget</option>
               {BOOKING_BUDGET_OPTIONS.map((option) => (
                 <option key={option} value={option}>{option}</option>
               ))}

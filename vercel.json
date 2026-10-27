@@ -49,7 +49,7 @@
       "src": "/salle-formation-paris",
       "status": 301,
       "headers": {
-        "Location": "/salle-de-conference-paris"
+        "Location": "/salle-seminaire-paris"
       }
     },
     {

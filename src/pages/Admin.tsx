@@ -98,6 +98,28 @@ const bookingRequestStatusClasses: Record<BookingRequestTrackingStatus, string> 
 const getBookingRequestStatusClass = (status: string) =>
   bookingRequestStatusClasses[status as BookingRequestTrackingStatus] ?? "bg-secondary text-secondary-foreground";
 
+const venueResponseLabels: Record<string, string> = {
+  waiting: "En attente",
+  available: "Disponible",
+  unavailable: "Pas disponible",
+  conditions_sent: "Conditions envoyées",
+};
+
+const venueResponseClasses: Record<string, string> = {
+  waiting: "bg-amber-100 text-amber-800",
+  available: "bg-emerald-100 text-emerald-700",
+  unavailable: "bg-destructive/10 text-destructive",
+  conditions_sent: "bg-blue-100 text-blue-700",
+};
+
+const BOOKING_LOSS_REASONS = [
+  "Client ne répond plus",
+  "Lieu pas disponible",
+  "Budget trop bas",
+  "A réservé ailleurs",
+  "Autre",
+] as const;
+
 const formatAdminDate = (value?: string | null) => {
   if (!value) return "-";
   const date = new Date(value.includes("T") ? value : `${value}T12:00:00`);
@@ -1358,6 +1380,33 @@ const Admin = () => {
     }
   };
 
+  const updateBookingRequestLossReason = async (requestId: string, lossReason: string) => {
+    if (!supabase || !canSubmit) return;
+    setUpdatingRequestId(requestId);
+    setMessage("");
+
+    try {
+      const normalizedReason = lossReason || null;
+      const { error } = await supabase
+        .from("booking_requests")
+        .update({ loss_reason: normalizedReason })
+        .eq("id", requestId);
+
+      if (error) throw error;
+
+      setAdminBookingRequests((current) => current.map((request) => (
+        request.id === requestId
+          ? { ...request, loss_reason: normalizedReason, updated_at: new Date().toISOString() }
+          : request
+      )));
+      setMessage("Raison de perte enregistrée.");
+    } catch (error) {
+      setMessage(formatAdminError(error));
+    } finally {
+      setUpdatingRequestId(null);
+    }
+  };
+
   const updateSeoForm = (path: string, field: SeoMetadataFormField, value: string) => {
     setSeoForms((current) => ({
       ...current,
@@ -1507,6 +1556,7 @@ const Admin = () => {
                   updatingRequestId={updatingRequestId}
                   onStatusChange={updateBookingRequestStatus}
                   onCommissionChange={updateBookingRequestCommission}
+                  onLossReasonChange={updateBookingRequestLossReason}
                 />
               )}
               {view === "seo" && (
@@ -1817,16 +1867,39 @@ const CommissionEditor = ({
   );
 };
 
+const VenueResponseStatus = ({ request }: { request: any }) => {
+  const status = request.venue_response_status || "waiting";
+  const label = venueResponseLabels[status] || status;
+  const statusClass = venueResponseClasses[status] || "bg-secondary text-muted-foreground";
+
+  return (
+    <div className="min-w-[190px] font-body text-xs">
+      <span className={`inline-flex rounded-full px-2.5 py-1 font-semibold ${statusClass}`}>{label}</span>
+      {request.venue_response_at && <p className="mt-2 text-muted-foreground">{formatAdminDateTime(request.venue_response_at)}</p>}
+      {request.venue_response_reason && <p className="mt-2 font-semibold text-foreground">Motif : {request.venue_response_reason}</p>}
+      {request.venue_response_conditions && <p className="mt-2 line-clamp-4 leading-relaxed text-muted-foreground">{request.venue_response_conditions}</p>}
+      {status === "waiting" && request.venue_response_reminder_sent_at && (
+        <p className="mt-2 text-muted-foreground">Relance envoyée le {formatAdminDateTime(request.venue_response_reminder_sent_at)}</p>
+      )}
+      {request.venue_response_reminder_last_error && (
+        <p className="mt-2 line-clamp-2 text-destructive" title={request.venue_response_reminder_last_error}>Relance à vérifier</p>
+      )}
+    </div>
+  );
+};
+
 const BookingRequestsView = ({
   requests,
   updatingRequestId,
   onStatusChange,
   onCommissionChange,
+  onLossReasonChange,
 }: {
   requests: any[];
   updatingRequestId: string | null;
   onStatusChange: (requestId: string, status: BookingRequestTrackingStatus) => void;
   onCommissionChange: (requestId: string, amount: number | null) => void;
+  onLossReasonChange: (requestId: string, reason: string) => void;
 }) => (
   <section>
     <div className="mb-6">
@@ -1847,10 +1920,10 @@ const BookingRequestsView = ({
 
     <div className="overflow-hidden rounded-lg border border-border bg-card luxury-shadow">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[1900px] text-left">
+        <table className="w-full min-w-[2300px] text-left">
           <thead className="border-b border-border bg-secondary/70">
             <tr>
-              {["Demande", "Lieu", "Date", "Invités", "Budget", "Contact", "Origine", "Espaces", "Statut", "Commission", "Email avis", "Créée le"].map((column) => (
+              {["Demande", "Lieu", "Date", "Invités", "Budget", "Contact", "Origine", "Espaces", "Réponse lieu", "Statut", "Raison de perte", "Commission", "Email avis", "Créée le"].map((column) => (
                 <th key={column} className="px-4 py-3 text-xs font-body font-semibold uppercase text-muted-foreground">{column}</th>
               ))}
             </tr>
@@ -1858,7 +1931,7 @@ const BookingRequestsView = ({
           <tbody className="divide-y divide-border">
             {requests.length === 0 ? (
               <tr>
-                <td colSpan={12} className="px-4 py-10 text-center text-sm font-body text-muted-foreground">
+                <td colSpan={14} className="px-4 py-10 text-center text-sm font-body text-muted-foreground">
                   Aucune demande pour le moment.
                 </td>
               </tr>
@@ -1933,6 +2006,9 @@ const BookingRequestsView = ({
                     </div>
                   </td>
                   <td className="px-4 py-4">
+                    <VenueResponseStatus request={request} />
+                  </td>
+                  <td className="px-4 py-4">
                     <div className="min-w-[190px]">
                       <span className={`mb-2 inline-flex rounded-full px-2.5 py-1 text-xs font-body font-semibold ${getBookingRequestStatusClass(request.status)}`}>
                         {getBookingRequestStatusLabel(request.status)}
@@ -1949,6 +2025,20 @@ const BookingRequestsView = ({
                             {option.label}
                           </option>
                         ))}
+                      </select>
+                    </div>
+                  </td>
+                  <td className="px-4 py-4">
+                    <div className="min-w-[190px]">
+                      <select
+                        value={request.loss_reason || ""}
+                        disabled={updatingRequestId === request.id}
+                        onChange={(event) => onLossReasonChange(request.id, event.target.value)}
+                        className="h-10 w-full rounded-lg border border-border bg-background px-3 text-xs font-body outline-none focus:border-primary disabled:opacity-60"
+                        aria-label={`Raison de perte de la demande ${request.id}`}
+                      >
+                        <option value="">Non renseignée</option>
+                        {BOOKING_LOSS_REASONS.map((reason) => <option key={reason} value={reason}>{reason}</option>)}
                       </select>
                     </div>
                   </td>

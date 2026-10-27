@@ -19,6 +19,7 @@ const SeoLanding = lazy(() => import("./pages/SeoLanding.tsx"));
 const Admin = lazy(() => import("./pages/Admin.tsx"));
 const Legal = lazy(() => import("./pages/Legal.tsx"));
 const Review = lazy(() => import("./pages/Review.tsx"));
+const VenueResponse = lazy(() => import("./pages/VenueResponse.tsx"));
 const Editorial = lazy(() => import("./pages/Editorial.tsx"));
 const AllVenues = lazy(() => import("./pages/AllVenues.tsx"));
 const NotFound = lazy(() => import("./pages/NotFound.tsx"));
@@ -48,6 +49,7 @@ const App = () => (
               <Route path="/cgu" element={<Legal kind="cgu" />} />
               <Route path="/politique-confidentialite" element={<Legal kind="privacy" />} />
               <Route path="/avis" element={<Review />} />
+              <Route path="/reponse-lieu" element={<VenueResponse />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="/:seoSlug" element={<SeoLanding />} />
               <Route path="*" element={<NotFound />} />
