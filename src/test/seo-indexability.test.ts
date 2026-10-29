@@ -38,16 +38,10 @@ describe("SEO landing indexability", () => {
 });
 
 describe("responsive image URLs", () => {
-  it("builds a srcset for generated storage variants", () => {
-    const props = getResponsiveImageProps(
-      "https://project.supabase.co/storage/v1/object/public/wearevents-images/lieu.webp",
-      "100vw",
-    );
+  it("keeps Supabase Storage images on their original public URL", () => {
+    const src = "https://project.supabase.co/storage/v1/object/public/wearevents-images/lieu.webp";
 
-    expect(props.src).toContain("/storage/v1/render/image/public/wearevents-images/lieu.webp?width=1200&quality=76");
-    expect(props.srcSet).toContain("width=480&quality=76 480w");
-    expect(props.srcSet).toContain("width=800&quality=76 800w");
-    expect(props.srcSet).toContain("width=1200&quality=76 1200w");
+    expect(getResponsiveImageProps(src, "100vw")).toEqual({ src, sizes: "100vw" });
   });
 
   it("does not invent variants for legacy images", () => {

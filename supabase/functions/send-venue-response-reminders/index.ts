@@ -50,7 +50,7 @@ const sendReminder = async (booking: ReminderBooking, to: string) => {
   const summary = `${booking.event_type || "Événement"} · ${booking.guest_count || "-"} pers. · ${booking.desired_date || "Date à confirmer"}`;
   const button = (label: string, url: string, color: string) =>
     `<a href="${escapeHtml(url)}" style="display:inline-block;margin:0 8px 10px 0;background:${color};color:#fff;padding:13px 16px;border-radius:10px;text-decoration:none;font-weight:700;">${label}</a>`;
-  const text = `Bonjour,\n\nNous attendons encore votre réponse concernant la demande ${booking.id} pour ${booking.venue_title}.\n${summary}\n\nDisponible : ${availableUrl}\nPas disponible : ${unavailableUrl}\nRépondre avec mes conditions : ${conditionsUrl}\n\nMerci de nous répondre rapidement.\n\nAnselme – Wearevents – reservation@wearevents.fr`;
+  const text = `Bonjour,\n\nNous attendons encore votre réponse concernant la demande ${booking.id} pour ${booking.venue_title}.\n${summary}\n\nDisponible : ${availableUrl}\nPas disponible : ${unavailableUrl}\nRépondre avec mes conditions : ${conditionsUrl}\n\nMerci de nous répondre rapidement.\n\nAnselme – Wearevents – reservations@wearevents.fr`;
 
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -62,10 +62,10 @@ const sendReminder = async (booking: ReminderBooking, to: string) => {
     body: JSON.stringify({
       from,
       to: [to],
-      reply_to: "reservation@wearevents.fr",
+      reply_to: "reservations@wearevents.fr",
       subject: `Rappel – réponse attendue pour ${booking.venue_title} – ${booking.id}`,
       text,
-      html: `<!doctype html><html lang="fr"><body style="margin:0;background:#f7f3f0;padding:28px;font-family:Arial,sans-serif;color:#171717;"><main style="max-width:640px;margin:auto;background:#fff;border-radius:18px;padding:30px;"><p style="color:#d94f6d;font-weight:700;">Rappel partenaire</p><h1 style="font-family:Georgia,serif;">Votre réponse est attendue</h1><p>Bonjour,</p><p>Nous attendons encore votre réponse concernant la demande <strong>${escapeHtml(booking.id)}</strong> pour <strong>${escapeHtml(booking.venue_title)}</strong>.</p><p>${escapeHtml(summary)}</p><p>Merci de nous répondre rapidement, le client attend notre proposition.</p><div style="margin-top:24px;">${button("Disponible", availableUrl, "#237a57")}${button("Pas disponible", unavailableUrl, "#4b4b4b")}${button("Mes conditions", conditionsUrl, "#d94f6d")}</div><p style="margin-top:22px;">Anselme – Wearevents – reservation@wearevents.fr</p></main></body></html>`,
+      html: `<!doctype html><html lang="fr"><body style="margin:0;background:#f7f3f0;padding:28px;font-family:Arial,sans-serif;color:#171717;"><main style="max-width:640px;margin:auto;background:#fff;border-radius:18px;padding:30px;"><p style="color:#d94f6d;font-weight:700;">Rappel partenaire</p><h1 style="font-family:Georgia,serif;">Votre réponse est attendue</h1><p>Bonjour,</p><p>Nous attendons encore votre réponse concernant la demande <strong>${escapeHtml(booking.id)}</strong> pour <strong>${escapeHtml(booking.venue_title)}</strong>.</p><p>${escapeHtml(summary)}</p><p>Merci de nous répondre rapidement, le client attend notre proposition.</p><div style="margin-top:24px;">${button("Disponible", availableUrl, "#237a57")}${button("Pas disponible", unavailableUrl, "#4b4b4b")}${button("Mes conditions", conditionsUrl, "#d94f6d")}</div><p style="margin-top:22px;">Anselme – Wearevents – reservations@wearevents.fr</p></main></body></html>`,
     }),
   });
 

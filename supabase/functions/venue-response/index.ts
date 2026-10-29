@@ -79,7 +79,7 @@ const sendNotification = async (
     },
     body: JSON.stringify({
       from,
-      to: ["reservation@wearevents.fr"],
+      to: ["reservations@wearevents.fr"],
       subject: `Réponse lieu – ${venueTitle} – ${responseLabels[choice]} – ${requestId}`,
       text,
       html: `<!doctype html><html lang="fr"><body style="margin:0;background:#f7f3f0;padding:28px;font-family:Arial,sans-serif;color:#171717;"><main style="max-width:640px;margin:auto;background:#fff;border-radius:18px;overflow:hidden;"><header style="background:#171717;color:#fff;padding:28px;"><p style="margin:0 0 8px;color:#e66b84;font-weight:700;">Réponse partenaire</p><h1 style="margin:0;font-family:Georgia,serif;">${escapeHtml(venueTitle)}</h1></header><section style="padding:28px;"><table role="presentation" style="width:100%;border-collapse:collapse;">${rows}</table><p style="margin:24px 0 0;"><a href="https://www.wearevents.fr/admin" style="display:inline-block;background:#d94f6d;color:#fff;padding:13px 18px;border-radius:10px;text-decoration:none;font-weight:700;">Ouvrir le back-office</a></p></section></main></body></html>`,

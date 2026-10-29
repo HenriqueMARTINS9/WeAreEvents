@@ -94,7 +94,7 @@ describe("booking workflow", () => {
 
     expect(templates.customerConfirmation.to).toBe(validForm.email);
     expect(templates.customerConfirmation.subject).toBe("Nous avons bien reçu votre demande");
-    expect(templates.adminNotification.to).toBe("reservation@wearevents.fr");
+    expect(templates.adminNotification.to).toBe("reservations@wearevents.fr");
     expect(templates.venueContactNotification.to).toBe(venue.contactEmail);
     expect(templates.venueContactNotification.subject).toBe(`Demande Wearevents – ${venue.title} – ven. 12/06, 120 pers.`);
     expect(templates.venueContactNotification.preview).toBe("Gala · 120 invités");
@@ -115,7 +115,7 @@ describe("booking workflow", () => {
     expect(templates.venueContactNotification.text).toContain("Merci de nous répondre sous 24 h");
     expect(templates.venueContactNotification.text).toContain("dans le cadre de notre partenariat");
     expect(templates.venueContactNotification.text).toContain("Anselme – Wearevents");
-    expect(templates.venueContactNotification.text).toContain("reservation@wearevents.fr");
+    expect(templates.venueContactNotification.text).toContain("reservations@wearevents.fr");
     expect(templates.venueContactNotification.text).not.toContain(request.phone);
     expect(templates.venueContactNotification.text).not.toContain(request.email);
     expect(templates.postEventReviewFollowUp.to).toBe(validForm.email);

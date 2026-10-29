@@ -30,19 +30,7 @@ const escapeHtml = (value = "") => String(value)
   .replace(/'/g, "&#39;");
 
 const responsiveImageAttributes = (src, sizes) => {
-  const marker = "/storage/v1/object/public/";
-  if (!String(src).includes(marker) || !/\.(?:avif|jpe?g|png|webp)(?:[?#]|$)/i.test(src)) {
-    return `src="${escapeHtml(src)}" sizes="${escapeHtml(sizes)}"`;
-  }
-
-  const transformedUrl = (width) => {
-    const url = new URL(String(src).replace(marker, "/storage/v1/render/image/public/"));
-    url.searchParams.set("width", String(width));
-    url.searchParams.set("quality", "76");
-    return url.href;
-  };
-  const srcSet = [480, 800, 1200].map((width) => `${transformedUrl(width)} ${width}w`).join(", ");
-  return `src="${escapeHtml(transformedUrl(1200))}" srcset="${escapeHtml(srcSet)}" sizes="${escapeHtml(sizes)}"`;
+  return `src="${escapeHtml(src)}" sizes="${escapeHtml(sizes)}"`;
 };
 
 const escapeJsonForHtml = (value) => JSON.stringify(value)

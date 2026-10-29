@@ -72,7 +72,7 @@ const renderTextWithLinks = (value: string) => {
 type EmailKind = "customer" | "admin" | "venue";
 
 const getPublicSiteUrl = () => (Deno.env.get("PUBLIC_SITE_URL") || "https://www.wearevents.fr").replace(/\/$/, "");
-const weareventsReplyEmail = "reservation@wearevents.fr";
+const weareventsReplyEmail = "reservations@wearevents.fr";
 
 const buildVenueResponseUrl = (token: string, response: string) => {
   const params = new URLSearchParams({ token, response });

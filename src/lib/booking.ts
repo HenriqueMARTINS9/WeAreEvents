@@ -25,7 +25,7 @@ export interface BookingSubmissionResult {
   emails: BookingEmailTemplates;
 }
 
-const ADMIN_EMAIL = "reservation@wearevents.fr";
+const ADMIN_EMAIL = "reservations@wearevents.fr";
 const WEAREVENTS_GOOGLE_REVIEW_URL = "https://g.page/r/Cb3yTIoVykRuEBM/review";
 const BOOKING_CONTACT_PHONE = String(import.meta.env.VITE_WHATSAPP_PHONE || "").trim();
 
