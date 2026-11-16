@@ -431,7 +431,12 @@ export const trackEstablishmentReferralConversion = async (
   });
 };
 
+let lastWhatsAppClickAt = 0;
+
 export const trackWhatsAppClick = (context: string, venueName?: string) => {
+  const now = Date.now();
+  if (now - lastWhatsAppClickAt < 500) return;
+  lastWhatsAppClickAt = now;
   trackAnalyticsEvent("contact", {
     method: "whatsapp",
     contact_context: context,

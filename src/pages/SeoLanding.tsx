@@ -52,6 +52,7 @@ const SeoLanding = () => {
     return filterVenues(venues, {
       locationQuery: page.filters.locationQuery,
       eventType: page.filters.eventType,
+      eventTypes: page.filters.eventTypes,
       minGuests: page.filters.minGuests,
       guestRangeMin: page.filters.guestRangeMin,
       guestRangeMax: page.filters.guestRangeMax,

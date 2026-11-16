@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import EstablishmentReferralModalProvider from "@/components/EstablishmentReferralModalProvider";
 import FloatingWhatsAppButton from "@/components/FloatingWhatsAppButton";
 import GoogleTagTracker from "@/components/GoogleTagTracker";
+import GlobalWhatsAppTracking from "@/components/GlobalWhatsAppTracking";
 
 const Index = lazy(() => import("./pages/Index.tsx"));
 const VenueDetail = lazy(() => import("./pages/VenueDetail.tsx"));
@@ -23,6 +24,7 @@ const VenueResponse = lazy(() => import("./pages/VenueResponse.tsx"));
 const Editorial = lazy(() => import("./pages/Editorial.tsx"));
 const AllVenues = lazy(() => import("./pages/AllVenues.tsx"));
 const NotFound = lazy(() => import("./pages/NotFound.tsx"));
+const GeneralBookingExperience = lazy(() => import("./components/GeneralBookingExperience.tsx"));
 
 const queryClient = new QueryClient();
 
@@ -56,6 +58,10 @@ const App = () => (
             </Routes>
           </Suspense>
           <FloatingWhatsAppButton />
+          <Suspense fallback={null}>
+            <GeneralBookingExperience />
+          </Suspense>
+          <GlobalWhatsAppTracking />
           <GoogleTagTracker />
         </EstablishmentReferralModalProvider>
       </BrowserRouter>

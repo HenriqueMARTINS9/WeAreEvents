@@ -356,7 +356,7 @@ Deno.serve(async (request) => {
       !templates ||
       !isValidEmailTemplate(templates.customerConfirmation) ||
       !isValidEmailTemplate(templates.adminNotification) ||
-      !isValidEmailTemplate(templates.venueContactNotification)
+      (templates.venueContactNotification !== undefined && !isValidEmailTemplate(templates.venueContactNotification))
     ) {
       return jsonResponse({ error: "Invalid booking email payload" }, 400);
     }
@@ -367,7 +367,9 @@ Deno.serve(async (request) => {
     const [customerConfirmation, adminNotification, venueContactNotification] = await Promise.all([
       sendEmail(templates.customerConfirmation, from, "customer", requestId),
       sendEmail(templates.adminNotification, from, "admin", requestId, customerEmail),
-      sendEmail(templates.venueContactNotification, from, "venue", requestId, undefined, venueResponseToken),
+      templates.venueContactNotification
+        ? sendEmail(templates.venueContactNotification, from, "venue", requestId, undefined, venueResponseToken)
+        : Promise.resolve(null),
     ]);
 
     return jsonResponse({

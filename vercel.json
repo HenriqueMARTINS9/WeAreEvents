@@ -193,6 +193,61 @@
       }
     },
     {
+      "src": "/blog/erreurs-a-eviter-avant-reserver-salle-anniversaire",
+      "status": 301,
+      "headers": { "Location": "/blog/location-salle-anniversaire-paris" }
+    },
+    {
+      "src": "/blog/restaurant-privatisable-ou-salle-reception-anniversaire",
+      "status": 301,
+      "headers": { "Location": "/blog/location-salle-anniversaire-paris" }
+    },
+    {
+      "src": "/blog/bar-loft-rooftop-ou-peniche-anniversaire",
+      "status": 301,
+      "headers": { "Location": "/blog/location-salle-anniversaire-paris" }
+    },
+    {
+      "src": "/blog/trouver-salle-anniversaire-derniere-minute-paris",
+      "status": 301,
+      "headers": { "Location": "/blog/location-salle-anniversaire-paris" }
+    },
+    {
+      "src": "/blog/apporter-son-gateau-salle-anniversaire-paris",
+      "status": 301,
+      "headers": { "Location": "/blog/location-salle-anniversaire-paris" }
+    },
+    {
+      "src": "/blog/jusqu-a-quelle-heure-louer-salle-anniversaire-paris",
+      "status": 301,
+      "headers": { "Location": "/blog/location-salle-anniversaire-paris" }
+    },
+    {
+      "src": "/blog/salle-anniversaire-terrasse-paris",
+      "status": 301,
+      "headers": { "Location": "/blog/anniversaire-exterieur-paris" }
+    },
+    {
+      "src": "/blog/salle-anniversaire-avec-jardin-paris",
+      "status": 301,
+      "headers": { "Location": "/blog/anniversaire-exterieur-paris" }
+    },
+    {
+      "src": "/blog/salle-anniversaire-systeme-son-paris",
+      "status": 301,
+      "headers": { "Location": "/blog/salle-ou-danser-paris-anniversaire" }
+    },
+    {
+      "src": "/blog/ou-organiser-anniversaire-pas-cher-paris",
+      "status": 301,
+      "headers": { "Location": "/blog/combien-coute-location-salle-anniversaire-paris" }
+    },
+    {
+      "src": "/blog/ou-organiser-anniversaire-20-personnes-paris",
+      "status": 301,
+      "headers": { "Location": "/blog/ou-organiser-anniversaire-50-personnes-paris" }
+    },
+    {
       "src": "/api/(.*)",
       "dest": "/api/$1"
     },

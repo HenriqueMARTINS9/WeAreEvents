@@ -35,6 +35,22 @@ describe("SEO landing indexability", () => {
     expect(page).toBeDefined();
     expect(getMatchingSeoVenues(venues, page).map((venue) => venue.slug)).toEqual(["bar-etudiant"]);
   });
+
+  it("keeps the less-than-20 page accessible but out of the index", () => {
+    expect(seoLandingPages.find((page) => page.slug === "location-salle-moins-20-personnes-paris")?.indexable).toBe(false);
+  });
+
+  it("matches company-party pages from either gala or end-of-year categories", () => {
+    const page = seoLandingPages.find((candidate) => candidate.slug === "salle-soiree-entreprise-paris");
+    const venues = [
+      { slug: "gala", active: true, city: "Paris", address: "75008 Paris", event_categories: ["Gala"] },
+      { slug: "fin-annee", active: true, city: "Paris", address: "75011 Paris", event_categories: ["Fête de fin d'année"] },
+      { slug: "anniversaire", active: true, city: "Paris", address: "75012 Paris", event_categories: ["Anniversaire"] },
+    ];
+
+    expect(page).toMatchObject({ indexable: true, forceIndex: true });
+    expect(getMatchingSeoVenues(venues, page).map((venue) => venue.slug).sort()).toEqual(["fin-annee", "gala"]);
+  });
 });
 
 describe("responsive image URLs", () => {

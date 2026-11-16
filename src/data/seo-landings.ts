@@ -12,6 +12,7 @@ import {
 export type SeoLandingFilters = {
   locationQuery?: string;
   eventType?: string;
+  eventTypes?: string[];
   minGuests?: number;
   guestRangeMin?: number;
   guestRangeMax?: number;

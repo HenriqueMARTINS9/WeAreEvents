@@ -46,6 +46,8 @@ export const venueMatchesSeoFilters = (venue, filters = {}) => {
   if (filters.eventType) {
     if (!eventCategories.some((item) => normalize(item) === normalize(filters.eventType))) return false;
   }
+  if (filters.eventTypes?.length && !filters.eventTypes.some((eventType) =>
+    eventCategories.some((item) => normalize(item) === normalize(eventType)))) return false;
   if (filters.minGuests && (minCapacity > filters.minGuests || maxCapacity < filters.minGuests)) return false;
   if (filters.guestRangeMin && maxCapacity < filters.guestRangeMin) return false;
   if (filters.guestRangeMax && minCapacity > filters.guestRangeMax) return false;

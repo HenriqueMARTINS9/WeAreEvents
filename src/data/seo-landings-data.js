@@ -217,6 +217,17 @@ const capacityPages = SEO_CAPACITY_RANGES.map((range) =>
   }),
 );
 
+const companyPartyPage = createPage({
+  slug: "salle-soiree-entreprise-paris",
+  h1: "Salle pour soirée d'entreprise à Paris",
+  intentLabel: "Salle pour soirée d'entreprise",
+  locationLabel: "Paris",
+  filters: { locationQuery: "Paris", eventTypes: ["Fête de fin d'année", "Gala"] },
+  intro: "Organisez votre soirée d'entreprise à Paris dans un lieu adapté à votre équipe, votre format et l'ambiance recherchée. Comparez les capacités, les équipements et les conditions de privatisation, puis recevez un retour qualifié.",
+  relatedSlugs: ["salle-fete-de-fin-d-annee-paris", "salle-gala-paris", "salle-afterwork-paris"],
+  forceIndex: true,
+});
+
 const createParisFilterPage = (page) =>
   createPage({
     ...page,
@@ -592,6 +603,7 @@ const allSeoLandingPages = [
   parisMainPage,
   ...parisArrondissementPages,
   ...eventPages,
+  companyPartyPage,
   ...capacityPages,
   ...venueTypePages,
   ...pricePages,
@@ -625,7 +637,7 @@ const isCoreSeoPage = (page) =>
 
 export const seoLandingPages = allSeoLandingPages.map((page) => ({
   ...page,
-  indexable: isCoreSeoPage(page),
+  indexable: page.slug === "location-salle-moins-20-personnes-paris" ? false : (page.forceIndex === true || isCoreSeoPage(page)),
 }));
 
 export const seoLandingPageSlugs = seoLandingPages.map((page) => page.slug);

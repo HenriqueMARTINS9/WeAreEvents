@@ -16,6 +16,20 @@ const staticPages = [
   { path: "/entreprises", changefreq: "monthly", priority: "0.7" },
 ];
 
+const redirectedBlogSlugs = new Set([
+  "erreurs-a-eviter-avant-reserver-salle-anniversaire",
+  "restaurant-privatisable-ou-salle-reception-anniversaire",
+  "bar-loft-rooftop-ou-peniche-anniversaire",
+  "trouver-salle-anniversaire-derniere-minute-paris",
+  "apporter-son-gateau-salle-anniversaire-paris",
+  "jusqu-a-quelle-heure-louer-salle-anniversaire-paris",
+  "salle-anniversaire-terrasse-paris",
+  "salle-anniversaire-avec-jardin-paris",
+  "salle-anniversaire-systeme-son-paris",
+  "ou-organiser-anniversaire-pas-cher-paris",
+  "ou-organiser-anniversaire-20-personnes-paris",
+]);
+
 const escapeXml = (value) => String(value)
   .replace(/&/g, "&amp;")
   .replace(/</g, "&lt;")
@@ -94,7 +108,7 @@ const buildPartitions = ({ venues, posts, metadata }) => {
     .filter((venue) => venue.slug && !["l'étage-du-mirasol", "l’étage-du-mirasol"].includes(venue.slug))
     .map((venue) => ({ path: `/salle/${venue.slug}`, lastmod: getDate(venue.updated_at), changefreq: "weekly", priority: "0.8" }));
   const blog = posts
-    .filter((post) => post.slug)
+    .filter((post) => post.slug && !redirectedBlogSlugs.has(post.slug))
     .map((post) => ({ path: `/blog/${post.slug}`, lastmod: getDate(post.updated_at || post.published_at), changefreq: "monthly", priority: "0.6" }));
   return { pages, venues: venueUrls, blog };
 };

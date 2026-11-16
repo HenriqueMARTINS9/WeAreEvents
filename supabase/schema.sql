@@ -186,6 +186,8 @@ alter table public.booking_requests add column if not exists last_name text not 
 alter table public.booking_requests add column if not exists email text not null default '';
 alter table public.booking_requests add column if not exists phone text not null default '';
 alter table public.booking_requests add column if not exists desired_date date;
+alter table public.booking_requests add column if not exists date_flexible boolean not null default false;
+alter table public.booking_requests add column if not exists preferred_zone text not null default '';
 alter table public.booking_requests add column if not exists start_time text not null default '';
 alter table public.booking_requests add column if not exists end_time text not null default '';
 alter table public.booking_requests add column if not exists guest_count integer not null default 0;

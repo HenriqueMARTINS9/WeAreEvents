@@ -1906,7 +1906,7 @@ const BookingRequestsView = ({
       <p className="font-body text-sm font-semibold text-primary">Suivi commercial</p>
       <h2 className="font-heading text-4xl font-semibold">Demandes</h2>
       <p className="mt-2 max-w-3xl text-sm font-body leading-relaxed text-muted-foreground">
-        Retrouvez les demandes envoyées depuis les fiches établissement et mettez à jour leur statut de traitement.
+        Retrouvez les demandes envoyées depuis les fiches établissement et les formulaires généraux, puis mettez à jour leur statut de traitement.
       </p>
     </div>
 
@@ -1957,11 +1957,12 @@ const BookingRequestsView = ({
                       <p className="mt-1 text-xs font-body text-muted-foreground">
                         {[request.venue_code, request.venue_city].filter(Boolean).join(" · ") || "-"}
                       </p>
+                      {request.preferred_zone && <p className="mt-1 text-xs font-body text-primary">Zone : {request.preferred_zone}</p>}
                     </div>
                   </td>
                   <td className="px-4 py-4 text-sm font-body text-foreground/80">
                     <div className="min-w-[130px]">
-                      <p>{formatAdminDate(request.desired_date)}</p>
+                      <p>{request.date_flexible ? "Date flexible" : formatAdminDate(request.desired_date)}</p>
                       <p className="mt-1 text-xs text-muted-foreground">
                         {[request.start_time, request.end_time].filter(Boolean).join(" - ") || "-"}
                       </p>

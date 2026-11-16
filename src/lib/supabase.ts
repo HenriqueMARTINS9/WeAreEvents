@@ -83,6 +83,8 @@ export type BookingRequestInsert = {
   email: string;
   phone: string;
   desired_date: string | null;
+  date_flexible?: boolean;
+  preferred_zone?: string;
   start_time: string;
   end_time: string;
   guest_count: number;
