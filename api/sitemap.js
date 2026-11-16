@@ -17,6 +17,7 @@ const staticPages = [
 ];
 
 const redirectedBlogSlugs = new Set([
+  "les-10-erreurs-a-eviter-lors-de-la-privatisation-d-un-lieu-pour-un-evenement",
   "erreurs-a-eviter-avant-reserver-salle-anniversaire",
   "restaurant-privatisable-ou-salle-reception-anniversaire",
   "bar-loft-rooftop-ou-peniche-anniversaire",
