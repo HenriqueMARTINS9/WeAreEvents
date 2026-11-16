@@ -76,6 +76,18 @@ const toNumber = (value: string, fallback = 0) => {
   return Number.isFinite(parsed) ? parsed : fallback;
 };
 
+const toAdminArray = (value: unknown): any[] => {
+  if (Array.isArray(value)) return value;
+  if (typeof value !== "string" || !value.trim()) return [];
+  try {
+    const parsed = JSON.parse(value);
+    if (Array.isArray(parsed)) return parsed;
+  } catch {
+    // Older rows can contain comma- or newline-separated values.
+  }
+  return value.split(/\n|,/).map((item) => item.trim()).filter(Boolean);
+};
+
 type AdminView = "dashboard" | "venues" | "blogs" | "requests" | "seo";
 
 const bookingRequestStatusLabels = Object.fromEntries(
@@ -649,8 +661,39 @@ const createEmptyBlogForm = () => ({
 type SeoMetadataFormField = "title" | "description" | "intro" | "guide" | "faq";
 type SeoMetadataFormState = Record<string, Record<SeoMetadataFormField, string>>;
 
-const serializeSeoFaq = (faq: Array<{ question?: string; answer?: string }> = []) =>
-  faq
+const normalizeSeoFaq = (value: unknown): Array<{ question?: string; answer?: string }> => {
+  if (Array.isArray(value)) {
+    return value.filter((item) => item && typeof item === "object");
+  }
+
+  if (value && typeof value === "object") {
+    const item = value as { question?: unknown; answer?: unknown };
+    return item.question || item.answer
+      ? [{ question: String(item.question ?? ""), answer: String(item.answer ?? "") }]
+      : [];
+  }
+
+  if (typeof value !== "string" || !value.trim()) return [];
+
+  try {
+    const parsed = JSON.parse(value);
+    if (parsed !== value) return normalizeSeoFaq(parsed);
+  } catch {
+    // Legacy values can be stored as one "Question | Réponse" pair per line.
+  }
+
+  return value.split("\n").map((line) => {
+    const separator = line.indexOf("|");
+    if (separator < 0) return {};
+    return {
+      question: line.slice(0, separator).trim(),
+      answer: line.slice(separator + 1).trim(),
+    };
+  });
+};
+
+const serializeSeoFaq = (faq: unknown = []) =>
+  normalizeSeoFaq(faq)
     .filter((item) => item.question && item.answer)
     .map((item) => `${item.question} | ${item.answer}`)
     .join("\n");
@@ -1208,6 +1251,8 @@ const Admin = () => {
   };
 
   const editVenue = (venue: any) => {
+    const optionFeatures = toAdminArray(venue.option_features);
+    const spaceTypes = toAdminArray(venue.space_types);
     setEditingVenueId(venue.id);
     setVenueForm({
       title: venue.title ?? "",
@@ -1221,11 +1266,11 @@ const Admin = () => {
       venueCode: venue.venue_code ?? "",
       minCapacity: String(venue.min_capacity ?? ""),
       maxCapacity: String(venue.max_capacity ?? ""),
-      eventCategories: (venue.event_categories ?? []).join("\n"),
-      venueTypes: (venue.venue_types ?? []).join("\n"),
-      services: (venue.services ?? []).join("\n"),
+      eventCategories: toAdminArray(venue.event_categories).join("\n"),
+      venueTypes: toAdminArray(venue.venue_types).join("\n"),
+      services: toAdminArray(venue.services).join("\n"),
       spaces: serializeReservationOptions(
-        (venue.spaces ?? []).map((space: any) => ({
+        toAdminArray(venue.spaces).map((space: any) => ({
           name: String(space.name ?? ""),
           capacity: String(space.capacity ?? ""),
           squareMeters: String(space.squareMeters ?? ""),
@@ -1233,13 +1278,13 @@ const Admin = () => {
           imageUrl: String(space.imageUrl ?? ""),
         })),
       ),
-      accessDetails: (venue.access_details ?? []).join("\n"),
-      usefulInformation: (venue.useful_information ?? []).join("\n"),
+      accessDetails: toAdminArray(venue.access_details).join("\n"),
+      usefulInformation: toAdminArray(venue.useful_information).join("\n"),
       pricingText: venue.pricing_text ?? "",
       priceAmount: venue.price_amount == null ? "" : String(venue.price_amount),
       priceType: venue.price_type ?? "per_person",
       coverImage: venue.cover_image ?? "",
-      gallery: (venue.gallery ?? []).join("\n"),
+      gallery: toAdminArray(venue.gallery).join("\n"),
       videoUrl: venue.video_url ?? "",
       videoStartSeconds: String(venue.video_start_seconds ?? 0),
       videoEndSeconds: venue.video_end_seconds ? String(venue.video_end_seconds) : "",
@@ -1249,12 +1294,12 @@ const Admin = () => {
       metaDescription: venue.meta_description ?? "",
       priceTier: venue.price_tier ?? "€€",
       closingTime: venue.closing_time ?? "",
-      ambianceTypes: (venue.ambiance_types ?? []).join("\n"),
-      externalOptions: (venue.external_options ?? []).join("\n"),
-      privatizationTypes: (venue.privatization_types ?? []).join("\n"),
-      guestDispositions: (venue.guest_dispositions ?? []).join("\n"),
-      spaceTypes: ((venue.space_types ?? []).length ? venue.space_types : (venue.option_features ?? []).filter((option: string) => SPACE_TYPES.includes(option as typeof SPACE_TYPES[number]))).join("\n"),
-      optionFeatures: (venue.option_features ?? []).filter((option: string) => !SPACE_TYPES.includes(option as typeof SPACE_TYPES[number])).join("\n"),
+      ambianceTypes: toAdminArray(venue.ambiance_types).join("\n"),
+      externalOptions: toAdminArray(venue.external_options).join("\n"),
+      privatizationTypes: toAdminArray(venue.privatization_types).join("\n"),
+      guestDispositions: toAdminArray(venue.guest_dispositions).join("\n"),
+      spaceTypes: (spaceTypes.length ? spaceTypes : optionFeatures.filter((option: string) => SPACE_TYPES.includes(option as typeof SPACE_TYPES[number]))).join("\n"),
+      optionFeatures: optionFeatures.filter((option: string) => !SPACE_TYPES.includes(option as typeof SPACE_TYPES[number])).join("\n"),
       faq: serializeSeoFaq(venue.faq ?? []),
       metroAccess: venue.metro_access ?? "",
       featured: Boolean(venue.featured),
