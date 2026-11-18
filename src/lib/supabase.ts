@@ -125,28 +125,50 @@ export type VenueReviewInsert = {
 
 type Database = {
   public: {
+    Views: Record<string, never>;
+    Functions: {
+      record_venue_page_view: {
+        Args: { p_slug: string; p_view_id: string };
+        Returns: undefined;
+      };
+      venue_monthly_page_views: {
+        Args: { p_month: string };
+        Returns: Array<{ venue_id: string; slug: string; title: string; views: number }>;
+      };
+    };
     Tables: {
+      redirects: {
+        Relationships: [];
+        Row: { source_path: string; target_path: string; venue_id: string | null; blog_post_id: string | null; created_at: string };
+        Insert: never;
+        Update: never;
+      };
       venues: {
+        Relationships: [];
         Insert: VenueInsert;
         Row: VenueInsert & { id: string; created_at: string; updated_at: string };
         Update: Partial<VenueInsert>;
       };
       blog_posts: {
+        Relationships: [];
         Insert: BlogPostInsert;
         Row: BlogPostInsert & { id: string; created_at: string; updated_at: string };
         Update: Partial<BlogPostInsert>;
       };
       seo_metadata: {
+        Relationships: [];
         Insert: SeoMetadataInsert;
         Row: SeoMetadataInsert & { id: string; created_at: string; updated_at: string };
         Update: Partial<SeoMetadataInsert>;
       };
       booking_requests: {
+        Relationships: [];
         Insert: BookingRequestInsert;
         Row: BookingRequestInsert & { created_at: string; updated_at: string };
         Update: Partial<BookingRequestInsert>;
       };
       venue_reviews: {
+        Relationships: [];
         Insert: VenueReviewInsert;
         Row: VenueReviewInsert & {
           id: string;

@@ -7,6 +7,7 @@ import MobileHeader from "@/components/MobileHeader";
 import SiteFooter from "@/components/SiteFooter";
 import VenueCodeSearch from "@/components/VenueCodeSearch";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useContentRedirect } from "@/hooks/use-content-redirect";
 import { fetchBlogPostBySlug, fetchBlogPosts, fetchVenues } from "@/lib/supabase-data";
 import Seo, { siteUrl } from "@/components/Seo";
 import { extractBlogFaq, sanitizeBlogHtml } from "@/lib/blog-content";
@@ -21,6 +22,7 @@ const BlogContent = ({ content }: { content: string }) => (
 
 const BlogDetail = () => {
   const { slug = "" } = useParams();
+  const redirecting = useContentRedirect("blog", slug);
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [showCodeSearch, setShowCodeSearch] = useState(false);
@@ -41,7 +43,7 @@ const BlogDetail = () => {
   }, [post?.venueSlugs, venues]);
   const articleFaq = useMemo(() => extractBlogFaq(post?.content ?? ""), [post?.content]);
 
-  if (isLoading) {
+  if (isLoading || redirecting) {
     return <div className="min-h-screen bg-background" />;
   }
 

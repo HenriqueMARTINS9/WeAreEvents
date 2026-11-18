@@ -25,6 +25,13 @@
       }
     },
     {
+      "src": "/salle/le-paris-clandestin/?",
+      "status": 301,
+      "headers": {
+        "Location": "/salle/le-myra"
+      }
+    },
+    {
       "src": "/salle-diner-d-affaires-paris",
       "status": 301,
       "headers": {

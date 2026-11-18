@@ -9,7 +9,7 @@ interface SiteFooterProps {
   variant?: "light" | "dark";
 }
 
-const SiteFooter = ({ variant = "light" }: SiteFooterProps) => {
+const SiteFooter = ({ variant = "dark" }: SiteFooterProps) => {
   const { openModal } = useEstablishmentReferralModal();
   const isDark = variant === "dark";
   const getSocialIcon = (platform: SocialPlatform) => {

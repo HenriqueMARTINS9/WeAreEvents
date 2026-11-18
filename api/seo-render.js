@@ -742,6 +742,25 @@ export default async function handler(request, response) {
   }
 
   try {
+    // Run before reading prerendered HTML: a stale file must never mask an alias.
+    if (/^\/(salle|blog)\/[^/]+$/.test(path)) {
+      const [redirect] = await fetchSupabaseRows("redirects", {
+        select: "target_path",
+        source_path: `eq.${path}`,
+        limit: "1",
+      });
+      if (redirect && /^\/(salle|blog)\/[^/?#\s]+$/.test(redirect.target_path) && redirect.target_path !== path) {
+        const query = new URL(request.url, "https://www.wearevents.fr").searchParams;
+        query.delete("path"); // Internal Vercel rewrite parameter, not a visitor parameter.
+        const search = query.toString();
+        response.statusCode = 301;
+        response.setHeader("Location", `${redirect.target_path}${search ? `?${search}` : ""}`);
+        // Aliases can change again; do not let a CDN cache retain an older target.
+        response.setHeader("Cache-Control", "no-store, max-age=0");
+        response.end();
+        return;
+      }
+    }
     const [documentResult, metadata] = await Promise.all([
       readHtmlForPath(path),
       resolveMetadata(path, requestedPage),

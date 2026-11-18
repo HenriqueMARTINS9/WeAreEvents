@@ -44,6 +44,7 @@ import {
 import { editableSeoPages, type EditableSeoPage } from "@/data/seo-pages";
 import { isSupabaseConfigured, supabase, type BlogPostInsert, type SeoMetadataInsert, type VenueInsert } from "@/lib/supabase";
 import Seo from "@/components/Seo";
+import VenueViews from "@/components/admin/VenueViews";
 import { plainTextToBlogHtml, prepareBlogContentForEditor, sanitizeBlogHtml } from "@/lib/blog-content";
 import { notifyIndexNow } from "@/lib/indexnow";
 
@@ -88,7 +89,7 @@ const toAdminArray = (value: unknown): any[] => {
   return value.split(/\n|,/).map((item) => item.trim()).filter(Boolean);
 };
 
-type AdminView = "dashboard" | "venues" | "blogs" | "requests" | "seo";
+type AdminView = "dashboard" | "venues" | "blogs" | "requests" | "seo" | "views";
 
 const bookingRequestStatusLabels = Object.fromEntries(
   BOOKING_REQUEST_STATUS_OPTIONS.map((option) => [option.value, option.label]),
@@ -1592,6 +1593,7 @@ const Admin = () => {
               {view === "venues" && (
                 <VenuesView venues={adminVenues} onCreate={openCreateVenue} onEdit={editVenue} onDelete={(item) => deleteVenue(item.id)} />
               )}
+              {view === "views" && <VenueViews />}
               {view === "blogs" && (
                 <BlogsView posts={adminBlogPosts} onCreate={openCreateBlog} onEdit={editBlogPost} onDelete={(item) => deleteBlogPost(item.id)} />
               )}
@@ -1690,6 +1692,7 @@ const AdminSidebar = ({ view, onViewChange, onCreateVenue, onCreateBlog }: any) 
     {[
       { id: "dashboard", label: "Dashboard", icon: <LayoutDashboard className="h-4 w-4" /> },
       { id: "venues", label: "Salles", icon: <Building2 className="h-4 w-4" /> },
+      { id: "views", label: "Vues des fiches", icon: <LayoutDashboard className="h-4 w-4" /> },
       { id: "blogs", label: "Blogs", icon: <FileText className="h-4 w-4" /> },
       { id: "requests", label: "Demandes", icon: <ClipboardList className="h-4 w-4" /> },
       { id: "seo", label: "SEO", icon: <Pilcrow className="h-4 w-4" /> },

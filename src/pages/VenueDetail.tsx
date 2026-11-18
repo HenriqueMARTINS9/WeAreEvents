@@ -4,6 +4,8 @@ import { fetchVenueBySlug, fetchVenueReviews, fetchVenues } from "@/lib/supabase
 import { ArrowRight, Building2, Cake, Clock3, Euro, ExternalLink, Images, MapPin, Music2, Play, Route, ShieldCheck, Sparkles, Star, Tag, UtensilsCrossed, Users } from "lucide-react";
 import { lazy, Suspense, useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useVenuePageView } from "@/hooks/use-venue-page-view";
+import { useContentRedirect } from "@/hooks/use-content-redirect";
 import DesktopNav from "@/components/DesktopNav";
 import SiteFooter from "@/components/SiteFooter";
 import VenueFaq from "@/components/VenueFaq";
@@ -50,6 +52,7 @@ const formatClosingLabel = (value: string) => {
 
 const VenueDetail = () => {
   const { slug } = useParams();
+  const redirecting = useContentRedirect("salle", slug);
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { data: venues = [] } = useQuery({ queryKey: ["venues"], queryFn: fetchVenues });
@@ -71,8 +74,9 @@ const VenueDetail = () => {
   });
   const [bookingOpen, setBookingOpen] = useState(false);
   const [activeMediaIndex, setActiveMediaIndex] = useState<number | null>(null);
+  useVenuePageView(redirecting ? undefined : venue?.slug);
 
-  if (isLoading) {
+  if (isLoading || redirecting) {
     return <div className="min-h-screen bg-background" />;
   }
 

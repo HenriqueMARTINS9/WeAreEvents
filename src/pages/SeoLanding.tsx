@@ -326,7 +326,7 @@ const SeoLanding = () => {
         )}
       </main>
 
-      <SiteFooter variant="light" />
+      <SiteFooter variant="dark" />
       {showCodeSearch && (
         <VenueCodeSearch
           onClose={() => setShowCodeSearch(false)}

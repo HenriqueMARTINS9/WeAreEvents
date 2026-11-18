@@ -506,7 +506,7 @@ const DesktopHome = () => {
       <FaqSection variant="dark" />
       </main>
 
-      <SiteFooter variant="light" />
+      <SiteFooter variant="dark" />
     </div>
   );
 };
